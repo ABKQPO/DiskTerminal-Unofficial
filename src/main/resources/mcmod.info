@@ -1,0 +1,21 @@
+{
+  "modListVersion": 2,
+  "modList": [
+    {
+      "modid": "${modId}",
+      "name": "${modName}",
+      "description": "A terminal for managing all storage cells and storage buses in an ME network.",
+      "version": "${modVersion}",
+      "mcversion": "${minecraftVersion}",
+      "url": "",
+      "updateUrl": "",
+      "authorList": [
+        "HFstudio"
+      ],
+      "credits": "",
+      "logoFile": "assets/disk_terminal/icon.png",
+      "screenshots": [],
+      "parent": ""
+    }
+  ]
+}

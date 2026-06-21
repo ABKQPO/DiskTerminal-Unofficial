@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "minVersion": "0.8.3-GTNH",
+  "package": "com.hfstudio.diskterminal.mixins.early",
+  "refmap": "mixins.disk_terminal.refmap.json",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8"
+}

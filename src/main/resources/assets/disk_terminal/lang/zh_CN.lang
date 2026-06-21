@@ -1,0 +1,6 @@
+disk_terminal.gui.config.general=总览配置
+disk_terminal.gui.config.general.debug=调试设置
+disk_terminal.gui.config.general.debug.tooltip=开发与调试
+
+disk_terminal.gui.config.general.debug.enabledebugmode=调试模式
+disk_terminal.gui.config.general.debug.enabledebugmode.tooltip=启用调试日志输出
