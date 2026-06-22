@@ -114,7 +114,7 @@ public class PacketNBTChunk implements IMessage {
             // Reassembly and dispatch happen on the client thread to keep NBT/GUI
             // interaction off the netty thread.
             Minecraft.getMinecraft()
-                .addScheduledTask(() -> ChunkedNBTReceiver.acceptChunk(message));
+                .func_152344_a(() -> ChunkedNBTReceiver.acceptChunk(message));
 
             return null;
         }

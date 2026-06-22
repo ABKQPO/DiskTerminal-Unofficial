@@ -1,0 +1,172 @@
+package com.hfstudio.diskterminal.client;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import net.minecraft.client.resources.I18n;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraftforge.common.util.Constants;
+
+import com.gtnewhorizon.gtnhlib.blockpos.BlockPos;
+import com.hfstudio.diskterminal.gui.rename.RenameTargetType;
+import com.hfstudio.diskterminal.gui.rename.Renameable;
+import com.hfstudio.diskterminal.util.ItemStacks;
+import com.hfstudio.diskterminal.util.PosUtil;
+
+/**
+ * Client-side data holder for drive/chest storage information received from server.
+ * <p>
+ * Written by {@code CellDataHandler#createStorageData}.
+ */
+public class StorageInfo implements Renameable, Prioritizable {
+
+    private final long id;
+    private final BlockPos pos;
+    private final int dimension;
+    private final String name;
+    private final ItemStack blockItem;
+    private final int slotCount;
+    private final int priority;
+    private final boolean supportsPriorityFlag;
+    private final List<CellInfo> cells = new ArrayList<>();
+
+    public StorageInfo(NBTTagCompound nbt) {
+        this.id = nbt.getLong("id");
+        this.pos = PosUtil.fromLong(nbt.getLong("pos"));
+        this.dimension = nbt.getInteger("dim");
+        this.name = nbt.getString("name");
+        this.blockItem = nbt.hasKey("blockItem") ? ItemStacks.load(nbt.getCompoundTag("blockItem")) : null;
+        this.slotCount = nbt.getInteger("slotCount");
+        this.priority = nbt.getInteger("priority");
+        this.supportsPriorityFlag = nbt.getBoolean("supportsPriority");
+
+        if (nbt.hasKey("cells")) {
+            NBTTagList cellList = nbt.getTagList("cells", Constants.NBT.TAG_COMPOUND);
+            for (int i = 0; i < cellList.tagCount(); i++) {
+                CellInfo cell = new CellInfo(cellList.getCompoundTagAt(i));
+                cell.setParentStorageId(this.id);
+                this.cells.add(cell);
+            }
+        }
+    }
+
+    @Override
+    public long getId() {
+        return id;
+    }
+
+    public BlockPos getPos() {
+        return pos;
+    }
+
+    public int getDimension() {
+        return dimension;
+    }
+
+    public String getName() {
+        // Translate lang keys (names starting with "tile." or "item.")
+        if (name.startsWith("tile.") || name.startsWith("item.")) {
+            return I18n.format(name);
+        }
+
+        return name;
+    }
+
+    public ItemStack getBlockItem() {
+        return blockItem;
+    }
+
+    public int getSlotCount() {
+        return slotCount;
+    }
+
+    @Override
+    public int getPriority() {
+        return priority;
+    }
+
+    public List<CellInfo> getCells() {
+        return cells;
+    }
+
+    public String getLocationString() {
+        return I18n.format("gui.disk_terminal.location_format", pos.getX(), pos.getY(), pos.getZ(), dimension);
+    }
+
+    public int getTotalCellCount() {
+        return cells.size();
+    }
+
+    public long getTotalUsedBytes() {
+        long total = 0;
+        for (CellInfo cell : cells) total += cell.getUsedBytes();
+
+        return total;
+    }
+
+    public long getTotalMaxBytes() {
+        long total = 0;
+        for (CellInfo cell : cells) total += cell.getTotalBytes();
+
+        return total;
+    }
+
+    /**
+     * Get the cell at a specific slot index.
+     *
+     * @param slotIndex The slot index (0-based)
+     * @return The CellInfo at that slot, or null if the slot is empty
+     */
+    public CellInfo getCellAtSlot(int slotIndex) {
+        for (CellInfo cell : cells) {
+            if (cell.getSlot() == slotIndex) return cell;
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if this storage supports priority editing.
+     */
+    @Override
+    public boolean supportsPriority() {
+        return supportsPriorityFlag;
+    }
+
+    @Override
+    public boolean isRenameable() {
+        return true;
+    }
+
+    @Override
+    public String getCustomName() {
+        // Storage name is always set (either custom or translation key)
+        // We consider it "custom" if it doesn't start with tile./item. (translation key)
+        if (name != null && !name.startsWith("tile.") && !name.startsWith("item.")) return name;
+
+        return null;
+    }
+
+    @Override
+    public boolean hasCustomName() {
+        return name != null && !name.startsWith("tile.") && !name.startsWith("item.");
+    }
+
+    @Override
+    public void setCustomName(String name) {
+        // Client-side optimistic update is not applicable for StorageInfo's final fields.
+        // The server will send a full refresh after rename.
+    }
+
+    @Override
+    public RenameTargetType getRenameTargetType() {
+        return RenameTargetType.STORAGE;
+    }
+
+    @Override
+    public long getRenameId() {
+        return id;
+    }
+}
