@@ -1,0 +1,59 @@
+package com.hfstudio.diskterminal.integration.subnet;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import net.minecraft.nbt.NBTTagList;
+
+import appeng.api.networking.IGrid;
+
+import com.hfstudio.diskterminal.DiskTerminal;
+import com.hfstudio.diskterminal.container.handler.SubnetDataHandler.SubnetTracker;
+
+/**
+ * Registry for subnet scanners.
+ * Scanners detect and collect information about subnets connected to an ME network.
+ */
+public final class SubnetScannerRegistry {
+
+    private static final List<ISubnetScanner> scanners = new ArrayList<>();
+
+    private SubnetScannerRegistry() {}
+
+    /**
+     * Register a subnet scanner.
+     *
+     * @param scanner The scanner to register
+     */
+    public static void register(ISubnetScanner scanner) {
+        if (scanner == null) {
+            DiskTerminal.LOG.warn("Attempted to register null subnet scanner");
+            return;
+        }
+
+        scanners.add(scanner);
+        DiskTerminal.LOG.info("Registered subnet scanner: {}", scanner.getId());
+    }
+
+    /**
+     * Scan all subnets using all registered scanners.
+     *
+     * @param grid       The main ME network grid
+     * @param out        NBTTagList to append subnet data to
+     * @param trackerMap Map to populate with subnet trackers
+     * @param playerId   The player ID for security permission checks
+     * @param slotLimit  Maximum number of inventory item types per subnet
+     */
+    public static void scanAll(IGrid grid, NBTTagList out, Map<Long, SubnetTracker> trackerMap, int playerId,
+        int slotLimit) {
+        for (ISubnetScanner scanner : scanners) {
+            if (!scanner.isAvailable()) continue;
+            try {
+                scanner.scanSubnets(grid, out, trackerMap, playerId, slotLimit);
+            } catch (Exception e) {
+                DiskTerminal.LOG.error("Error scanning subnets with {}: {}", scanner.getId(), e.getMessage());
+            }
+        }
+    }
+}
