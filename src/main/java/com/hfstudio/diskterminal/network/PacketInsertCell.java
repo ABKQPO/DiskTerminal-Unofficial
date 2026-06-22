@@ -1,0 +1,60 @@
+package com.hfstudio.diskterminal.network;
+
+import io.netty.buffer.ByteBuf;
+
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.inventory.Container;
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+
+import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
+
+
+/**
+ * Packet sent from client to server to insert a held cell into a storage.
+ */
+public class PacketInsertCell implements IMessage {
+
+    private long storageId;
+    private int targetSlot; // -1 for first available
+
+    public PacketInsertCell() {
+    }
+
+    public PacketInsertCell(long storageId, int targetSlot) {
+        this.storageId = storageId;
+        this.targetSlot = targetSlot;
+    }
+
+    @Override
+    public void fromBytes(ByteBuf buf) {
+        this.storageId = buf.readLong();
+        this.targetSlot = buf.readInt();
+    }
+
+    @Override
+    public void toBytes(ByteBuf buf) {
+        buf.writeLong(storageId);
+        buf.writeInt(targetSlot);
+    }
+
+    public static class Handler implements IMessageHandler<PacketInsertCell, IMessage> {
+
+        @Override
+        public IMessage onMessage(PacketInsertCell message, MessageContext ctx) {
+            EntityPlayerMP player = ctx.getServerHandler().playerEntity;
+
+            NetUtil.run(player, () -> {
+                Container container = player.openContainer;
+
+                if (container instanceof ContainerCellTerminalBase) {
+                    ContainerCellTerminalBase cellContainer = (ContainerCellTerminalBase) container;
+                    cellContainer.handleInsertCell(message.storageId, message.targetSlot, player);
+                }
+            });
+
+            return null;
+        }
+    }
+}

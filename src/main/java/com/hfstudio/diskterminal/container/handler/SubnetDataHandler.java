@@ -208,6 +208,19 @@ public class SubnetDataHandler {
     }
 
     /**
+     * Handle a subnet connection partition modification. The full connection-resolution logic
+     * (finding the storage bus at pos/side within the subnet) is deferred with the AE2SubnetScanner;
+     * until then this is a no-op that reports "not handled".
+     *
+     * @return true if the partition was modified
+     */
+    public static boolean handleSubnetPartitionAction(Map<Long, SubnetTracker> trackerMap, long subnetId, long pos,
+        int side, com.hfstudio.diskterminal.network.PacketSubnetPartitionAction.Action action, int partitionSlot,
+        net.minecraft.item.ItemStack itemStack) {
+        return false;
+    }
+
+    /**
      * Actions that can be performed on subnets.
      */
     public enum SubnetAction {

@@ -17,8 +17,9 @@ dependencies {
         exclude group: "com.github.GTNewHorizons", module: "Applied-Energistics-2-Unofficial"
         exclude group: "com.github.GTNewHorizons", module: "AE2FluidCraft-Rework"
     }
+    compileOnlyApi("com.github.reobf:Programmable-Hatches-Mod:v0.2.0p4-beta") { transitive = false }
 
-    // compileOnlyApi("com.github.reobf:Programmable-Hatches-Mod:v0.2.0p2-beta:dev") { transitive = false }
+    devOnlyNonPublishable("com.github.GTNewHorizons:Baubles-Expanded:2.2.21-GTNH:dev")
 
     runtimeOnlyNonPublishable("com.github.GTNewHorizons:AspectRecipeIndex:1.1.1:dev")
     runtimeOnlyNonPublishable("com.falsepattern:endlessids-mc1.7.10:1.7.3:dev")

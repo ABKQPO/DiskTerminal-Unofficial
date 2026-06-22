@@ -12,6 +12,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 
 import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraftforge.fluids.FluidStack;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Settings;
@@ -32,6 +33,7 @@ import appeng.util.item.AEFluidStackType;
 import appeng.util.item.AEItemStackType;
 
 import com.glodblock.github.common.item.ItemFluidDrop;
+import com.hfstudio.diskterminal.util.InventoryHelper;
 import com.hfstudio.diskterminal.client.StorageType;
 import com.hfstudio.diskterminal.integration.storagebus.StorageBusScannerRegistry;
 import com.hfstudio.diskterminal.util.ItemStacks;
@@ -256,6 +258,97 @@ public class StorageBusDataHandler {
         }
 
         busData.setTag("upgrades", upgradeList);
+    }
+
+    /**
+     * Check whether an ADD_ITEM request would create a duplicate filter entry on this bus.
+     */
+    public static boolean isDuplicateFilterAdd(StorageBusTracker tracker,
+        com.hfstudio.diskterminal.network.PacketStorageBusPartitionAction.Action action, int partitionSlot,
+        ItemStack itemStack) {
+        if (tracker == null) return false;
+        if (action != com.hfstudio.diskterminal.network.PacketStorageBusPartitionAction.Action.ADD_ITEM) return false;
+        if (partitionSlot < 0 || ItemStacks.isEmpty(itemStack)) return false;
+        if (!(tracker.storageBus instanceof PartStorageBus)) return false;
+
+        IInventory config = ((PartStorageBus) tracker.storageBus).getInventoryByName("config");
+        if (config == null || partitionSlot >= config.getSizeInventory()) return false;
+
+        int existing = findItemInConfig(config, itemStack);
+
+        return existing >= 0 && existing != partitionSlot;
+    }
+
+    /**
+     * Handle a partition action against a storage bus (item or fluid; both share the config inventory).
+     *
+     * @return true if the partition was modified
+     */
+    public static boolean handlePartitionAction(StorageBusTracker tracker,
+        com.hfstudio.diskterminal.network.PacketStorageBusPartitionAction.Action action, int partitionSlot,
+        ItemStack itemStack) {
+        if (!(tracker.storageBus instanceof PartStorageBus)) return false;
+
+        PartStorageBus bus = (PartStorageBus) tracker.storageBus;
+        IInventory config = bus.getInventoryByName("config");
+        if (config == null) return false;
+
+        boolean fluid = tracker.storageType == StorageType.FLUID;
+        ItemStack normalized = fluid ? normalizeFluidConfigStack(itemStack) : itemStack;
+        int slots = config.getSizeInventory();
+
+        switch (action) {
+            case ADD_ITEM:
+                if (partitionSlot >= 0 && partitionSlot < slots && !ItemStacks.isEmpty(normalized)) {
+                    InventoryHelper.setSlot(config, partitionSlot, normalized);
+                }
+                break;
+            case REMOVE_ITEM:
+                if (partitionSlot >= 0 && partitionSlot < slots) InventoryHelper.setSlot(config, partitionSlot, null);
+                break;
+            case TOGGLE_ITEM:
+                if (!ItemStacks.isEmpty(normalized)) {
+                    int existing = findItemInConfig(config, normalized);
+                    if (existing >= 0) {
+                        InventoryHelper.setSlot(config, existing, null);
+                    } else {
+                        int empty = InventoryHelper.findEmptySlot(config);
+                        if (empty >= 0) InventoryHelper.setSlot(config, empty, normalized);
+                    }
+                }
+                break;
+            case CLEAR_ALL:
+                InventoryHelper.clear(config);
+                break;
+            case SET_ALL_FROM_CONTENTS:
+                // Filling from connected contents is deferred; clear keeps behavior predictable.
+                InventoryHelper.clear(config);
+                break;
+        }
+
+        tracker.hostTile.markDirty();
+
+        return true;
+    }
+
+    private static int findItemInConfig(IInventory inv, ItemStack stack) {
+        for (int i = 0; i < inv.getSizeInventory(); i++) {
+            if (ItemStack.areItemStacksEqual(inv.getStackInSlot(i), stack)) return i;
+        }
+
+        return -1;
+    }
+
+    private static ItemStack normalizeFluidConfigStack(ItemStack stack) {
+        if (ItemStacks.isEmpty(stack)) return stack;
+        if (stack.getItem() instanceof ItemFluidDrop) {
+            FluidStack fs = ItemFluidDrop.getFluidStack(stack);
+            if (fs != null && fs.getFluid() != null) {
+                return ItemFluidDrop.newStack(new FluidStack(fs.getFluid(), 1000));
+            }
+        }
+
+        return stack;
     }
 
     /**

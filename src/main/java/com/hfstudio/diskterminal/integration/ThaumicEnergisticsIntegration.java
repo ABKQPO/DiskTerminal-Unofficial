@@ -1,5 +1,6 @@
 package com.hfstudio.diskterminal.integration;
 
+import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 
@@ -39,5 +40,24 @@ public final class ThaumicEnergisticsIntegration {
 
         // Filled in by the full Thaumic Energistics integration (Phase 5).
         return null;
+    }
+
+    /**
+     * Try to get the essentia cell config (partition) inventory.
+     *
+     * @return data array [configInv, essentiaChannel, essentiaCellHandler], or null if not an
+     *         essentia cell or Thaumic Energistics is not present.
+     */
+    public static Object[] tryGetEssentiaConfigInventory(ICellHandler cellHandler, ItemStack cellStack) {
+        if (!isModLoaded()) return null;
+
+        return null;
+    }
+
+    /**
+     * Fill a partition config inventory from an essentia cell's contents.
+     */
+    public static void setAllFromEssentiaContents(IInventory configInv, Object[] essentiaData) {
+        // Filled in by the full Thaumic Energistics integration (Phase 5).
     }
 }

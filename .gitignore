@@ -52,3 +52,6 @@ layout.json
 
 ### Mac OS ###
 .DS_Store
+
+# Port staging (work-in-progress files not yet wired)
+.port-staging/
