@@ -32,12 +32,12 @@ public class DeltaApplier {
     /**
      * Apply a FULL or DELTA payload to a state map.
      *
-     * @param mode          payload mode (FULL replaces, DELTA merges)
-     * @param payload       the decoded NBT payload
-     * @param target        the map to mutate
-     * @param parser        converts an entry compound into the consumer's domain object
-     * @param idFromObject  extracts the long ID from a parsed object (used for FULL parsing)
-     * @param <T>           consumer domain type
+     * @param mode         payload mode (FULL replaces, DELTA merges)
+     * @param payload      the decoded NBT payload
+     * @param target       the map to mutate
+     * @param parser       converts an entry compound into the consumer's domain object
+     * @param idFromObject extracts the long ID from a parsed object (used for FULL parsing)
+     * @param <T>          consumer domain type
      */
     public static <T> void apply(PayloadMode mode, NBTTagCompound payload, Map<Long, T> target,
         Function<NBTTagCompound, T> parser, Function<T, Long> idFromObject) {
@@ -48,8 +48,8 @@ public class DeltaApplier {
         }
     }
 
-    private static <T> void applyFull(NBTTagCompound payload, Map<Long, T> target,
-        Function<NBTTagCompound, T> parser, Function<T, Long> idFromObject) {
+    private static <T> void applyFull(NBTTagCompound payload, Map<Long, T> target, Function<NBTTagCompound, T> parser,
+        Function<T, Long> idFromObject) {
         target.clear();
 
         // The list key is whichever NBTTagList of compounds is present at the top level. The

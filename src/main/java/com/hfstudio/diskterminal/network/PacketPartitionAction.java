@@ -1,18 +1,17 @@
 package com.hfstudio.diskterminal.network;
 
-import io.netty.buffer.ByteBuf;
-
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+
+import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
+
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-
-import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
-
+import io.netty.buffer.ByteBuf;
 
 /**
  * Packet sent from client to server to modify cell partition.
@@ -117,8 +116,7 @@ public class PacketPartitionAction implements IMessage {
                         message.cellSlot,
                         message.action,
                         message.partitionSlot,
-                        message.itemStack
-                    );
+                        message.itemStack);
                 }
             });
 

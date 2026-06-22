@@ -1,19 +1,17 @@
 package com.hfstudio.diskterminal.network;
 
-import io.netty.buffer.ByteBuf;
-
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 
+import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
+
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-
-import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
-
+import io.netty.buffer.ByteBuf;
 
 /**
  * Packet for modifying partition of a temp cell in the temp area.
@@ -118,8 +116,11 @@ public class PacketTempCellPartitionAction implements IMessage {
                 if (!(container instanceof ContainerCellTerminalBase)) return;
 
                 ContainerCellTerminalBase cellContainer = (ContainerCellTerminalBase) container;
-                cellContainer.handleTempCellPartitionAction(message.tempSlotIndex, message.action,
-                    message.partitionSlot, message.itemStack);
+                cellContainer.handleTempCellPartitionAction(
+                    message.tempSlotIndex,
+                    message.action,
+                    message.partitionSlot,
+                    message.itemStack);
             });
 
             return null;

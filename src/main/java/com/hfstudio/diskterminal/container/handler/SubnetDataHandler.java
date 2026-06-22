@@ -10,8 +10,10 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
-
 import net.minecraftforge.common.util.ForgeDirection;
+
+import com.hfstudio.diskterminal.integration.subnet.SubnetScannerRegistry;
+import com.hfstudio.diskterminal.util.PosUtil;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
@@ -20,9 +22,6 @@ import appeng.helpers.ICustomNameObject;
 import appeng.helpers.IInterfaceHost;
 import appeng.parts.misc.PartInterface;
 import appeng.tile.misc.TileInterface;
-
-import com.hfstudio.diskterminal.integration.subnet.SubnetScannerRegistry;
-import com.hfstudio.diskterminal.util.PosUtil;
 
 /**
  * Server-side handler for subnet data collection and management.

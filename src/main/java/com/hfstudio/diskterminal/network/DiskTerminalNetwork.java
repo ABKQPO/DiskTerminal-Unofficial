@@ -1,11 +1,11 @@
 package com.hfstudio.diskterminal.network;
 
+import com.hfstudio.diskterminal.Tags;
+import com.hfstudio.diskterminal.network.chunked.PacketNBTChunk;
+
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import cpw.mods.fml.relauncher.Side;
-
-import com.hfstudio.diskterminal.Tags;
-import com.hfstudio.diskterminal.network.chunked.PacketNBTChunk;
 
 /**
  * Network handler for Disk Terminal packets.
@@ -22,6 +22,65 @@ public class DiskTerminalNetwork {
     public static void init() {
         // Server -> Client: Generic chunked NBT payload (terminal data, subnet data, etc).
         INSTANCE.registerMessage(PacketNBTChunk.Handler.class, PacketNBTChunk.class, packetId++, Side.CLIENT);
+
+        // Client -> Server: action packets
+        INSTANCE
+            .registerMessage(PacketPartitionAction.Handler.class, PacketPartitionAction.class, packetId++, Side.SERVER);
+        INSTANCE.registerMessage(PacketEjectCell.Handler.class, PacketEjectCell.class, packetId++, Side.SERVER);
+        INSTANCE.registerMessage(PacketInsertCell.Handler.class, PacketInsertCell.class, packetId++, Side.SERVER);
+        INSTANCE.registerMessage(PacketPickupCell.Handler.class, PacketPickupCell.class, packetId++, Side.SERVER);
+        INSTANCE.registerMessage(PacketSetPriority.Handler.class, PacketSetPriority.class, packetId++, Side.SERVER);
+        INSTANCE.registerMessage(PacketUpgradeCell.Handler.class, PacketUpgradeCell.class, packetId++, Side.SERVER);
+        INSTANCE.registerMessage(PacketTabChange.Handler.class, PacketTabChange.class, packetId++, Side.SERVER);
+        INSTANCE.registerMessage(
+            PacketStorageBusPartitionAction.Handler.class,
+            PacketStorageBusPartitionAction.class,
+            packetId++,
+            Side.SERVER);
+        INSTANCE.registerMessage(
+            PacketStorageBusIOMode.Handler.class,
+            PacketStorageBusIOMode.class,
+            packetId++,
+            Side.SERVER);
+        INSTANCE.registerMessage(
+            PacketUpgradeStorageBus.Handler.class,
+            PacketUpgradeStorageBus.class,
+            packetId++,
+            Side.SERVER);
+        INSTANCE
+            .registerMessage(PacketExtractUpgrade.Handler.class, PacketExtractUpgrade.class, packetId++, Side.SERVER);
+        INSTANCE
+            .registerMessage(PacketSlotLimitChange.Handler.class, PacketSlotLimitChange.class, packetId++, Side.SERVER);
+        INSTANCE.registerMessage(
+            PacketNetworkToolAction.Handler.class,
+            PacketNetworkToolAction.class,
+            packetId++,
+            Side.SERVER);
+        INSTANCE.registerMessage(
+            PacketSubnetListRequest.Handler.class,
+            PacketSubnetListRequest.class,
+            packetId++,
+            Side.SERVER);
+        INSTANCE.registerMessage(PacketSubnetAction.Handler.class, PacketSubnetAction.class, packetId++, Side.SERVER);
+        INSTANCE.registerMessage(PacketSwitchNetwork.Handler.class, PacketSwitchNetwork.class, packetId++, Side.SERVER);
+        INSTANCE.registerMessage(PacketRenameAction.Handler.class, PacketRenameAction.class, packetId++, Side.SERVER);
+        INSTANCE.registerMessage(
+            PacketOpenWirelessTerminal.Handler.class,
+            PacketOpenWirelessTerminal.class,
+            packetId++,
+            Side.SERVER);
+        INSTANCE
+            .registerMessage(PacketTempCellAction.Handler.class, PacketTempCellAction.class, packetId++, Side.SERVER);
+        INSTANCE.registerMessage(
+            PacketTempCellPartitionAction.Handler.class,
+            PacketTempCellPartitionAction.class,
+            packetId++,
+            Side.SERVER);
+        INSTANCE.registerMessage(
+            PacketSubnetPartitionAction.Handler.class,
+            PacketSubnetPartitionAction.class,
+            packetId++,
+            Side.SERVER);
 
         // Server -> Client: GUI-safe feedback messages (overlay + chat)
         INSTANCE

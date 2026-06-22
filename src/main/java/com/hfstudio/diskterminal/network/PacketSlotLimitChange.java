@@ -1,13 +1,11 @@
 package com.hfstudio.diskterminal.network;
 
-import io.netty.buffer.ByteBuf;
+import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-
-import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
-
+import io.netty.buffer.ByteBuf;
 
 /**
  * Packet sent from client to server to sync slot limit preferences.
@@ -19,8 +17,7 @@ public class PacketSlotLimitChange implements IMessage {
     private int busLimit;
     private int subnetLimit;
 
-    public PacketSlotLimitChange() {
-    }
+    public PacketSlotLimitChange() {}
 
     public PacketSlotLimitChange(int cellLimit, int busLimit, int subnetLimit) {
         this.cellLimit = cellLimit;
@@ -48,7 +45,8 @@ public class PacketSlotLimitChange implements IMessage {
         public IMessage onMessage(PacketSlotLimitChange message, MessageContext ctx) {
             NetUtil.run(ctx.getServerHandler().playerEntity, () -> {
                 if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase) {
-                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx.getServerHandler().playerEntity.openContainer;
+                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx
+                        .getServerHandler().playerEntity.openContainer;
                     container.setSlotLimits(message.cellLimit, message.busLimit, message.subnetLimit);
                 }
             });

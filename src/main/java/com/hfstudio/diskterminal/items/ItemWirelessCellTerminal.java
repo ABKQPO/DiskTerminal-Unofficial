@@ -10,15 +10,13 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.world.World;
-
 import net.minecraftforge.common.util.Constants;
 
-import cpw.mods.fml.common.Optional;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import com.hfstudio.diskterminal.Tags;
+import com.hfstudio.diskterminal.gui.GuiHandler;
+import com.hfstudio.diskterminal.util.ItemStacks;
 
 import appeng.api.AEApi;
-import appeng.api.config.Actionable;
 import appeng.api.config.Settings;
 import appeng.api.config.SortDir;
 import appeng.api.config.SortOrder;
@@ -28,18 +26,15 @@ import appeng.api.features.IWirelessTermHandler;
 import appeng.api.util.IConfigManager;
 import appeng.core.AEConfig;
 import appeng.core.CreativeTab;
-import appeng.core.localization.GuiText;
 import appeng.core.localization.PlayerMessages;
 import appeng.items.tools.powered.powersink.AEBasePoweredItem;
 import appeng.util.ConfigManager;
 import appeng.util.Platform;
-
 import baubles.api.BaubleType;
 import baubles.api.IBauble;
-
-import com.hfstudio.diskterminal.Tags;
-import com.hfstudio.diskterminal.gui.GuiHandler;
-import com.hfstudio.diskterminal.util.ItemStacks;
+import cpw.mods.fml.common.Optional;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 
 /**
  * Wireless version of the Cell Terminal.
@@ -53,7 +48,7 @@ public class ItemWirelessCellTerminal extends AEBasePoweredItem implements IWire
     public static final int MAX_TEMP_CELLS = 16;
 
     public ItemWirelessCellTerminal() {
-        super(AEConfig.instance().wirelessTerminalBattery, com.google.common.base.Optional.absent());
+        super(AEConfig.instance.wirelessTerminalBattery, com.google.common.base.Optional.absent());
         this.setUnlocalizedName(Tags.MODID + ".wireless_cell_terminal");
         this.setTextureName(Tags.MODID + ":wireless_cell_terminal");
         this.setCreativeTab(CreativeTab.instance);
@@ -102,7 +97,7 @@ public class ItemWirelessCellTerminal extends AEBasePoweredItem implements IWire
 
     @SideOnly(Side.CLIENT)
     @Override
-    protected void addCheckedInformation(ItemStack stack, EntityPlayer player, List<String> lines,
+    public void addCheckedInformation(ItemStack stack, EntityPlayer player, List<String> lines,
         boolean displayMoreInfo) {
         super.addCheckedInformation(stack, player, lines, displayMoreInfo);
 
@@ -115,9 +110,9 @@ public class ItemWirelessCellTerminal extends AEBasePoweredItem implements IWire
 
         String encKey = getEncryptionKey(stack);
         if (encKey == null || encKey.isEmpty()) {
-            lines.add(EnumChatFormatting.RED + GuiText.Unlinked.getLocal());
+            lines.add(EnumChatFormatting.RED + I18n.format("item.disk_terminal.wireless_cell_terminal.unlinked"));
         } else {
-            lines.add(EnumChatFormatting.GREEN + GuiText.Linked.getLocal());
+            lines.add(EnumChatFormatting.GREEN + I18n.format("item.disk_terminal.wireless_cell_terminal.linked"));
         }
     }
 
@@ -128,7 +123,7 @@ public class ItemWirelessCellTerminal extends AEBasePoweredItem implements IWire
 
     @Override
     public boolean usePower(EntityPlayer player, double amount, ItemStack is) {
-        return this.extractAEPower(is, amount, Actionable.MODULATE) >= amount - 0.5;
+        return this.extractAEPower(is, amount) >= amount - 0.5;
     }
 
     @Override
@@ -147,8 +142,9 @@ public class ItemWirelessCellTerminal extends AEBasePoweredItem implements IWire
         out.registerSetting(Settings.VIEW_MODE, ViewItems.ALL);
         out.registerSetting(Settings.SORT_DIRECTION, SortDir.ASCENDING);
 
-        out.readFromNBT((NBTTagCompound) Platform.openNbtData(target)
-            .copy());
+        out.readFromNBT(
+            (NBTTagCompound) Platform.openNbtData(target)
+                .copy());
 
         return out;
     }
@@ -213,7 +209,6 @@ public class ItemWirelessCellTerminal extends AEBasePoweredItem implements IWire
         return MAX_TEMP_CELLS;
     }
 
-    @Override
     public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
         return slotChanged;
     }

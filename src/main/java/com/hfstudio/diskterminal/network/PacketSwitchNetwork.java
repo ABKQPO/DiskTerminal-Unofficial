@@ -1,13 +1,11 @@
 package com.hfstudio.diskterminal.network;
 
-import io.netty.buffer.ByteBuf;
+import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-
-import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
-
+import io.netty.buffer.ByteBuf;
 
 /**
  * Packet sent from client to server to switch the terminal view to a different network.
@@ -23,8 +21,7 @@ public class PacketSwitchNetwork implements IMessage {
      */
     private long networkId;
 
-    public PacketSwitchNetwork() {
-    }
+    public PacketSwitchNetwork() {}
 
     public PacketSwitchNetwork(long networkId) {
         this.networkId = networkId;
@@ -68,7 +65,8 @@ public class PacketSwitchNetwork implements IMessage {
         public IMessage onMessage(PacketSwitchNetwork message, MessageContext ctx) {
             NetUtil.run(ctx.getServerHandler().playerEntity, () -> {
                 if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase) {
-                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx.getServerHandler().playerEntity.openContainer;
+                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx
+                        .getServerHandler().playerEntity.openContainer;
                     container.switchNetwork(message.networkId);
                 }
             });

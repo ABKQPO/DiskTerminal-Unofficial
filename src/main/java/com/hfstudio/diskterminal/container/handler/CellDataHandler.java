@@ -7,6 +7,12 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 
+import com.glodblock.github.common.item.ItemFluidDrop;
+import com.hfstudio.diskterminal.client.StorageType;
+import com.hfstudio.diskterminal.integration.ThaumicEnergisticsIntegration;
+import com.hfstudio.diskterminal.util.ItemStacks;
+import com.hfstudio.diskterminal.util.PosUtil;
+
 import appeng.api.AEApi;
 import appeng.api.implementations.tiles.IChestOrDrive;
 import appeng.api.implementations.tiles.IMEChest;
@@ -24,12 +30,6 @@ import appeng.tile.AEBaseInvTile;
 import appeng.util.IterationCounter;
 import appeng.util.item.AEFluidStackType;
 import appeng.util.item.AEItemStackType;
-
-import com.glodblock.github.common.item.ItemFluidDrop;
-import com.hfstudio.diskterminal.client.StorageType;
-import com.hfstudio.diskterminal.integration.ThaumicEnergisticsIntegration;
-import com.hfstudio.diskterminal.util.ItemStacks;
-import com.hfstudio.diskterminal.util.PosUtil;
 
 /**
  * Handles cell and storage data generation for NBT serialization.
@@ -197,8 +197,8 @@ public class CellDataHandler {
 
     private static boolean tryPopulateEssentiaCell(NBTTagCompound cellData, ICellHandler cellHandler,
         ItemStack cellStack, int slotLimit) {
-        NBTTagCompound essentiaData = ThaumicEnergisticsIntegration.tryPopulateEssentiaCell(cellHandler, cellStack,
-            slotLimit);
+        NBTTagCompound essentiaData = ThaumicEnergisticsIntegration
+            .tryPopulateEssentiaCell(cellHandler, cellStack, slotLimit);
         if (essentiaData == null) return false;
 
         for (Object key : essentiaData.func_150296_c()) {
@@ -234,8 +234,8 @@ public class CellDataHandler {
 
     private static void populateItemContents(NBTTagCompound cellData, ICellInventory<IAEItemStack> cellInv,
         int slotLimit) {
-        IItemList<IAEItemStack> contents = cellInv.getAvailableItems(AEItemStackType.ITEM_STACK_TYPE.createList(),
-            IterationCounter.fetchNewId());
+        IItemList<IAEItemStack> contents = cellInv
+            .getAvailableItems(AEItemStackType.ITEM_STACK_TYPE.createList(), IterationCounter.fetchNewId());
         NBTTagList contentsList = new NBTTagList();
         int count = 0;
 
@@ -253,8 +253,8 @@ public class CellDataHandler {
 
     private static void populateFluidContents(NBTTagCompound cellData, ICellInventory<IAEFluidStack> cellInv,
         int slotLimit) {
-        IItemList<IAEFluidStack> contents = cellInv.getAvailableItems(AEFluidStackType.FLUID_STACK_TYPE.createList(),
-            IterationCounter.fetchNewId());
+        IItemList<IAEFluidStack> contents = cellInv
+            .getAvailableItems(AEFluidStackType.FLUID_STACK_TYPE.createList(), IterationCounter.fetchNewId());
         NBTTagList contentsList = new NBTTagList();
         int count = 0;
 

@@ -10,10 +10,10 @@ import java.util.zip.GZIPInputStream;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 
+import com.hfstudio.diskterminal.DiskTerminal;
+
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
-
-import com.hfstudio.diskterminal.DiskTerminal;
 
 /**
  * Client-side reassembler for chunked NBT payloads.

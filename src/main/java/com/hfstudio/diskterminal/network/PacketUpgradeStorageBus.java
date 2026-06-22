@@ -1,15 +1,14 @@
 package com.hfstudio.diskterminal.network;
 
-import io.netty.buffer.ByteBuf;
-
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 
 import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
 
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Packet sent from client to server to add an upgrade to a storage bus.
@@ -19,16 +18,16 @@ import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
 public class PacketUpgradeStorageBus implements IMessage {
 
     private long storageBusId;
-    private boolean shiftClick;  // If true, apply to first storage bus that accepts this upgrade
-    private int fromSlot;        // Inventory slot to take upgrade from (-1 = cursor)
+    private boolean shiftClick; // If true, apply to first storage bus that accepts this upgrade
+    private int fromSlot; // Inventory slot to take upgrade from (-1 = cursor)
 
-    public PacketUpgradeStorageBus() {
-    }
+    public PacketUpgradeStorageBus() {}
 
     /**
      * Create an upgrade request for a storage bus, taking from cursor.
+     * 
      * @param storageBusId The storage bus to upgrade
-     * @param shiftClick If true, apply to first visible storage bus that accepts this upgrade
+     * @param shiftClick   If true, apply to first visible storage bus that accepts this upgrade
      */
     public PacketUpgradeStorageBus(long storageBusId, boolean shiftClick) {
         this(storageBusId, shiftClick, -1);
@@ -36,9 +35,10 @@ public class PacketUpgradeStorageBus implements IMessage {
 
     /**
      * Create an upgrade request for a storage bus.
+     * 
      * @param storageBusId The storage bus to upgrade
-     * @param shiftClick If true, apply to first visible storage bus that accepts this upgrade
-     * @param fromSlot Inventory slot to take upgrade from (-1 = cursor)
+     * @param shiftClick   If true, apply to first visible storage bus that accepts this upgrade
+     * @param fromSlot     Inventory slot to take upgrade from (-1 = cursor)
      */
     public PacketUpgradeStorageBus(long storageBusId, boolean shiftClick, int fromSlot) {
         this.storageBusId = storageBusId;
@@ -87,8 +87,7 @@ public class PacketUpgradeStorageBus implements IMessage {
                         player,
                         message.getStorageBusId(),
                         message.isShiftClick(),
-                        message.getFromSlot()
-                    );
+                        message.getFromSlot());
                 }
             });
 

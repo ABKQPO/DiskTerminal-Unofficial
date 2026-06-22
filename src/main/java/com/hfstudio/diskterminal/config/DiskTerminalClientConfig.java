@@ -101,8 +101,7 @@ public class DiskTerminalClientConfig {
                 + "Higher values keep highlights visible longer.",
             1,
             3600);
-        this.highlightDurationProperty
-            .setLanguageKey("config.disk_terminal.config.client.settings.highlight_duration");
+        this.highlightDurationProperty.setLanguageKey("config.disk_terminal.config.client.settings.highlight_duration");
         this.highlightDuration = this.highlightDurationProperty.getInt();
 
         this.arrowScalePercentProperty = config.get(

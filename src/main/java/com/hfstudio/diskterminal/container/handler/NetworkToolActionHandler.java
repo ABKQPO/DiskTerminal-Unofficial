@@ -4,11 +4,11 @@ import java.util.Map;
 
 import net.minecraft.entity.player.EntityPlayer;
 
-import appeng.api.networking.IGrid;
-
 import com.hfstudio.diskterminal.client.CellFilter;
 import com.hfstudio.diskterminal.container.ContainerCellTerminalBase.StorageTracker;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler.StorageBusTracker;
+
+import appeng.api.networking.IGrid;
 
 /**
  * Executes network-tool batch operations on cells and storage buses.

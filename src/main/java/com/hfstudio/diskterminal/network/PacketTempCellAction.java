@@ -1,16 +1,14 @@
 package com.hfstudio.diskterminal.network;
 
-import io.netty.buffer.ByteBuf;
-
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
+
+import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-
-import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
-
+import io.netty.buffer.ByteBuf;
 
 /**
  * Packet for temp cell area operations (insert, extract, send to network).
@@ -32,11 +30,10 @@ public class PacketTempCellAction implements IMessage {
 
     private Action action;
     private int tempSlotIndex;
-    private int playerSlotIndex;  // Used for INSERT
-    private boolean toInventory;  // Used for EXTRACT - true to send directly to inventory (shift-click)
+    private int playerSlotIndex; // Used for INSERT
+    private boolean toInventory; // Used for EXTRACT - true to send directly to inventory (shift-click)
 
-    public PacketTempCellAction() {
-    }
+    public PacketTempCellAction() {}
 
     /**
      * Create a packet for EXTRACT or SEND actions.
@@ -47,6 +44,7 @@ public class PacketTempCellAction implements IMessage {
 
     /**
      * Create a packet for EXTRACT or SEND actions.
+     * 
      * @param toInventory For EXTRACT: if true, send directly to inventory (shift-click behavior)
      */
     public PacketTempCellAction(Action action, int tempSlotIndex, boolean toInventory) {
@@ -93,8 +91,11 @@ public class PacketTempCellAction implements IMessage {
                 if (!(container instanceof ContainerCellTerminalBase)) return;
 
                 ContainerCellTerminalBase cellContainer = (ContainerCellTerminalBase) container;
-                cellContainer.handleTempCellAction(message.action, message.tempSlotIndex,
-                    message.playerSlotIndex, message.toInventory);
+                cellContainer.handleTempCellAction(
+                    message.action,
+                    message.tempSlotIndex,
+                    message.playerSlotIndex,
+                    message.toInventory);
             });
 
             return null;

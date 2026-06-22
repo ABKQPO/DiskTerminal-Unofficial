@@ -10,9 +10,15 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
-
 import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.fluids.FluidStack;
+
+import com.glodblock.github.common.item.ItemFluidDrop;
+import com.hfstudio.diskterminal.client.StorageType;
+import com.hfstudio.diskterminal.integration.storagebus.StorageBusScannerRegistry;
+import com.hfstudio.diskterminal.util.InventoryHelper;
+import com.hfstudio.diskterminal.util.ItemStacks;
+import com.hfstudio.diskterminal.util.PosUtil;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Settings;
@@ -22,7 +28,6 @@ import appeng.api.storage.IMEInventoryHandler;
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
-import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
 import appeng.api.util.IConfigManager;
 import appeng.helpers.ICustomNameObject;
@@ -31,13 +36,6 @@ import appeng.parts.misc.PartStorageBus;
 import appeng.util.IterationCounter;
 import appeng.util.item.AEFluidStackType;
 import appeng.util.item.AEItemStackType;
-
-import com.glodblock.github.common.item.ItemFluidDrop;
-import com.hfstudio.diskterminal.util.InventoryHelper;
-import com.hfstudio.diskterminal.client.StorageType;
-import com.hfstudio.diskterminal.integration.storagebus.StorageBusScannerRegistry;
-import com.hfstudio.diskterminal.util.ItemStacks;
-import com.hfstudio.diskterminal.util.PosUtil;
 
 /**
  * Handles storage bus data collection and NBT generation.
@@ -98,7 +96,8 @@ public class StorageBusDataHandler {
     public static long createBusId(TileEntity hostTile, int sideOrdinal, int typeFlag) {
         long pos = PosUtil.toLong(hostTile.xCoord, hostTile.yCoord, hostTile.zCoord);
 
-        return pos ^ ((long) hostTile.getWorldObj().provider.dimensionId << 48) ^ ((long) sideOrdinal << 40)
+        return pos ^ ((long) hostTile.getWorldObj().provider.dimensionId << 48)
+            ^ ((long) sideOrdinal << 40)
             ^ ((long) typeFlag << 39);
     }
 
@@ -197,8 +196,8 @@ public class StorageBusDataHandler {
 
         if (fluid) {
             IItemList<IAEFluidStack> list = AEFluidStackType.FLUID_STACK_TYPE.createList();
-            ((IMEInventoryHandler<IAEFluidStack>) castHandler(handler)).getAvailableItems(list,
-                IterationCounter.fetchNewId());
+            ((IMEInventoryHandler<IAEFluidStack>) castHandler(handler))
+                .getAvailableItems(list, IterationCounter.fetchNewId());
             for (IAEFluidStack stack : list) {
                 ItemStack rep = ItemFluidDrop.newStack(stack.getFluidStack());
                 if (ItemStacks.isEmpty(rep)) continue;
@@ -210,8 +209,8 @@ public class StorageBusDataHandler {
             }
         } else {
             IItemList<IAEItemStack> list = AEItemStackType.ITEM_STACK_TYPE.createList();
-            ((IMEInventoryHandler<IAEItemStack>) castHandler(handler)).getAvailableItems(list,
-                IterationCounter.fetchNewId());
+            ((IMEInventoryHandler<IAEItemStack>) castHandler(handler))
+                .getAvailableItems(list, IterationCounter.fetchNewId());
             for (IAEItemStack stack : list) {
                 ItemStack rep = stack.getItemStack();
                 if (ItemStacks.isEmpty(rep)) continue;

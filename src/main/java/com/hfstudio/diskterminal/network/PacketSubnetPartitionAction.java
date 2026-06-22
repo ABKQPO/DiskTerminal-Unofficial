@@ -1,17 +1,15 @@
 package com.hfstudio.diskterminal.network;
 
-import io.netty.buffer.ByteBuf;
-
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+
+import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
 
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-
-import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
-
+import io.netty.buffer.ByteBuf;
 
 /**
  * Packet for modifying partition of a storage bus connection in the subnet overview.
@@ -57,8 +55,8 @@ public class PacketSubnetPartitionAction implements IMessage {
     /**
      * ADD_ITEM action on a specific partition slot with an item.
      */
-    public PacketSubnetPartitionAction(long subnetId, long pos, int side, Action action,
-                                       int partitionSlot, ItemStack itemStack) {
+    public PacketSubnetPartitionAction(long subnetId, long pos, int side, Action action, int partitionSlot,
+        ItemStack itemStack) {
         this.subnetId = subnetId;
         this.pos = pos;
         this.side = side;
@@ -114,11 +112,15 @@ public class PacketSubnetPartitionAction implements IMessage {
         public IMessage onMessage(PacketSubnetPartitionAction message, MessageContext ctx) {
             NetUtil.run(ctx.getServerHandler().playerEntity, () -> {
                 if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase) {
-                    ContainerCellTerminalBase container =
-                        (ContainerCellTerminalBase) ctx.getServerHandler().playerEntity.openContainer;
+                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx
+                        .getServerHandler().playerEntity.openContainer;
                     container.handleSubnetPartitionAction(
-                        message.subnetId, message.pos, message.side,
-                        message.action, message.partitionSlot, message.itemStack);
+                        message.subnetId,
+                        message.pos,
+                        message.side,
+                        message.action,
+                        message.partitionSlot,
+                        message.itemStack);
                 }
             });
 

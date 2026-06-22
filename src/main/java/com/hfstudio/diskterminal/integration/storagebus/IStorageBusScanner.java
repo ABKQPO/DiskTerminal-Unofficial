@@ -4,9 +4,9 @@ import java.util.Map;
 
 import net.minecraft.nbt.NBTTagList;
 
-import appeng.api.networking.IGrid;
-
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler.StorageBusTracker;
+
+import appeng.api.networking.IGrid;
 
 /**
  * Interface for scanning and collecting storage buses from an ME network grid.

@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -21,27 +20,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.IChatComponent;
-
-import appeng.api.AEApi;
-import appeng.api.implementations.IUpgradeableHost;
-import appeng.api.implementations.items.IUpgradeModule;
-import appeng.api.implementations.tiles.IChestOrDrive;
-import appeng.api.networking.IGrid;
-import appeng.api.networking.IGridHost;
-import appeng.api.networking.IGridNode;
-import appeng.api.networking.security.IActionHost;
-import appeng.api.parts.IPart;
-import appeng.api.storage.ICellWorkbenchItem;
-import appeng.container.AEBaseContainer;
-import appeng.container.slot.SlotRestrictedInput;
-import appeng.helpers.ICustomNameObject;
-import appeng.helpers.IInterfaceHost;
-import appeng.helpers.IPriorityHost;
-import appeng.helpers.WirelessTerminalGuiObject;
-import appeng.items.contents.NetworkToolViewer;
-import appeng.items.tools.ToolNetworkTool;
-import appeng.parts.automation.PartUpgradeable;
-import appeng.util.Platform;
 
 import com.hfstudio.diskterminal.DiskTerminal;
 import com.hfstudio.diskterminal.api.IUpgradeable;
@@ -72,6 +50,27 @@ import com.hfstudio.diskterminal.util.InventoryHelper;
 import com.hfstudio.diskterminal.util.ItemStacks;
 import com.hfstudio.diskterminal.util.PlayerMessageHelper;
 import com.hfstudio.diskterminal.util.PosUtil;
+
+import appeng.api.AEApi;
+import appeng.api.implementations.IUpgradeableHost;
+import appeng.api.implementations.items.IUpgradeModule;
+import appeng.api.implementations.tiles.IChestOrDrive;
+import appeng.api.networking.IGrid;
+import appeng.api.networking.IGridHost;
+import appeng.api.networking.IGridNode;
+import appeng.api.networking.security.IActionHost;
+import appeng.api.parts.IPart;
+import appeng.api.storage.ICellWorkbenchItem;
+import appeng.container.AEBaseContainer;
+import appeng.container.slot.SlotRestrictedInput;
+import appeng.helpers.ICustomNameObject;
+import appeng.helpers.IInterfaceHost;
+import appeng.helpers.IPriorityHost;
+import appeng.helpers.WirelessTerminalGuiObject;
+import appeng.items.contents.NetworkToolViewer;
+import appeng.items.tools.ToolNetworkTool;
+import appeng.parts.automation.PartUpgradeable;
+import appeng.util.Platform;
 
 /**
  * Base container for Cell Terminal variants.
@@ -146,9 +145,14 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
             for (int v = 0; v < 3; v++) {
                 for (int u = 0; u < 3; u++) {
-                    this.addSlotToContainer(new SlotRestrictedInput(SlotRestrictedInput.PlacableItemType.UPGRADES,
-                        this.toolboxInventory, u + v * 3, 8 + 9 * 18 + 14 + 18 + 1 + u * 18, v * 18,
-                        this.getInventoryPlayer()).setPlayerSide());
+                    this.addSlotToContainer(
+                        new SlotRestrictedInput(
+                            SlotRestrictedInput.PlacableItemType.UPGRADES,
+                            this.toolboxInventory,
+                            u + v * 3,
+                            8 + 9 * 18 + 14 + 18 + 1 + u * 18,
+                            v * 18,
+                            this.getInventoryPlayer()).setPlayerSide());
                 }
             }
         }
@@ -429,8 +433,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         StorageTracker tracker = this.byId.get(storageId);
         if (tracker == null) return;
 
-        if (CellActionHandler.handlePartitionAction(tracker.storage, tracker.tile, cellSlot, action, partitionSlot,
-            itemStack)) {
+        if (CellActionHandler
+            .handlePartitionAction(tracker.storage, tracker.tile, cellSlot, action, partitionSlot, itemStack)) {
             requestFullRefresh();
         }
     }
@@ -525,8 +529,13 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
                 IInventory cellInventory = CellDataHandler.getCellInventory(targetTracker.storage);
                 if (cellInventory != null) {
                     for (int slot = 0; slot < cellInventory.getSizeInventory(); slot++) {
-                        if (CellActionHandler.upgradeCell(targetTracker.storage, targetTracker.tile, slot, upgradeStack,
-                            player, fromSlot)) {
+                        if (CellActionHandler.upgradeCell(
+                            targetTracker.storage,
+                            targetTracker.tile,
+                            slot,
+                            upgradeStack,
+                            player,
+                            fromSlot)) {
                             requestFullRefresh();
 
                             return;
@@ -548,8 +557,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
                 if (cellInventory == null) continue;
 
                 for (int slot = 0; slot < cellInventory.getSizeInventory(); slot++) {
-                    if (CellActionHandler.upgradeCell(tracker.storage, tracker.tile, slot, upgradeStack, player,
-                        fromSlot)) {
+                    if (CellActionHandler
+                        .upgradeCell(tracker.storage, tracker.tile, slot, upgradeStack, player, fromSlot)) {
                         requestFullRefresh();
 
                         return;
@@ -679,8 +688,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
     private void warnUpgradeInsertFailure(EntityPlayer player, IChatComponent targetName) {
         if (targetName != null) {
-            PlayerMessageHelper.warning(player, "disk_terminal.warning.upgrade_insert_failed",
-                targetName.getUnformattedText());
+            PlayerMessageHelper
+                .warning(player, "disk_terminal.warning.upgrade_insert_failed", targetName.getUnformattedText());
 
             return;
         }
@@ -700,8 +709,9 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         }
 
         return tracker.tile == null ? null
-            : new ChatComponentText(tracker.tile.getClass()
-                .getSimpleName());
+            : new ChatComponentText(
+                tracker.tile.getClass()
+                    .getSimpleName());
     }
 
     private IChatComponent getCellDisplayName(StorageTracker tracker, int cellSlot) {
@@ -1092,7 +1102,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
         int playerId = this.getPlayerInv().player.getEntityId();
         NBTTagCompound data = new NBTTagCompound();
-        data.setTag("subnets",
+        data.setTag(
+            "subnets",
             SubnetDataHandler.collectSubnets(this.grid, this.subnetById, playerId, this.subnetSlotLimit));
 
         sendChunked(TerminalChannels.SUBNETS, data, "subnets", "id");
@@ -1125,8 +1136,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
             SubnetDataHandler.collectSubnets(this.grid, this.subnetById, player.getEntityId(), this.subnetSlotLimit);
         }
 
-        if (SubnetDataHandler.handleSubnetPartitionAction(this.subnetById, subnetId, pos, side, action, partitionSlot,
-            itemStack)) {
+        if (SubnetDataHandler
+            .handleSubnetPartitionAction(this.subnetById, subnetId, pos, side, action, partitionSlot, itemStack)) {
             this.needsSubnetRefresh = true;
         }
     }
@@ -1179,7 +1190,10 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
             TileEntity tile = interfaceHost.getTileEntity();
 
             if (tile != null) {
-                return new ChatComponentTranslation("gui.disk_terminal.subnet.default_name", tile.xCoord, tile.yCoord,
+                return new ChatComponentTranslation(
+                    "gui.disk_terminal.subnet.default_name",
+                    tile.xCoord,
+                    tile.yCoord,
                     tile.zCoord);
             }
         }

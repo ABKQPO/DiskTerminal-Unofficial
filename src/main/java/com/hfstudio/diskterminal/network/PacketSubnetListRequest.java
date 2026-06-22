@@ -1,13 +1,11 @@
 package com.hfstudio.diskterminal.network;
 
-import io.netty.buffer.ByteBuf;
+import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-
-import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
-
+import io.netty.buffer.ByteBuf;
 
 /**
  * Packet sent from client to server to request subnet list refresh.
@@ -15,8 +13,7 @@ import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
  */
 public class PacketSubnetListRequest implements IMessage {
 
-    public PacketSubnetListRequest() {
-    }
+    public PacketSubnetListRequest() {}
 
     @Override
     public void fromBytes(ByteBuf buf) {
@@ -34,7 +31,8 @@ public class PacketSubnetListRequest implements IMessage {
         public IMessage onMessage(PacketSubnetListRequest message, MessageContext ctx) {
             NetUtil.run(ctx.getServerHandler().playerEntity, () -> {
                 if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase) {
-                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx.getServerHandler().playerEntity.openContainer;
+                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx
+                        .getServerHandler().playerEntity.openContainer;
                     // The overview widget may have been recreated client-side (for example by JEI
                     // reinitializing the GUI), so force a full subnet snapshot instead of a delta.
                     container.requestSubnetRefresh(true);

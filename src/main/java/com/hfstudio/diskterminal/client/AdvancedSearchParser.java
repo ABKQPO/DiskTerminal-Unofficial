@@ -13,7 +13,6 @@ import net.minecraft.item.ItemStack;
 import com.hfstudio.diskterminal.client.SubnetInfo.ConnectionPoint;
 import com.hfstudio.diskterminal.util.ItemStacks;
 
-
 /**
  * Parser and evaluator for advanced search queries.
  * <p>
@@ -51,15 +50,15 @@ public class AdvancedSearchParser {
             if (args.length == 0) return key;
 
             StringBuilder sb = new StringBuilder(key);
-            for (Object arg : args) sb.append(": ").append(arg);
+            for (Object arg : args) sb.append(": ")
+                .append(arg);
 
             return sb.toString();
         }
     }
 
-    private static final Pattern TOKEN_PATTERN = Pattern.compile(
-        "\\$\\w+|[<>=!~]+|\\(|\\)|&|\\||\"[^\"]*\"|'[^']*'|[^\\s$<>=!~()&|\"']+"
-    );
+    private static final Pattern TOKEN_PATTERN = Pattern
+        .compile("\\$\\w+|[<>=!~]+|\\(|\\)|&|\\||\"[^\"]*\"|'[^']*'|[^\\s$<>=!~()&|\"']+");
 
     /**
      * Result of parsing an advanced query.
@@ -119,6 +118,7 @@ public class AdvancedSearchParser {
 
     /**
      * Parse and create a matcher for the given advanced query.
+     * 
      * @param query The query string (with or without leading "?")
      * @return A ParseResult containing either a SearchMatcher or error messages
      */
@@ -128,7 +128,8 @@ public class AdvancedSearchParser {
         }
 
         // Strip leading "?" if present
-        String expr = query.startsWith("?") ? query.substring(1).trim() : query.trim();
+        String expr = query.startsWith("?") ? query.substring(1)
+            .trim() : query.trim();
         if (expr.isEmpty()) {
             return ParseResult.error(safeFormat("disk_terminal.search.error.empty_after_prefix"));
         }
@@ -140,7 +141,7 @@ public class AdvancedSearchParser {
             return ParseResult.error(safeFormat("disk_terminal.search.error.no_tokens"));
         }
 
-        int[] pos = {0};
+        int[] pos = { 0 };
         SearchMatcher matcher = parseExpression(tokens, pos, errors);
 
         // Check for unconsumed tokens
@@ -160,7 +161,8 @@ public class AdvancedSearchParser {
         Matcher matcher = TOKEN_PATTERN.matcher(expr);
 
         while (matcher.find()) {
-            String token = matcher.group().trim();
+            String token = matcher.group()
+                .trim();
             if (!token.isEmpty()) tokens.add(token);
         }
 
@@ -171,7 +173,7 @@ public class AdvancedSearchParser {
         SearchMatcher left = parseAndExpression(tokens, pos, errors);
 
         while (pos[0] < tokens.size() && "|".equals(tokens.get(pos[0]))) {
-            pos[0]++;  // Skip "|"
+            pos[0]++; // Skip "|"
 
             if (pos[0] >= tokens.size()) {
                 errors.add(safeFormat("disk_terminal.search.error.expected_after_or"));
@@ -183,6 +185,7 @@ public class AdvancedSearchParser {
             SearchMatcher l = left;
             SearchMatcher r = right;
             left = new SearchMatcher() {
+
                 @Override
                 public boolean appliesToCell(SearchFilterMode mode) {
                     return l.appliesToCell(mode) || r.appliesToCell(mode);
@@ -193,7 +196,8 @@ public class AdvancedSearchParser {
                     boolean leftApplicable = l.appliesToCell(mode);
                     boolean rightApplicable = r.appliesToCell(mode);
 
-                    return combineOr(leftApplicable,
+                    return combineOr(
+                        leftApplicable,
                         leftApplicable && l.matchesCell(cell, storage, mode),
                         rightApplicable,
                         rightApplicable && r.matchesCell(cell, storage, mode));
@@ -209,7 +213,8 @@ public class AdvancedSearchParser {
                     boolean leftApplicable = l.appliesToStorageBus(mode);
                     boolean rightApplicable = r.appliesToStorageBus(mode);
 
-                    return combineOr(leftApplicable,
+                    return combineOr(
+                        leftApplicable,
                         leftApplicable && l.matchesStorageBus(bus, mode),
                         rightApplicable,
                         rightApplicable && r.matchesStorageBus(bus, mode));
@@ -223,11 +228,12 @@ public class AdvancedSearchParser {
 
                 @Override
                 public boolean matchesSubnetConnection(SubnetInfo subnet, ConnectionPoint connection,
-                                                      boolean usesSubnetInventory, SearchFilterMode mode) {
+                    boolean usesSubnetInventory, SearchFilterMode mode) {
                     boolean leftApplicable = l.appliesToSubnetConnection(usesSubnetInventory, mode);
                     boolean rightApplicable = r.appliesToSubnetConnection(usesSubnetInventory, mode);
 
-                    return combineOr(leftApplicable,
+                    return combineOr(
+                        leftApplicable,
                         leftApplicable && l.matchesSubnetConnection(subnet, connection, usesSubnetInventory, mode),
                         rightApplicable,
                         rightApplicable && r.matchesSubnetConnection(subnet, connection, usesSubnetInventory, mode));
@@ -242,7 +248,7 @@ public class AdvancedSearchParser {
         SearchMatcher left = parsePrimary(tokens, pos, errors);
 
         while (pos[0] < tokens.size() && "&".equals(tokens.get(pos[0]))) {
-            pos[0]++;  // Skip "&"
+            pos[0]++; // Skip "&"
 
             if (pos[0] >= tokens.size()) {
                 errors.add(safeFormat("disk_terminal.search.error.expected_after_and"));
@@ -254,6 +260,7 @@ public class AdvancedSearchParser {
             SearchMatcher l = left;
             SearchMatcher r = right;
             left = new SearchMatcher() {
+
                 @Override
                 public boolean appliesToCell(SearchFilterMode mode) {
                     return l.appliesToCell(mode) || r.appliesToCell(mode);
@@ -264,7 +271,8 @@ public class AdvancedSearchParser {
                     boolean leftApplicable = l.appliesToCell(mode);
                     boolean rightApplicable = r.appliesToCell(mode);
 
-                    return combineAnd(leftApplicable,
+                    return combineAnd(
+                        leftApplicable,
                         leftApplicable && l.matchesCell(cell, storage, mode),
                         rightApplicable,
                         rightApplicable && r.matchesCell(cell, storage, mode));
@@ -280,7 +288,8 @@ public class AdvancedSearchParser {
                     boolean leftApplicable = l.appliesToStorageBus(mode);
                     boolean rightApplicable = r.appliesToStorageBus(mode);
 
-                    return combineAnd(leftApplicable,
+                    return combineAnd(
+                        leftApplicable,
                         leftApplicable && l.matchesStorageBus(bus, mode),
                         rightApplicable,
                         rightApplicable && r.matchesStorageBus(bus, mode));
@@ -294,11 +303,12 @@ public class AdvancedSearchParser {
 
                 @Override
                 public boolean matchesSubnetConnection(SubnetInfo subnet, ConnectionPoint connection,
-                                                      boolean usesSubnetInventory, SearchFilterMode mode) {
+                    boolean usesSubnetInventory, SearchFilterMode mode) {
                     boolean leftApplicable = l.appliesToSubnetConnection(usesSubnetInventory, mode);
                     boolean rightApplicable = r.appliesToSubnetConnection(usesSubnetInventory, mode);
 
-                    return combineAnd(leftApplicable,
+                    return combineAnd(
+                        leftApplicable,
                         leftApplicable && l.matchesSubnetConnection(subnet, connection, usesSubnetInventory, mode),
                         rightApplicable,
                         rightApplicable && r.matchesSubnetConnection(subnet, connection, usesSubnetInventory, mode));
@@ -309,8 +319,8 @@ public class AdvancedSearchParser {
         return left;
     }
 
-    private static boolean combineOr(boolean leftApplicable, boolean leftMatches,
-                                     boolean rightApplicable, boolean rightMatches) {
+    private static boolean combineOr(boolean leftApplicable, boolean leftMatches, boolean rightApplicable,
+        boolean rightMatches) {
         if (leftApplicable && rightApplicable) return leftMatches || rightMatches;
         if (leftApplicable) return leftMatches;
         if (rightApplicable) return rightMatches;
@@ -318,8 +328,8 @@ public class AdvancedSearchParser {
         return true;
     }
 
-    private static boolean combineAnd(boolean leftApplicable, boolean leftMatches,
-                                      boolean rightApplicable, boolean rightMatches) {
+    private static boolean combineAnd(boolean leftApplicable, boolean leftMatches, boolean rightApplicable,
+        boolean rightMatches) {
         if (leftApplicable && rightApplicable) return leftMatches && rightMatches;
         if (leftApplicable) return leftMatches;
         if (rightApplicable) return rightMatches;
@@ -338,13 +348,13 @@ public class AdvancedSearchParser {
 
         // Parenthesized expression
         if ("(".equals(token)) {
-            pos[0]++;  // Skip "("
+            pos[0]++; // Skip "("
             SearchMatcher inner = parseExpression(tokens, pos, errors);
 
             if (pos[0] >= tokens.size() || !")".equals(tokens.get(pos[0]))) {
                 errors.add(safeFormat("disk_terminal.search.error.missing_paren"));
             } else {
-                pos[0]++;  // Skip ")"
+                pos[0]++; // Skip ")"
             }
 
             return inner;
@@ -374,7 +384,8 @@ public class AdvancedSearchParser {
     }
 
     private static SearchMatcher parseComparison(List<String> tokens, int[] pos, List<String> errors) {
-        String identifier = tokens.get(pos[0]).toLowerCase(Locale.ROOT);
+        String identifier = tokens.get(pos[0])
+            .toLowerCase(Locale.ROOT);
         pos[0]++;
 
         // Validate identifier
@@ -383,7 +394,7 @@ public class AdvancedSearchParser {
         }
 
         // Check for operator
-        String operator = "~";  // Default to contains
+        String operator = "~"; // Default to contains
         if (pos[0] < tokens.size()) {
             String next = tokens.get(pos[0]);
             if (isOperator(next)) {
@@ -421,9 +432,14 @@ public class AdvancedSearchParser {
     }
 
     private static boolean isValidIdentifier(String id) {
-        return "$name".equals(id) || "$priority".equals(id) || "$partition".equals(id) || "$items".equals(id)
-            || "$content".equals(id) || "$part".equals(id) || "$container".equals(id)
-            || "$renamed".equals(id) || "$dir".equals(id);
+        return "$name".equals(id) || "$priority".equals(id)
+            || "$partition".equals(id)
+            || "$items".equals(id)
+            || "$content".equals(id)
+            || "$part".equals(id)
+            || "$container".equals(id)
+            || "$renamed".equals(id)
+            || "$dir".equals(id);
     }
 
     private static boolean isNumericIdentifier(String id) {
@@ -431,9 +447,14 @@ public class AdvancedSearchParser {
     }
 
     private static boolean isOperator(String s) {
-        return s.startsWith("=") || "!=".equals(s) || s.startsWith("<") || s.startsWith(">")
-            || "<=".equals(s) || ">=".equals(s) || "~".equals(s)
-            || s.startsWith("!") || s.startsWith("~");
+        return s.startsWith("=") || "!=".equals(s)
+            || s.startsWith("<")
+            || s.startsWith(">")
+            || "<=".equals(s)
+            || ">=".equals(s)
+            || "~".equals(s)
+            || s.startsWith("!")
+            || s.startsWith("~");
     }
 
     private static String normalizeOperator(String s) {
@@ -497,6 +518,7 @@ public class AdvancedSearchParser {
         final String searchValue = value.toLowerCase(Locale.ROOT);
 
         return new SearchMatcher() {
+
             @Override
             public boolean appliesToSubnetConnection(boolean usesSubnetInventory, SearchFilterMode mode) {
                 return true;
@@ -537,11 +559,13 @@ public class AdvancedSearchParser {
 
             @Override
             public boolean matchesSubnetConnection(SubnetInfo subnet, ConnectionPoint connection,
-                                                  boolean usesSubnetInventory, SearchFilterMode mode) {
+                boolean usesSubnetInventory, SearchFilterMode mode) {
                 if (connection == null) return false;
 
                 boolean matchesInventory = matchesItemList(
-                    getSubnetContentItems(subnet, connection, usesSubnetInventory), searchValue, operator);
+                    getSubnetContentItems(subnet, connection, usesSubnetInventory),
+                    searchValue,
+                    operator);
                 boolean matchesPartition = matchesItemList(connection.getPartition(), searchValue, operator);
 
                 switch (mode) {
@@ -563,6 +587,7 @@ public class AdvancedSearchParser {
      */
     private static SearchMatcher createContentContainsMatcher(String searchText) {
         return new SearchMatcher() {
+
             @Override
             public boolean appliesToSubnetConnection(boolean usesSubnetInventory, SearchFilterMode mode) {
                 return true;
@@ -602,11 +627,13 @@ public class AdvancedSearchParser {
 
             @Override
             public boolean matchesSubnetConnection(SubnetInfo subnet, ConnectionPoint connection,
-                                                  boolean usesSubnetInventory, SearchFilterMode mode) {
+                boolean usesSubnetInventory, SearchFilterMode mode) {
                 if (connection == null) return false;
 
                 boolean matchesInventory = matchesItemList(
-                    getSubnetContentItems(subnet, connection, usesSubnetInventory), searchText, "~");
+                    getSubnetContentItems(subnet, connection, usesSubnetInventory),
+                    searchText,
+                    "~");
                 boolean matchesPartition = matchesItemList(connection.getPartition(), searchText, "~");
 
                 switch (mode) {
@@ -627,7 +654,8 @@ public class AdvancedSearchParser {
             if (ItemStacks.isEmpty(stack)) continue;
 
             // Check display name
-            String displayName = stack.getDisplayName().toLowerCase(Locale.ROOT);
+            String displayName = stack.getDisplayName()
+                .toLowerCase(Locale.ROOT);
             if (compareString(displayName, operator, searchValue)) return true;
 
             // Check registry name
@@ -648,6 +676,7 @@ public class AdvancedSearchParser {
         final String searchValue = value.toLowerCase(Locale.ROOT);
 
         return new SearchMatcher() {
+
             @Override
             public boolean appliesToSubnetConnection(boolean usesSubnetInventory, SearchFilterMode mode) {
                 return true;
@@ -665,11 +694,13 @@ public class AdvancedSearchParser {
 
             @Override
             public boolean matchesSubnetConnection(SubnetInfo subnet, ConnectionPoint connection,
-                                                  boolean usesSubnetInventory, SearchFilterMode mode) {
+                boolean usesSubnetInventory, SearchFilterMode mode) {
                 if (connection == null) return false;
 
-                return matchesItemList(getSubnetContentItems(subnet, connection, usesSubnetInventory),
-                    searchValue, operator);
+                return matchesItemList(
+                    getSubnetContentItems(subnet, connection, usesSubnetInventory),
+                    searchValue,
+                    operator);
             }
         };
     }
@@ -681,6 +712,7 @@ public class AdvancedSearchParser {
         final String searchValue = value.toLowerCase(Locale.ROOT);
 
         return new SearchMatcher() {
+
             @Override
             public boolean appliesToSubnetConnection(boolean usesSubnetInventory, SearchFilterMode mode) {
                 return true;
@@ -698,7 +730,7 @@ public class AdvancedSearchParser {
 
             @Override
             public boolean matchesSubnetConnection(SubnetInfo subnet, ConnectionPoint connection,
-                                                  boolean usesSubnetInventory, SearchFilterMode mode) {
+                boolean usesSubnetInventory, SearchFilterMode mode) {
                 if (connection == null) return false;
 
                 return matchesItemList(connection.getPartition(), searchValue, operator);
@@ -708,12 +740,14 @@ public class AdvancedSearchParser {
 
     /**
      * Create a matcher that searches container names (cell item name, drive/chest name, storage bus name).
+     * 
      * @param onlyRenamed If true, only match containers that have been renamed by the user.
      */
     private static SearchMatcher createContainerMatcher(String operator, String value, boolean onlyRenamed) {
         final String searchValue = value.toLowerCase(Locale.ROOT);
 
         return new SearchMatcher() {
+
             @Override
             public boolean appliesToSubnetConnection(boolean usesSubnetInventory, SearchFilterMode mode) {
                 return true;
@@ -724,7 +758,8 @@ public class AdvancedSearchParser {
                 // Check cell item name (only if cell has custom name when onlyRenamed is true)
                 if (!ItemStacks.isEmpty(cell.getCellItem())) {
                     if (!onlyRenamed || cell.hasCustomName()) {
-                        String cellName = cell.getDisplayName().toLowerCase(Locale.ROOT);
+                        String cellName = cell.getDisplayName()
+                            .toLowerCase(Locale.ROOT);
                         if (compareString(cellName, operator, searchValue)) return true;
                     }
                 }
@@ -733,7 +768,8 @@ public class AdvancedSearchParser {
                 // A renamed container should match even if its cells are not renamed
                 if (storage != null) {
                     if (!onlyRenamed || storage.hasCustomName()) {
-                        String storageName = storage.getName().toLowerCase(Locale.ROOT);
+                        String storageName = storage.getName()
+                            .toLowerCase(Locale.ROOT);
                         if (compareString(storageName, operator, searchValue)) return true;
                     }
                 }
@@ -745,18 +781,23 @@ public class AdvancedSearchParser {
             public boolean matchesStorageBus(StorageBusInfo bus, SearchFilterMode mode) {
                 if (onlyRenamed && !bus.hasCustomName()) return false;
 
-                String busName = bus.getLocalizedName().toLowerCase(Locale.ROOT);
+                String busName = bus.getLocalizedName()
+                    .toLowerCase(Locale.ROOT);
 
                 return compareString(busName, operator, searchValue);
             }
 
             @Override
             public boolean matchesSubnetConnection(SubnetInfo subnet, ConnectionPoint connection,
-                                                  boolean usesSubnetInventory, SearchFilterMode mode) {
+                boolean usesSubnetInventory, SearchFilterMode mode) {
                 if (subnet == null) return false;
                 if (onlyRenamed && !subnet.hasCustomName()) return false;
 
-                return compareString(subnet.getDisplayName().toLowerCase(Locale.ROOT), operator, searchValue);
+                return compareString(
+                    subnet.getDisplayName()
+                        .toLowerCase(Locale.ROOT),
+                    operator,
+                    searchValue);
             }
         };
     }
@@ -769,6 +810,7 @@ public class AdvancedSearchParser {
         String searchValue = value.toLowerCase(Locale.ROOT);
 
         return new SearchMatcher() {
+
             @Override
             public boolean appliesToCell(SearchFilterMode mode) {
                 return false;
@@ -796,7 +838,7 @@ public class AdvancedSearchParser {
 
             @Override
             public boolean matchesSubnetConnection(SubnetInfo subnet, ConnectionPoint connection,
-                                                  boolean usesSubnetInventory, SearchFilterMode mode) {
+                boolean usesSubnetInventory, SearchFilterMode mode) {
                 if (connection == null) return false;
 
                 String direction = connection.isOutbound() ? "outbound" : "inbound";
@@ -807,9 +849,10 @@ public class AdvancedSearchParser {
     }
 
     private static SearchMatcher createPriorityMatcher(String operator, String value) {
-        final String targetValue = value;  // Keep raw for multi-value support
+        final String targetValue = value; // Keep raw for multi-value support
 
         return new SearchMatcher() {
+
             @Override
             public boolean matchesCell(CellInfo cell, StorageInfo storage, SearchFilterMode mode) {
                 if (storage == null) return false;
@@ -825,9 +868,10 @@ public class AdvancedSearchParser {
     }
 
     private static SearchMatcher createPartitionCountMatcher(String operator, String value) {
-        final String targetValue = value;  // Keep raw for multi-value support
+        final String targetValue = value; // Keep raw for multi-value support
 
         return new SearchMatcher() {
+
             @Override
             public boolean appliesToSubnetConnection(boolean usesSubnetInventory, SearchFilterMode mode) {
                 return true;
@@ -847,7 +891,7 @@ public class AdvancedSearchParser {
 
             @Override
             public boolean matchesSubnetConnection(SubnetInfo subnet, ConnectionPoint connection,
-                                                  boolean usesSubnetInventory, SearchFilterMode mode) {
+                boolean usesSubnetInventory, SearchFilterMode mode) {
                 if (connection == null) return false;
 
                 return compareInt(countNonEmpty(connection.getPartition()), operator, targetValue);
@@ -856,9 +900,10 @@ public class AdvancedSearchParser {
     }
 
     private static SearchMatcher createItemsMatcher(String operator, String value) {
-        final String targetValue = value;  // Keep raw for multi-value support
+        final String targetValue = value; // Keep raw for multi-value support
 
         return new SearchMatcher() {
+
             @Override
             public boolean appliesToSubnetConnection(boolean usesSubnetInventory, SearchFilterMode mode) {
                 return true;
@@ -866,7 +911,8 @@ public class AdvancedSearchParser {
 
             @Override
             public boolean matchesCell(CellInfo cell, StorageInfo storage, SearchFilterMode mode) {
-                int itemCount = cell.getContents().size();
+                int itemCount = cell.getContents()
+                    .size();
 
                 return compareInt(itemCount, operator, targetValue);
             }
@@ -878,11 +924,13 @@ public class AdvancedSearchParser {
 
             @Override
             public boolean matchesSubnetConnection(SubnetInfo subnet, ConnectionPoint connection,
-                                                  boolean usesSubnetInventory, SearchFilterMode mode) {
+                boolean usesSubnetInventory, SearchFilterMode mode) {
                 if (connection == null) return false;
 
-                return compareInt(getSubnetContentItems(subnet, connection, usesSubnetInventory).size(),
-                    operator, targetValue);
+                return compareInt(
+                    getSubnetContentItems(subnet, connection, usesSubnetInventory).size(),
+                    operator,
+                    targetValue);
             }
         };
     }
@@ -897,7 +945,7 @@ public class AdvancedSearchParser {
     }
 
     private static List<ItemStack> getSubnetContentItems(SubnetInfo subnet, ConnectionPoint connection,
-                                                         boolean usesSubnetInventory) {
+        boolean usesSubnetInventory) {
         if (subnet == null || connection == null) return java.util.Collections.emptyList();
 
         return usesSubnetInventory ? subnet.getInventory() : connection.getContent();
@@ -905,6 +953,7 @@ public class AdvancedSearchParser {
 
     private static SearchMatcher alwaysFalse() {
         return new SearchMatcher() {
+
             @Override
             public boolean matchesCell(CellInfo cell, StorageInfo storage, SearchFilterMode mode) {
                 return false;
@@ -917,7 +966,7 @@ public class AdvancedSearchParser {
 
             @Override
             public boolean matchesSubnetConnection(SubnetInfo subnet, ConnectionPoint connection,
-                                                  boolean usesSubnetInventory, SearchFilterMode mode) {
+                boolean usesSubnetInventory, SearchFilterMode mode) {
                 return false;
             }
         };
@@ -947,7 +996,8 @@ public class AdvancedSearchParser {
             } else if (inQuotes && c == quoteChar) {
                 inQuotes = false;
             } else if (!inQuotes && c == ',') {
-                String v = current.toString().trim();
+                String v = current.toString()
+                    .trim();
                 if (!v.isEmpty()) values.add(v);
 
                 current = new StringBuilder();
@@ -956,7 +1006,8 @@ public class AdvancedSearchParser {
             }
         }
 
-        String v = current.toString().trim();
+        String v = current.toString()
+            .trim();
         if (!v.isEmpty()) values.add(v);
 
         if (values.isEmpty()) values.add("");
@@ -992,7 +1043,8 @@ public class AdvancedSearchParser {
                 case '}':
                 case '|':
                 case '\\':
-                    regex.append("\\").append(c);
+                    regex.append("\\")
+                        .append(c);
                     break;
                 default:
                     regex.append(c);
@@ -1125,6 +1177,7 @@ public class AdvancedSearchParser {
      * Interface for matching cells, storage buses, and subnet connections.
      */
     public interface SearchMatcher {
+
         default boolean appliesToCell(SearchFilterMode mode) {
             return true;
         }
@@ -1138,6 +1191,7 @@ public class AdvancedSearchParser {
         }
 
         boolean matchesCell(CellInfo cell, StorageInfo storage, SearchFilterMode mode);
+
         boolean matchesStorageBus(StorageBusInfo bus, SearchFilterMode mode);
 
         default boolean matchesCellFilter(CellInfo cell, StorageInfo storage, SearchFilterMode mode) {
@@ -1153,12 +1207,12 @@ public class AdvancedSearchParser {
         }
 
         default boolean matchesSubnetConnection(SubnetInfo subnet, ConnectionPoint connection,
-                                               boolean usesSubnetInventory, SearchFilterMode mode) {
+            boolean usesSubnetInventory, SearchFilterMode mode) {
             return false;
         }
 
         default boolean matchesSubnetConnectionFilter(SubnetInfo subnet, ConnectionPoint connection,
-                                                      boolean usesSubnetInventory, SearchFilterMode mode) {
+            boolean usesSubnetInventory, SearchFilterMode mode) {
             if (!appliesToSubnetConnection(usesSubnetInventory, mode)) return true;
 
             return matchesSubnetConnection(subnet, connection, usesSubnetInventory, mode);

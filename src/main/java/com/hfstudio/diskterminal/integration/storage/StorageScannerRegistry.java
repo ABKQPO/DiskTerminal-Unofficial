@@ -5,10 +5,10 @@ import java.util.List;
 
 import net.minecraft.nbt.NBTTagList;
 
-import appeng.api.networking.IGrid;
-
 import com.hfstudio.diskterminal.DiskTerminal;
 import com.hfstudio.diskterminal.container.handler.CellDataHandler;
+
+import appeng.api.networking.IGrid;
 
 /**
  * Registry for storage scanners.

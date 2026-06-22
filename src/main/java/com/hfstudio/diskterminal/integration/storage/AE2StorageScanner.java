@@ -3,13 +3,13 @@ package com.hfstudio.diskterminal.integration.storage;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 
+import com.hfstudio.diskterminal.container.handler.CellDataHandler;
+
 import appeng.api.implementations.tiles.IChestOrDrive;
 import appeng.api.implementations.tiles.IMEChest;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import appeng.tile.storage.TileDrive;
-
-import com.hfstudio.diskterminal.container.handler.CellDataHandler;
 
 /**
  * Default storage scanner for vanilla AE2 storage devices.
@@ -40,8 +40,11 @@ public class AE2StorageScanner extends AbstractStorageScanner {
         for (IGridNode gn : grid.getMachines(TileDrive.class)) {
             if (!gn.isActive()) continue;
 
-            NBTTagCompound storageData = CellDataHandler.createStorageData((IChestOrDrive) gn.getMachine(),
-                "tile.appliedenergistics2.drive.name", callback, slotLimit);
+            NBTTagCompound storageData = CellDataHandler.createStorageData(
+                (IChestOrDrive) gn.getMachine(),
+                "tile.appliedenergistics2.drive.name",
+                callback,
+                slotLimit);
             applyCapabilities(storageData);
             storageList.appendTag(storageData);
         }
@@ -55,11 +58,10 @@ public class AE2StorageScanner extends AbstractStorageScanner {
             Object machine = gn.getMachine();
             if (!(machine instanceof IMEChest)) continue;
 
-            NBTTagCompound storageData = CellDataHandler.createStorageData((IChestOrDrive) machine,
-                "tile.appliedenergistics2.chest.name", callback, slotLimit);
+            NBTTagCompound storageData = CellDataHandler
+                .createStorageData((IChestOrDrive) machine, "tile.appliedenergistics2.chest.name", callback, slotLimit);
             applyCapabilities(storageData);
             storageList.appendTag(storageData);
         }
     }
 }
-

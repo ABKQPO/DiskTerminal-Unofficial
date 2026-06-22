@@ -12,15 +12,15 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 
-import appeng.api.networking.IGrid;
-import appeng.api.parts.PartItemStack;
-import appeng.parts.AEBasePart;
-
 import com.hfstudio.diskterminal.api.FilterHostUtil;
 import com.hfstudio.diskterminal.api.IFilterHost;
 import com.hfstudio.diskterminal.api.IInterfaceHost;
 import com.hfstudio.diskterminal.api.ResourcePreviewEntry;
 import com.hfstudio.diskterminal.util.ItemStacks;
+
+import appeng.api.networking.IGrid;
+import appeng.api.parts.PartItemStack;
+import appeng.parts.AEBasePart;
 
 /**
  * Generic display/normalize/host helpers shared by the terminal handlers.

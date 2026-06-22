@@ -1,13 +1,11 @@
 package com.hfstudio.diskterminal.network;
 
-import io.netty.buffer.ByteBuf;
+import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-
-import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
-
+import io.netty.buffer.ByteBuf;
 
 /**
  * Packet sent from client to server to notify of tab change.
@@ -17,8 +15,7 @@ public class PacketTabChange implements IMessage {
 
     private int tabIndex;
 
-    public PacketTabChange() {
-    }
+    public PacketTabChange() {}
 
     public PacketTabChange(int tabIndex) {
         this.tabIndex = tabIndex;
@@ -35,11 +32,13 @@ public class PacketTabChange implements IMessage {
     }
 
     public static class Handler implements IMessageHandler<PacketTabChange, IMessage> {
+
         @Override
         public IMessage onMessage(PacketTabChange message, MessageContext ctx) {
             NetUtil.run(ctx.getServerHandler().playerEntity, () -> {
                 if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase) {
-                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx.getServerHandler().playerEntity.openContainer;
+                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx
+                        .getServerHandler().playerEntity.openContainer;
                     container.setActiveTab(message.tabIndex);
                 }
             });

@@ -301,7 +301,8 @@ public class DiskTerminalServerConfig {
             CATEGORY_INTEGRATION,
             "enableNEI",
             true,
-            "Enable NEI integration (ghost ingredients, quick partition).\n" + "Set to false to disable NEI integration.");
+            "Enable NEI integration (ghost ingredients, quick partition).\n"
+                + "Set to false to disable NEI integration.");
         this.integrationNeiProperty.setLanguageKey("config.disk_terminal.config.server.integration.enable_nei");
         this.integrationNeiEnabled = this.integrationNeiProperty.getBoolean();
 
@@ -331,7 +332,8 @@ public class DiskTerminalServerConfig {
             10,
             "Minimum number of ticks between full data refreshes (20 ticks = 1 second).\n"
                 + "Throttles regen of storages/buses/subnets when many trigger events fire in quick succession.\n"
-                + "Lower for snappier updates, higher to reduce server load on large networks.\n" + "Range: 1 - 200.",
+                + "Lower for snappier updates, higher to reduce server load on large networks.\n"
+                + "Range: 1 - 200.",
             1,
             200);
         this.minRefreshIntervalTicksProperty

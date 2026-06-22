@@ -6,10 +6,10 @@ import java.util.Map;
 
 import net.minecraft.nbt.NBTTagList;
 
-import appeng.api.networking.IGrid;
-
 import com.hfstudio.diskterminal.DiskTerminal;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler.StorageBusTracker;
+
+import appeng.api.networking.IGrid;
 
 /**
  * Registry for storage bus scanners.

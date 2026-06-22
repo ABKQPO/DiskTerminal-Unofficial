@@ -1,16 +1,15 @@
 package com.hfstudio.diskterminal.network;
 
-import io.netty.buffer.ByteBuf;
-
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+
+import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
+
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-
-import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
-
+import io.netty.buffer.ByteBuf;
 
 /**
  * Packet sent from client to server to modify storage bus partition.
@@ -84,17 +83,18 @@ public class PacketStorageBusPartitionAction implements IMessage {
     }
 
     public static class Handler implements IMessageHandler<PacketStorageBusPartitionAction, IMessage> {
+
         @Override
         public IMessage onMessage(PacketStorageBusPartitionAction message, MessageContext ctx) {
             NetUtil.run(ctx.getServerHandler().playerEntity, () -> {
                 if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase) {
-                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx.getServerHandler().playerEntity.openContainer;
+                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx
+                        .getServerHandler().playerEntity.openContainer;
                     container.handleStorageBusPartitionAction(
                         message.storageBusId,
                         message.action,
                         message.partitionSlot,
-                        message.itemStack
-                    );
+                        message.itemStack);
                 }
             });
 

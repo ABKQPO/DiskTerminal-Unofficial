@@ -1,15 +1,14 @@
 package com.hfstudio.diskterminal.network;
 
-import io.netty.buffer.ByteBuf;
-
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 
 import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
 
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Packet sent from client to server to insert a held cell into a storage.
@@ -19,8 +18,7 @@ public class PacketInsertCell implements IMessage {
     private long storageId;
     private int targetSlot; // -1 for first available
 
-    public PacketInsertCell() {
-    }
+    public PacketInsertCell() {}
 
     public PacketInsertCell(long storageId, int targetSlot) {
         this.storageId = storageId;

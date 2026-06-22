@@ -2,9 +2,9 @@ package com.hfstudio.diskterminal.integration.storage;
 
 import net.minecraft.nbt.NBTTagList;
 
-import appeng.api.networking.IGrid;
-
 import com.hfstudio.diskterminal.container.handler.CellDataHandler;
+
+import appeng.api.networking.IGrid;
 
 /**
  * Interface for scanning and collecting storage devices from an ME network grid.

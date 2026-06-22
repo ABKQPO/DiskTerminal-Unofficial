@@ -190,8 +190,14 @@ public class SubnetInfo implements Renameable {
      * This is always displayed at the top of the subnet list.
      */
     public static SubnetInfo createMainNetwork() {
-        return new SubnetInfo(0, new BlockPos(0, 0, 0), I18n.format("disk_terminal.subnet.main_network"), true, true,
-            true, true);
+        return new SubnetInfo(
+            0,
+            new BlockPos(0, 0, 0),
+            I18n.format("disk_terminal.subnet.main_network"),
+            true,
+            true,
+            true,
+            true);
     }
 
     private SubnetInfo(long id, BlockPos primaryPos, String defaultName, boolean isFavorite, boolean hasSecurity,
@@ -438,14 +444,18 @@ public class SubnetInfo implements Renameable {
         List<SubnetConnectionRow> rows = new ArrayList<>();
 
         if (conn.usesSubnetInventory() && subnet.hasInventory()) {
-            int contentCount = slotLimit.getEffectiveCount(subnet.getInventory().size());
+            int contentCount = slotLimit.getEffectiveCount(
+                subnet.getInventory()
+                    .size());
             int contentRows = Math.max(1, (contentCount + slotsPerRow - 1) / slotsPerRow);
             for (int row = 0; row < contentRows; row++) {
                 rows.add(new SubnetConnectionRow(subnet, conn, connIdx, row * slotsPerRow, row == 0, false, true));
             }
 
         } else if (conn.hasContentKey()) {
-            int contentCount = slotLimit.getEffectiveCount(conn.getContent().size());
+            int contentCount = slotLimit.getEffectiveCount(
+                conn.getContent()
+                    .size());
             int contentRows = Math.max(1, (contentCount + slotsPerRow - 1) / slotsPerRow);
             for (int row = 0; row < contentRows; row++) {
                 rows.add(new SubnetConnectionRow(subnet, conn, connIdx, row * slotsPerRow, row == 0, false, false));

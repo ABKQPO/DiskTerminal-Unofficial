@@ -3,9 +3,9 @@ package com.hfstudio.diskterminal.integration.storage;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 
-import appeng.api.networking.IGrid;
-
 import com.hfstudio.diskterminal.container.handler.CellDataHandler;
+
+import appeng.api.networking.IGrid;
 
 /**
  * Abstract base class for storage scanners providing sane defaults.

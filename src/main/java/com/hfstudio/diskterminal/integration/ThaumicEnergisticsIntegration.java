@@ -5,7 +5,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 
 import appeng.api.storage.ICellHandler;
-
 import cpw.mods.fml.common.Loader;
 
 /**

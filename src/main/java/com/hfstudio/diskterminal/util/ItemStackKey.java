@@ -92,7 +92,7 @@ public class ItemStackKey {
 
     @Override
     public String toString() {
-        return "ItemStackKey{item=" + Item.itemRegistry.getNameForObject(this.item) + "@" + this.meta
-            + (this.nbt == null ? "null" : "|" + this.nbt) + "}";
+        return "ItemStackKey{item=" + Item.itemRegistry
+            .getNameForObject(this.item) + "@" + this.meta + (this.nbt == null ? "null" : "|" + this.nbt) + "}";
     }
 }

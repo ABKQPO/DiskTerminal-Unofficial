@@ -1,10 +1,10 @@
 package com.hfstudio.diskterminal.gui;
 
-import org.lwjgl.opengl.GL11;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.util.ResourceLocation;
+
+import org.lwjgl.opengl.GL11;
 
 /**
  * Central location for all GUI layout constants used in the Cell Terminal.

@@ -6,9 +6,16 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
-
 import net.minecraftforge.fluids.FluidContainerRegistry;
 import net.minecraftforge.fluids.FluidStack;
+
+import com.glodblock.github.common.item.ItemFluidDrop;
+import com.hfstudio.diskterminal.api.IItemCompactingCell;
+import com.hfstudio.diskterminal.integration.ThaumicEnergisticsIntegration;
+import com.hfstudio.diskterminal.network.PacketPartitionAction;
+import com.hfstudio.diskterminal.network.PacketTempCellPartitionAction;
+import com.hfstudio.diskterminal.util.InventoryHelper;
+import com.hfstudio.diskterminal.util.ItemStacks;
 
 import appeng.api.AEApi;
 import appeng.api.config.Upgrades;
@@ -25,14 +32,6 @@ import appeng.api.storage.data.IItemList;
 import appeng.util.IterationCounter;
 import appeng.util.item.AEFluidStackType;
 import appeng.util.item.AEItemStackType;
-
-import com.glodblock.github.common.item.ItemFluidDrop;
-import com.hfstudio.diskterminal.api.IItemCompactingCell;
-import com.hfstudio.diskterminal.integration.ThaumicEnergisticsIntegration;
-import com.hfstudio.diskterminal.network.PacketPartitionAction;
-import com.hfstudio.diskterminal.network.PacketTempCellPartitionAction;
-import com.hfstudio.diskterminal.util.InventoryHelper;
-import com.hfstudio.diskterminal.util.ItemStacks;
 
 /**
  * Handles cell-related actions: partition modifications, ejection, pickup, insertion, upgrades.
@@ -62,8 +61,15 @@ public class CellActionHandler {
         ConfigResult config = getConfigInventory(cellHandler, cellStack);
         if (config.configInv == null) return false;
 
-        executePartitionAction(config.configInv, action, partitionSlot, itemStack, cellHandler, cellStack,
-            config.isFluidCell, config.essentiaData);
+        executePartitionAction(
+            config.configInv,
+            action,
+            partitionSlot,
+            itemStack,
+            cellHandler,
+            cellStack,
+            config.isFluidCell,
+            config.essentiaData);
 
         forceCellHandlerRefresh(cellInventory, cellSlot, cellStack);
         handleCompactingCell(cellStack, action, itemStack, config.configInv, tile.getWorldObj());
@@ -249,8 +255,8 @@ public class CellActionHandler {
             }
         }
 
-        IMEInventoryHandler<?> rawFluid = cellHandler.getCellInventory(cellStack, null,
-            AEFluidStackType.FLUID_STACK_TYPE);
+        IMEInventoryHandler<?> rawFluid = cellHandler
+            .getCellInventory(cellStack, null, AEFluidStackType.FLUID_STACK_TYPE);
         if (rawFluid instanceof ICellInventoryHandler) {
             @SuppressWarnings("unchecked")
             ICellInventoryHandler<IAEFluidStack> fluidHandler = (ICellInventoryHandler<IAEFluidStack>) rawFluid;
@@ -292,7 +298,14 @@ public class CellActionHandler {
             case TOGGLE_ITEM -> PacketPartitionAction.Action.TOGGLE_ITEM;
         };
 
-        executePartitionAction(configInv, mappedAction, partitionSlot, itemStack, cellHandler, cellStack, isFluidCell,
+        executePartitionAction(
+            configInv,
+            mappedAction,
+            partitionSlot,
+            itemStack,
+            cellHandler,
+            cellStack,
+            isFluidCell,
             essentiaData);
     }
 
@@ -356,23 +369,24 @@ public class CellActionHandler {
             ICellInventory<IAEItemStack> inv = ((ICellInventoryHandler<IAEItemStack>) raw).getCellInv();
             if (inv == null) return;
 
-            IItemList<IAEItemStack> contents = inv.getAvailableItems(AEItemStackType.ITEM_STACK_TYPE.createList(),
-                IterationCounter.fetchNewId());
+            IItemList<IAEItemStack> contents = inv
+                .getAvailableItems(AEItemStackType.ITEM_STACK_TYPE.createList(), IterationCounter.fetchNewId());
             int slot = 0;
             for (IAEItemStack stack : contents) {
                 if (slot >= configInv.getSizeInventory()) break;
                 setConfigSlot(configInv, slot++, stack.getItemStack());
             }
         } else {
-            IMEInventoryHandler<?> raw = cellHandler.getCellInventory(cellStack, null, AEFluidStackType.FLUID_STACK_TYPE);
+            IMEInventoryHandler<?> raw = cellHandler
+                .getCellInventory(cellStack, null, AEFluidStackType.FLUID_STACK_TYPE);
             if (!(raw instanceof ICellInventoryHandler)) return;
 
             @SuppressWarnings("unchecked")
             ICellInventory<IAEFluidStack> inv = ((ICellInventoryHandler<IAEFluidStack>) raw).getCellInv();
             if (inv == null) return;
 
-            IItemList<IAEFluidStack> contents = inv.getAvailableItems(AEFluidStackType.FLUID_STACK_TYPE.createList(),
-                IterationCounter.fetchNewId());
+            IItemList<IAEFluidStack> contents = inv
+                .getAvailableItems(AEFluidStackType.FLUID_STACK_TYPE.createList(), IterationCounter.fetchNewId());
             int slot = 0;
             for (IAEFluidStack stack : contents) {
                 if (slot >= configInv.getSizeInventory()) break;

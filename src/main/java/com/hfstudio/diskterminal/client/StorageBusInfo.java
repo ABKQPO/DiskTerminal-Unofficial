@@ -10,14 +10,14 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.util.Constants;
 
-import appeng.api.config.Upgrades;
-import appeng.api.implementations.items.IUpgradeModule;
-
 import com.gtnewhorizon.gtnhlib.blockpos.BlockPos;
 import com.hfstudio.diskterminal.gui.rename.RenameTargetType;
 import com.hfstudio.diskterminal.gui.rename.Renameable;
 import com.hfstudio.diskterminal.util.ItemStacks;
 import com.hfstudio.diskterminal.util.PosUtil;
+
+import appeng.api.config.Upgrades;
+import appeng.api.implementations.items.IUpgradeModule;
 
 /**
  * Client-side data holder for storage bus information received from server.
@@ -99,8 +99,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
 
         // Connected inventory info
         this.connectedName = nbt.hasKey("connectedName") ? nbt.getString("connectedName") : null;
-        this.connectedIcon = nbt.hasKey("connectedIcon") ? ItemStacks.load(nbt.getCompoundTag("connectedIcon"))
-            : null;
+        this.connectedIcon = nbt.hasKey("connectedIcon") ? ItemStacks.load(nbt.getCompoundTag("connectedIcon")) : null;
 
         // Parse upgrade items for display
         if (nbt.hasKey("upgrades")) {

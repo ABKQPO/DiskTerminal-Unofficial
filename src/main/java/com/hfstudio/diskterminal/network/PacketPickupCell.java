@@ -1,15 +1,14 @@
 package com.hfstudio.diskterminal.network;
 
-import io.netty.buffer.ByteBuf;
-
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 
 import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
 
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Packet sent from client to server to pick up a cell from a drive.
@@ -23,8 +22,7 @@ public class PacketPickupCell implements IMessage {
     private int cellSlot;
     private boolean toInventory;
 
-    public PacketPickupCell() {
-    }
+    public PacketPickupCell() {}
 
     public PacketPickupCell(long storageId, int cellSlot, boolean toInventory) {
         this.storageId = storageId;

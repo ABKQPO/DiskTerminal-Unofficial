@@ -21,6 +21,9 @@ dependencies {
 
     devOnlyNonPublishable("com.github.GTNewHorizons:Baubles-Expanded:2.2.21-GTNH:dev")
 
+    // COFH energy API — AEBasePoweredItem implements cofh.api.energy.IEnergyContainerItem
+    compileOnly(rfg.deobf("curse.maven:cofh-core-69162:2388751"))
+
     runtimeOnlyNonPublishable("com.github.GTNewHorizons:AspectRecipeIndex:1.1.1:dev")
     runtimeOnlyNonPublishable("com.falsepattern:endlessids-mc1.7.10:1.7.3:dev")
     runtimeOnlyNonPublishable(rfg.deobf("curse.maven:spark-361579:4271867"))

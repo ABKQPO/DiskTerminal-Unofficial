@@ -1,7 +1,5 @@
 package com.hfstudio.diskterminal.api;
 
-import javax.annotation.Nonnull;
-
 import net.minecraft.item.ItemStack;
 
 /**

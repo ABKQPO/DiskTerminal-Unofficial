@@ -9,11 +9,11 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants;
 
-import appeng.api.implementations.items.IUpgradeModule;
-
 import com.hfstudio.diskterminal.gui.rename.RenameTargetType;
 import com.hfstudio.diskterminal.gui.rename.Renameable;
 import com.hfstudio.diskterminal.util.ItemStacks;
+
+import appeng.api.implementations.items.IUpgradeModule;
 
 /**
  * Client-side data holder for cell information received from server.

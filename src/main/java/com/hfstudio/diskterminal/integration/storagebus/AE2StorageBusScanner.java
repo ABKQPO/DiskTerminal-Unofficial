@@ -6,14 +6,14 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 
-import appeng.api.networking.IGrid;
-import appeng.api.networking.IGridNode;
-import appeng.parts.misc.PartStorageBus;
-
 import com.glodblock.github.common.parts.PartFluidStorageBus;
 import com.hfstudio.diskterminal.client.StorageType;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler.StorageBusTracker;
+
+import appeng.api.networking.IGrid;
+import appeng.api.networking.IGridNode;
+import appeng.parts.misc.PartStorageBus;
 
 /**
  * Scanner for AE2 item storage buses and AE2FluidCraft fluid storage buses.
@@ -49,15 +49,24 @@ public class AE2StorageBusScanner extends AbstractStorageBusScanner {
                 .getTile();
             if (hostTile == null) continue;
 
-            long busId = StorageBusDataHandler.createBusId(hostTile, bus.getSide()
-                .ordinal(), StorageType.ITEM.ordinal());
+            long busId = StorageBusDataHandler.createBusId(
+                hostTile,
+                bus.getSide()
+                    .ordinal(),
+                StorageType.ITEM.ordinal());
             NBTTagCompound nbt = StorageBusDataHandler.createItemStorageBusData(bus, busId);
             applyCapabilities(nbt);
             applySlotParameters(nbt);
             out.appendTag(nbt);
-            trackerMap.put(busId,
-                new StorageBusTracker(busId, bus, hostTile, bus.getSide()
-                    .ordinal(), StorageType.ITEM));
+            trackerMap.put(
+                busId,
+                new StorageBusTracker(
+                    busId,
+                    bus,
+                    hostTile,
+                    bus.getSide()
+                        .ordinal(),
+                    StorageType.ITEM));
         }
 
         // Fluid storage buses (AE2FluidCraft)
@@ -68,15 +77,24 @@ public class AE2StorageBusScanner extends AbstractStorageBusScanner {
                 .getTile();
             if (hostTile == null) continue;
 
-            long busId = StorageBusDataHandler.createBusId(hostTile, bus.getSide()
-                .ordinal(), StorageType.FLUID.ordinal());
+            long busId = StorageBusDataHandler.createBusId(
+                hostTile,
+                bus.getSide()
+                    .ordinal(),
+                StorageType.FLUID.ordinal());
             NBTTagCompound nbt = StorageBusDataHandler.createFluidStorageBusData(bus, busId);
             applyCapabilities(nbt);
             applySlotParameters(nbt);
             out.appendTag(nbt);
-            trackerMap.put(busId,
-                new StorageBusTracker(busId, bus, hostTile, bus.getSide()
-                    .ordinal(), StorageType.FLUID));
+            trackerMap.put(
+                busId,
+                new StorageBusTracker(
+                    busId,
+                    bus,
+                    hostTile,
+                    bus.getSide()
+                        .ordinal(),
+                    StorageType.FLUID));
         }
     }
 }

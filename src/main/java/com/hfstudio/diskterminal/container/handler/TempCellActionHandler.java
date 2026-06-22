@@ -8,17 +8,17 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.IChatComponent;
 
-import appeng.api.AEApi;
-import appeng.api.implementations.items.IUpgradeModule;
-import appeng.api.storage.ICellHandler;
-import appeng.api.storage.ICellWorkbenchItem;
-
 import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
 import com.hfstudio.diskterminal.network.PacketTempCellAction;
 import com.hfstudio.diskterminal.network.PacketTempCellPartitionAction;
 import com.hfstudio.diskterminal.util.InventoryHelper;
 import com.hfstudio.diskterminal.util.ItemStacks;
 import com.hfstudio.diskterminal.util.PlayerMessageHelper;
+
+import appeng.api.AEApi;
+import appeng.api.implementations.items.IUpgradeModule;
+import appeng.api.storage.ICellHandler;
+import appeng.api.storage.ICellWorkbenchItem;
 
 /**
  * Handles temp cell area actions for the cell terminal.
@@ -61,8 +61,15 @@ public class TempCellActionHandler {
         CellActionHandler.ConfigResult config = CellActionHandler.getConfigInventory(cellHandler, cellStack);
         if (config.configInv == null) return;
 
-        CellActionHandler.executePartitionActionDirect(config.configInv, action, partitionSlot, itemStack, cellHandler,
-            cellStack, config.isFluidCell, config.essentiaData);
+        CellActionHandler.executePartitionActionDirect(
+            config.configInv,
+            action,
+            partitionSlot,
+            itemStack,
+            cellHandler,
+            cellStack,
+            config.isFluidCell,
+            config.essentiaData);
 
         tempInv.setInventorySlotContents(tempSlotIndex, cellStack);
         markDirty(container);
@@ -278,7 +285,9 @@ public class TempCellActionHandler {
             return;
         }
 
-        PlayerMessageHelper.warning(player, "disk_terminal.warning.upgrade_insert_failed",
+        PlayerMessageHelper.warning(
+            player,
+            "disk_terminal.warning.upgrade_insert_failed",
             getTempCellDisplayName(tempInv, tempSlotIndex));
     }
 

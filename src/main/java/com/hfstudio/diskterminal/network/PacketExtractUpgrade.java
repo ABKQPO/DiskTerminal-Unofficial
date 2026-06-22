@@ -1,15 +1,14 @@
 package com.hfstudio.diskterminal.network;
 
-import io.netty.buffer.ByteBuf;
-
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 
 import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
 
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Packet sent from client to server to extract an upgrade from a cell or storage bus.
@@ -25,19 +24,19 @@ public class PacketExtractUpgrade implements IMessage {
 
     private TargetType targetType;
     private long targetId;
-    private int cellSlot;      // Only used for cells
+    private int cellSlot; // Only used for cells
     private int upgradeIndex;
-    private boolean toInventory;  // If true, put in inventory; if false, put in hand
+    private boolean toInventory; // If true, put in inventory; if false, put in hand
 
-    public PacketExtractUpgrade() {
-    }
+    public PacketExtractUpgrade() {}
 
     /**
      * Create an extract request for a cell upgrade.
-     * @param storageId The storage containing the cell
-     * @param cellSlot The slot of the cell in the storage
+     * 
+     * @param storageId    The storage containing the cell
+     * @param cellSlot     The slot of the cell in the storage
      * @param upgradeIndex The upgrade slot index to extract from
-     * @param toInventory If true, put in inventory; if false, put in hand
+     * @param toInventory  If true, put in inventory; if false, put in hand
      */
     public static PacketExtractUpgrade forCell(long storageId, int cellSlot, int upgradeIndex, boolean toInventory) {
         PacketExtractUpgrade packet = new PacketExtractUpgrade();
@@ -52,9 +51,10 @@ public class PacketExtractUpgrade implements IMessage {
 
     /**
      * Create an extract request for a storage bus upgrade.
+     * 
      * @param storageBusId The storage bus to extract from
      * @param upgradeIndex The upgrade slot index to extract from
-     * @param toInventory If true, put in inventory; if false, put in hand
+     * @param toInventory  If true, put in inventory; if false, put in hand
      */
     public static PacketExtractUpgrade forStorageBus(long storageBusId, int upgradeIndex, boolean toInventory) {
         PacketExtractUpgrade packet = new PacketExtractUpgrade();
@@ -69,9 +69,10 @@ public class PacketExtractUpgrade implements IMessage {
 
     /**
      * Create an extract request for a temp cell upgrade.
+     * 
      * @param tempSlotIndex The temp area slot index containing the cell
-     * @param upgradeIndex The upgrade slot index to extract from
-     * @param toInventory If true, put in inventory; if false, put in hand
+     * @param upgradeIndex  The upgrade slot index to extract from
+     * @param toInventory   If true, put in inventory; if false, put in hand
      */
     public static PacketExtractUpgrade forTempCell(int tempSlotIndex, int upgradeIndex, boolean toInventory) {
         PacketExtractUpgrade packet = new PacketExtractUpgrade();
@@ -139,8 +140,7 @@ public class PacketExtractUpgrade implements IMessage {
                         message.getTargetId(),
                         message.getCellSlot(),
                         message.getUpgradeIndex(),
-                        message.isToInventory()
-                    );
+                        message.isToInventory());
                 }
             });
 

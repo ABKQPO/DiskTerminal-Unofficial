@@ -1,15 +1,14 @@
 package com.hfstudio.diskterminal.network;
 
-import io.netty.buffer.ByteBuf;
-
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 
 import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
 
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Packet sent from client to server to add an upgrade to a cell.
@@ -20,16 +19,16 @@ public class PacketUpgradeCell implements IMessage {
 
     private long storageId;
     private int cellSlot;
-    private boolean shiftClick;  // If true, apply to first cell without this upgrade
-    private int fromSlot;        // Inventory slot to take upgrade from (-1 = cursor)
+    private boolean shiftClick; // If true, apply to first cell without this upgrade
+    private int fromSlot; // Inventory slot to take upgrade from (-1 = cursor)
 
-    public PacketUpgradeCell() {
-    }
+    public PacketUpgradeCell() {}
 
     /**
      * Create an upgrade request for a specific cell, taking from cursor.
-     * @param storageId The storage containing the cell
-     * @param cellSlot The slot of the cell in the storage
+     * 
+     * @param storageId  The storage containing the cell
+     * @param cellSlot   The slot of the cell in the storage
      * @param shiftClick If true, apply to first visible cell that doesn't have this upgrade
      */
     public PacketUpgradeCell(long storageId, int cellSlot, boolean shiftClick) {
@@ -38,10 +37,11 @@ public class PacketUpgradeCell implements IMessage {
 
     /**
      * Create an upgrade request for a specific cell.
-     * @param storageId The storage containing the cell
-     * @param cellSlot The slot of the cell in the storage
+     * 
+     * @param storageId  The storage containing the cell
+     * @param cellSlot   The slot of the cell in the storage
      * @param shiftClick If true, apply to first visible cell that doesn't have this upgrade
-     * @param fromSlot Inventory slot to take upgrade from (-1 = cursor)
+     * @param fromSlot   Inventory slot to take upgrade from (-1 = cursor)
      */
     public PacketUpgradeCell(long storageId, int cellSlot, boolean shiftClick, int fromSlot) {
         this.storageId = storageId;
@@ -98,8 +98,7 @@ public class PacketUpgradeCell implements IMessage {
                         message.getStorageId(),
                         message.getCellSlot(),
                         message.isShiftClick(),
-                        message.getFromSlot()
-                    );
+                        message.getFromSlot());
                 }
             });
 
