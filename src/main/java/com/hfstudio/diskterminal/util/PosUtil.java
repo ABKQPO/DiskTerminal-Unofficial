@@ -37,4 +37,17 @@ public class PosUtil {
 
         return new BlockPos(x, y, z);
     }
+
+    /**
+     * Squared euclidean distance between two positions. GTNHLib's {@link BlockPos} has no
+     * {@code distanceSq}, so this mirrors the vanilla 1.12 helper used by the source mod for
+     * distance-based sorting.
+     */
+    public static double distSq(BlockPos a, BlockPos b) {
+        double dx = a.getX() - b.getX();
+        double dy = a.getY() - b.getY();
+        double dz = a.getZ() - b.getZ();
+
+        return dx * dx + dy * dy + dz * dz;
+    }
 }

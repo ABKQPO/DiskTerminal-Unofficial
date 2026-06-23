@@ -59,4 +59,15 @@ public final class ThaumicEnergisticsIntegration {
     public static void setAllFromEssentiaContents(IInventory configInv, Object[] essentiaData) {
         // Filled in by the full Thaumic Energistics integration (Phase 5).
     }
+
+    /**
+     * Convert an essentia container item (phial, jar) into the aspect-stack representation used by
+     * essentia cell/bus partitions. Returns null if not an essentia container or ThE is absent.
+     */
+    public static ItemStack tryConvertEssentiaContainerToAspect(ItemStack container) {
+        if (!isModLoaded()) return null;
+
+        // Filled in by the full Thaumic Energistics integration (Phase 5).
+        return null;
+    }
 }

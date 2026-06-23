@@ -96,7 +96,31 @@ public class GuiHandler implements IGuiHandler {
     @Nullable
     @Override
     public Object getClientGuiElement(int id, EntityPlayer player, World world, int x, int y, int z) {
-        // GUI screens are provided by the GUI layer (Phase 3); not yet wired.
+        int guiType = id >> 4;
+        ForgeDirection side = ForgeDirection.getOrientation(id & 7);
+
+        if (guiType == GUI_CELL_TERMINAL) {
+            TileEntity te = world.getTileEntity(x, y, z);
+            if (te instanceof IPartHost) {
+                IPart part = ((IPartHost) te).getPart(side);
+                if (part instanceof PartCellTerminal) {
+                    return new GuiCellTerminal(player.inventory, (PartCellTerminal) part);
+                }
+            }
+        } else if (guiType == GUI_WIRELESS_CELL_TERMINAL) {
+            boolean isBauble = y == 1;
+            ItemStack terminal = getWirelessTerminalStack(player, x, isBauble);
+            IWirelessTermHandler handler = AEApi.instance()
+                .registries()
+                .wireless()
+                .getWirelessTerminalHandler(terminal);
+            if (handler == null) return null;
+
+            return new GuiWirelessCellTerminal(
+                player.inventory,
+                new WirelessTerminalGuiObject(handler, terminal, player, world, x, y, z));
+        }
+
         return null;
     }
 
