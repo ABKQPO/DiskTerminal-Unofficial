@@ -25,6 +25,8 @@ public class CommonProxy {
 
         StorageScannerRegistry.register(AE2StorageScanner.INSTANCE);
         StorageBusScannerRegistry.register(AE2StorageBusScanner.INSTANCE);
+
+        RecipeRegistry.init();
     }
 
     public void postInit(FMLPostInitializationEvent event) {}

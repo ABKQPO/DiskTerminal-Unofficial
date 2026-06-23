@@ -85,5 +85,14 @@ public class DiskTerminalNetwork {
         // Server -> Client: GUI-safe feedback messages (overlay + chat)
         INSTANCE
             .registerMessage(PacketPlayerFeedback.Handler.class, PacketPlayerFeedback.class, packetId++, Side.CLIENT);
+
+        // World block highlight: client requests (C2S), server echoes to the requester (S2C)
+        INSTANCE
+            .registerMessage(PacketHighlightBlock.Handler.class, PacketHighlightBlock.class, packetId++, Side.SERVER);
+        INSTANCE.registerMessage(
+            PacketHighlightBlockClient.Handler.class,
+            PacketHighlightBlockClient.class,
+            packetId++,
+            Side.CLIENT);
     }
 }
