@@ -15,6 +15,7 @@ import net.minecraftforge.fluids.FluidStack;
 import com.hfstudio.diskterminal.client.CellContentRow;
 import com.hfstudio.diskterminal.client.CellInfo;
 import com.hfstudio.diskterminal.client.StorageInfo;
+import com.hfstudio.diskterminal.integration.NEIIntegration;
 import com.hfstudio.diskterminal.integration.ThaumicEnergisticsIntegration;
 import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
 import com.hfstudio.diskterminal.network.PacketPartitionAction;
@@ -183,12 +184,12 @@ public class QuickPartitionHandler {
     }
 
     /**
-     * Hook for the NEI bridge (Phase 5): return the item/fluid ingredient under the mouse in an
-     * external item-list overlay, or null. Default returns null (no overlay integration yet).
+     * Hook for the NEI bridge: return the item ingredient under the mouse in the NEI item-list
+     * overlay, or null. NEI only surfaces ItemStacks (fluids appear as their AE2FC drop items).
      */
     @Nullable
     public static Object getModIngredientUnderMouse() {
-        return null;
+        return NEIIntegration.getStackUnderMouse();
     }
 
     private static ItemStack convertStackForCellType(ItemStack stack, PartitionType type,

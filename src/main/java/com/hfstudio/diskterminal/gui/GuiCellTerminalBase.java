@@ -1,12 +1,16 @@
 package com.hfstudio.diskterminal.gui;
 
+import org.lwjgl.opengl.GL11;
 import java.awt.Rectangle;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.lwjgl.input.Keyboard;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
@@ -16,69 +20,57 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.opengl.GL11;
-
 import com.gtnewhorizon.gtnhlib.blockpos.BlockPos;
-import com.hfstudio.diskterminal.client.CellContentRow;
-import com.hfstudio.diskterminal.client.CellInfo;
-import com.hfstudio.diskterminal.client.KeyBindings;
-import com.hfstudio.diskterminal.client.SearchFilterMode;
-import com.hfstudio.diskterminal.client.StorageBusContentRow;
-import com.hfstudio.diskterminal.client.StorageInfo;
-import com.hfstudio.diskterminal.client.SubnetVisibility;
-import com.hfstudio.diskterminal.client.TabStateManager;
-import com.hfstudio.diskterminal.config.DiskTerminalClientConfig;
-import com.hfstudio.diskterminal.config.DiskTerminalClientConfig.TerminalStyle;
-import com.hfstudio.diskterminal.config.DiskTerminalServerConfig;
-import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
-import com.hfstudio.diskterminal.gui.buttons.FilterPanelManager;
-import com.hfstudio.diskterminal.gui.buttons.GuiBackButton;
-import com.hfstudio.diskterminal.gui.buttons.GuiFilterButton;
-import com.hfstudio.diskterminal.gui.buttons.GuiSearchHelpButton;
-import com.hfstudio.diskterminal.gui.buttons.GuiSearchModeButton;
-import com.hfstudio.diskterminal.gui.buttons.GuiSlotLimitButton;
-import com.hfstudio.diskterminal.gui.buttons.GuiSubnetVisibilityButton;
-import com.hfstudio.diskterminal.gui.buttons.GuiTerminalStyleButton;
-import com.hfstudio.diskterminal.gui.handler.GhostTarget;
-import com.hfstudio.diskterminal.gui.handler.TabManager;
-import com.hfstudio.diskterminal.gui.handler.TabRenderingHandler;
-import com.hfstudio.diskterminal.gui.handler.TerminalDataManager;
-import com.hfstudio.diskterminal.gui.handler.TooltipHandler;
-import com.hfstudio.diskterminal.gui.networktools.GuiToolConfirmationModal;
-import com.hfstudio.diskterminal.gui.networktools.INetworkTool;
-import com.hfstudio.diskterminal.gui.overlay.MessageHelper;
-import com.hfstudio.diskterminal.gui.overlay.OverlayMessageRenderer;
-import com.hfstudio.diskterminal.gui.rename.InlineRenameManager;
-import com.hfstudio.diskterminal.gui.widget.tab.AbstractTabWidget;
-import com.hfstudio.diskterminal.gui.widget.tab.NetworkToolsTabWidget;
-import com.hfstudio.diskterminal.gui.widget.tab.SubnetOverviewTabWidget;
-import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
-import com.hfstudio.diskterminal.network.PacketHighlightBlock;
-import com.hfstudio.diskterminal.network.PacketSlotLimitChange;
-import com.hfstudio.diskterminal.network.PacketSwitchNetwork;
-import com.hfstudio.diskterminal.network.PacketTabChange;
-import com.hfstudio.diskterminal.network.chunked.PayloadDispatcher;
-import com.hfstudio.diskterminal.network.chunked.PayloadMode;
-import com.hfstudio.diskterminal.network.chunked.TerminalChannels;
-import com.hfstudio.diskterminal.util.ItemStacks;
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
 
 import appeng.api.implementations.items.IUpgradeModule;
 import appeng.client.gui.AEBaseGui;
 import appeng.client.gui.widgets.GuiScrollbar;
 import appeng.client.gui.widgets.MEGuiTextField;
 import appeng.container.slot.AppEngSlot;
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
+
+
+import com.hfstudio.diskterminal.client.CellInfo;
+import com.hfstudio.diskterminal.client.SubnetVisibility;
+import com.hfstudio.diskterminal.client.TabStateManager;
+import com.hfstudio.diskterminal.config.DiskTerminalClientConfig;
+import com.hfstudio.diskterminal.config.DiskTerminalClientConfig.TerminalStyle;
+import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
+import com.hfstudio.diskterminal.client.CellContentRow;
+import com.hfstudio.diskterminal.client.KeyBindings;
+import com.hfstudio.diskterminal.client.SearchFilterMode;
+import com.hfstudio.diskterminal.client.StorageBusContentRow;
+import com.hfstudio.diskterminal.client.StorageInfo;
+import com.hfstudio.diskterminal.config.DiskTerminalServerConfig;
+import com.hfstudio.diskterminal.gui.buttons.*;
+import com.hfstudio.diskterminal.gui.handler.TabManager;
+import com.hfstudio.diskterminal.gui.handler.TabRenderingHandler;
+import com.hfstudio.diskterminal.gui.handler.TerminalDataManager;
+import com.hfstudio.diskterminal.gui.handler.TooltipHandler;
+import com.hfstudio.diskterminal.gui.networktools.INetworkTool;
+import com.hfstudio.diskterminal.gui.networktools.GuiToolConfirmationModal;
+import com.hfstudio.diskterminal.gui.overlay.MessageHelper;
+import com.hfstudio.diskterminal.gui.overlay.OverlayMessageRenderer;
+import com.hfstudio.diskterminal.gui.widget.tab.AbstractTabWidget;
+import com.hfstudio.diskterminal.gui.widget.tab.NetworkToolsTabWidget;
+import com.hfstudio.diskterminal.gui.widget.tab.SubnetOverviewTabWidget;
+import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
+import com.hfstudio.diskterminal.network.PacketHighlightBlock;
+import com.hfstudio.diskterminal.network.PacketSwitchNetwork;
+import com.hfstudio.diskterminal.network.PacketSlotLimitChange;
+import com.hfstudio.diskterminal.network.PacketTabChange;
+import com.hfstudio.diskterminal.network.chunked.PayloadDispatcher;
+import com.hfstudio.diskterminal.network.chunked.PayloadMode;
+import com.hfstudio.diskterminal.network.chunked.TerminalChannels;
+import com.hfstudio.diskterminal.gui.rename.InlineRenameManager;
+
 
 /**
  * Base GUI for Cell Terminal variants.
  * Contains shared functionality for displaying storage drives/chests with their cells.
- * Supports three tabs: Terminal (list view), Inventory (cell slots with contents), Partition (cell slots with
- * partition).
+ * Supports three tabs: Terminal (list view), Inventory (cell slots with contents), Partition (cell slots with partition).
  */
-public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkToolsTabWidget.NetworkToolGuiContext,
-    SubnetOverviewTabWidget.SubnetOverviewContext, TabManager.TabSwitchListener {
+public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkToolsTabWidget.NetworkToolGuiContext, SubnetOverviewTabWidget.SubnetOverviewContext, TabManager.TabSwitchListener {
 
     // Layout constants
     protected static final int ROW_HEIGHT = GuiConstants.ROW_HEIGHT;
@@ -102,7 +94,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
     // Filter panel manager
     protected FilterPanelManager filterPanelManager;
-    protected int nextButtonId = 10; // Starting button ID for filter buttons
+    protected int nextButtonId = 10;  // Starting button ID for filter buttons
 
     // Search field and mode button
     protected MEGuiTextField searchField;
@@ -140,13 +132,13 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
     // Guard to prevent style button from being retriggered while mouse is still down
     private long lastStyleButtonClickTime = 0;
-    private static final long STYLE_BUTTON_COOLDOWN = 100; // ms
+    private static final long STYLE_BUTTON_COOLDOWN = 100;  // ms
 
     // Whether we've restored the saved scroll after the first data update
     private boolean initialScrollRestored = false;
 
     // Subnet view state (network routing, kept here since it affects data updates)
-    protected long currentNetworkId = 0; // 0 = main network, >0 = subnet ID
+    protected long currentNetworkId = 0;  // 0 = main network, >0 = subnet ID
     // When true, we're waiting for a network switch response - ignore incoming data until confirmed
     protected boolean awaitingNetworkSwitch = false;
 
@@ -212,8 +204,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         // SUBNETS: routed to the subnet overview tab widget. Not gated by networkId since the
         // subnet list is global per main grid, not per current view.
         PayloadDispatcher.register(TerminalChannels.SUBNETS, (mode, data) -> {
-            tabManager.getSubnetTab()
-                .applySubnetPayload(mode, data);
+            tabManager.getSubnetTab().applySubnetPayload(mode, data);
             updateScrollbarForCurrentTab();
         });
     }
@@ -259,8 +250,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         if (this.initialScrollRestored) return;
 
         TabStateManager.TabType tabType = TabStateManager.TabType.fromIndex(tabManager.getCurrentTab());
-        int saved = TabStateManager.getInstance()
-            .getScrollPosition(tabType);
+        int saved = TabStateManager.getInstance().getScrollPosition(tabType);
         scrollToLine(saved);
         this.initialScrollRestored = true;
     }
@@ -269,17 +259,13 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
      * Calculate the number of rows to display based on terminal style and screen height.
      */
     protected int calculateRowsCount() {
-        TerminalStyle style = DiskTerminalClientConfig.getInstance()
-            .getTerminalStyle();
+        TerminalStyle style = DiskTerminalClientConfig.getInstance().getTerminalStyle();
 
         if (style == TerminalStyle.SMALL) return DEFAULT_ROWS;
 
         // TALL mode: expand to fill available screen space
         // Use ScaledResolution to properly get the scaled screen height (handles auto GUI scale)
-        ScaledResolution res = new ScaledResolution(
-            Minecraft.getMinecraft(),
-            Minecraft.getMinecraft().displayWidth,
-            Minecraft.getMinecraft().displayHeight);
+        ScaledResolution res = new ScaledResolution(Minecraft.getMinecraft(), Minecraft.getMinecraft().displayWidth, Minecraft.getMinecraft().displayHeight);
         int screenHeight = res.getScaledHeight();
 
         // Leave some padding at top and bottom
@@ -307,8 +293,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         super.initGui();
 
         // Center GUI with appropriate spacing based on terminal style
-        TerminalStyle style = DiskTerminalClientConfig.getInstance()
-            .getTerminalStyle();
+        TerminalStyle style = DiskTerminalClientConfig.getInstance().getTerminalStyle();
         int unusedSpace = this.height - this.ySize;
 
         if (style == TerminalStyle.SMALL) {
@@ -328,10 +313,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             if (this.guiTop < tabSpace) this.guiTop = tabSpace;
         }
 
-        this.getScrollBar()
-            .setTop(18)
-            .setLeft(189)
-            .setHeight(this.rowsVisible * ROW_HEIGHT - 2);
+        this.getScrollBar().setTop(18).setLeft(189).setHeight(this.rowsVisible * ROW_HEIGHT - 2);
         this.repositionSlots();
         initTabWidgets();
         initTerminalStyleButton();
@@ -347,8 +329,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
         // Restore saved scroll position for the current tab (in-memory TabStateManager)
         TabStateManager.TabType initialTabType = TabStateManager.TabType.fromIndex(tabManager.getCurrentTab());
-        int initialSavedScroll = TabStateManager.getInstance()
-            .getScrollPosition(initialTabType);
+        int initialSavedScroll = TabStateManager.getInstance().getScrollPosition(initialTabType);
         scrollToLine(initialSavedScroll);
 
         // We'll also re-apply the saved scroll once when data arrives, in case
@@ -361,14 +342,11 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
         // Send current slot limit preferences to server
         DiskTerminalClientConfig config = DiskTerminalClientConfig.getInstance();
-        DiskTerminalNetwork.INSTANCE.sendToServer(
-            new PacketSlotLimitChange(
-                config.getCellSlotLimit()
-                    .getLimit(),
-                config.getBusSlotLimit()
-                    .getLimit(),
-                config.getSubnetSlotLimit()
-                    .getLimit()));
+        DiskTerminalNetwork.INSTANCE.sendToServer(new PacketSlotLimitChange(
+            config.getCellSlotLimit().getLimit(),
+            config.getBusSlotLimit().getLimit(),
+            config.getSubnetSlotLimit().getLimit()
+        ));
 
         // If a subnet was previously being viewed, tell the server to switch to it
         // Also reset data manager to avoid showing stale data from a previous session
@@ -378,16 +356,14 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             DiskTerminalNetwork.INSTANCE.sendToServer(new PacketSwitchNetwork(this.currentNetworkId));
         }
 
-        // Reopening the GUI directly onto the subnet overview (for example after leaving via JEI)
-        // does not fire a tab-switch event, so trigger the overview enter hook manually.
-        if (isInSubnetOverviewMode()) tabManager.getSubnetTab()
-            .onEnterOverview();
+            // Reopening the GUI directly onto the subnet overview (for example after leaving via JEI)
+            // does not fire a tab-switch event, so trigger the overview enter hook manually.
+            if (isInSubnetOverviewMode()) tabManager.getSubnetTab().onEnterOverview();
     }
 
     protected void initTabWidgets() {
         // Provide scroll access so TabManager can save/restore scroll positions on tab switch
         tabManager.setScrollAccessor(new TabManager.ScrollAccessor() {
-
             @Override
             public int getCurrentScroll() {
                 return getScrollBar().getCurrentScroll();
@@ -400,12 +376,11 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         });
 
         // Delegate widget creation and initialization to the TabManager
-        tabManager
-            .initWidgets(this.fontRendererObj, this.itemRender, this.guiLeft, this.guiTop, this.rowsVisible, this);
+        tabManager.initWidgets(this.fontRendererObj, this.itemRender,
+            this.guiLeft, this.guiTop, this.rowsVisible, this);
 
         // Wire subnet context after widget init
-        tabManager.getSubnetTab()
-            .setSubnetContext(this);
+        tabManager.getSubnetTab().setSubnetContext(this);
     }
 
     protected void initSubnetBackButton() {
@@ -425,12 +400,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         // Calculate button Y like in SMALL mode (for consistent positioning across style changes)
         int smallModeYSize = MAGIC_HEIGHT_NUMBER + DEFAULT_ROWS * ROW_HEIGHT;
         int buttonY = Math.max(8, (this.height - smallModeYSize) / 2 + 8);
-        this.terminalStyleButton = new GuiTerminalStyleButton(
-            0,
-            this.guiLeft - 18,
-            buttonY,
-            DiskTerminalClientConfig.getInstance()
-                .getTerminalStyle());
+        this.terminalStyleButton = new GuiTerminalStyleButton(0, this.guiLeft - 18, buttonY, DiskTerminalClientConfig.getInstance().getTerminalStyle());
         this.buttonList.add(this.terminalStyleButton);
     }
 
@@ -441,15 +411,9 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
     protected void updateFilterButtonPositions() {
         int styleButtonY = (this.terminalStyleButton != null) ? this.terminalStyleButton.yPosition : this.guiTop + 8;
-        int styleButtonBottom = styleButtonY + 16; // BUTTON_SIZE = 16
+        int styleButtonBottom = styleButtonY + 16;  // BUTTON_SIZE = 16
         Rectangle controlsHelpBounds = getControlsHelpBounds();
-        filterPanelManager.updatePositions(
-            this.guiLeft,
-            this.guiTop,
-            this.ySize,
-            styleButtonY,
-            styleButtonBottom,
-            controlsHelpBounds);
+        filterPanelManager.updatePositions(this.guiLeft, this.guiTop, this.ySize, styleButtonY, styleButtonBottom, controlsHelpBounds);
     }
 
     protected void applyFiltersToDataManager() {
@@ -471,19 +435,15 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         int searchY = 4;
         int availableWidth = 189 - searchX;
 
-        String existingSearch = (this.searchField != null) ? this.searchField.getText()
-            : DiskTerminalClientConfig.getInstance()
-                .getSearchFilter();
+        String existingSearch = (this.searchField != null) ? this.searchField.getText() : DiskTerminalClientConfig.getInstance().getSearchFilter();
 
-        this.searchField = new MEGuiTextField(availableWidth, 12) {
-
+        this.searchField = new MEGuiTextField(this.fontRendererObj, this.guiLeft + searchX, this.guiTop + searchY, availableWidth, 12) {
             @Override
             public void onTextChange(String oldText) {
                 onSearchTextChanged();
             }
         };
-        this.searchField.x = this.guiLeft + searchX;
-        this.searchField.y = this.guiTop + searchY;
+        this.searchField.setEnableBackgroundDrawing(true);
         this.searchField.setMaxStringLength(512);
         this.searchField.setText(existingSearch, true);
 
@@ -497,8 +457,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         // Subnet visibility button: positioned next to search mode button
         // if (this.subnetVisibilityButton != null) this.buttonList.remove(this.subnetVisibilityButton);
         // TODO: enable when it's working
-        // this.subnetVisibilityButton = new GuiSubnetVisibilityButton(4, this.guiLeft + 189 - 14, this.guiTop + 4,
-        // currentSubnetVisibility);
+        // this.subnetVisibilityButton = new GuiSubnetVisibilityButton(4, this.guiLeft + 189 - 14, this.guiTop + 4, currentSubnetVisibility);
         // this.buttonList.add(this.subnetVisibilityButton);
 
         // Initialize modal search bar and search field handler
@@ -520,8 +479,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         updateScrollbarForCurrentTab();
 
         // Persist the search filter text
-        DiskTerminalClientConfig.getInstance()
-            .setSearchFilter(searchField.getText());
+        DiskTerminalClientConfig.getInstance().setSearchFilter(searchField.getText());
     }
 
     /**
@@ -536,8 +494,8 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         for (Object obj : this.inventorySlots.inventorySlots) {
             if (obj instanceof AppEngSlot) {
                 AppEngSlot slot = (AppEngSlot) obj;
-                slot.yDisplayPosition = this.ySize + slot.yDisplayPosition - 82;
-                slot.xDisplayPosition = slot.xDisplayPosition + 14;
+                slot.yPos = this.ySize + slot.getY() - 82;
+                slot.xPos = slot.getX() + 14;
             }
         }
     }
@@ -549,47 +507,25 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         // Draw popups on top (including their JEI ghost targets)
         if (inventoryPopup != null) {
             inventoryPopup.draw(mouseX, mouseY);
-            java.util.List<String> invTip = inventoryPopup.getHoveredTooltip();
-            if (invTip != null) {
-                drawHoveringText(
-                    invTip,
-                    inventoryPopup.getHoveredTooltipX(),
-                    inventoryPopup.getHoveredTooltipY(),
-                    this.fontRendererObj);
-            }
+            inventoryPopup.drawTooltip(mouseX, mouseY);
         }
 
         if (partitionPopup != null) {
             partitionPopup.draw(mouseX, mouseY);
-            java.util.List<String> popupTip = partitionPopup.getHoveredTooltip();
-            if (popupTip != null) {
-                drawHoveringText(
-                    popupTip,
-                    partitionPopup.getHoveredTooltipX(),
-                    partitionPopup.getHoveredTooltipY(),
-                    this.fontRendererObj);
-            }
+            partitionPopup.drawTooltip(mouseX, mouseY);
         }
 
         // Draw hover preview from terminal tab widget
         // TODO: we can assume that the popups are only open in the terminal tab, as outside click or Esc closes them
-        if (tabManager.getCurrentTab() == GuiConstants.TAB_TERMINAL && inventoryPopup == null
-            && partitionPopup == null) {
-            CellInfo previewCell = tabManager.getTerminalWidget()
-                .getPreviewCell();
-            int previewType = tabManager.getTerminalWidget()
-                .getPreviewType();
+        if (tabManager.getCurrentTab() == GuiConstants.TAB_TERMINAL && inventoryPopup == null && partitionPopup == null) {
+            CellInfo previewCell = tabManager.getTerminalWidget().getPreviewCell();
+            int previewType = tabManager.getTerminalWidget().getPreviewType();
 
             if (previewCell != null) {
                 int previewX = mouseX + 10, previewY = mouseY + 10;
-                if (previewType == 1)
-                    new PopupCellInventory(this, previewCell, previewX, previewY).draw(mouseX, mouseY);
-                else if (previewType == 2)
-                    new PopupCellPartition(this, previewCell, previewX, previewY).draw(mouseX, mouseY);
-                else if (previewType == 3) this.drawHoveringText(
-                    Collections.singletonList(I18n.format("gui.disk_terminal.eject_cell")),
-                    mouseX,
-                    mouseY);
+                if (previewType == 1) new PopupCellInventory(this, previewCell, previewX, previewY).draw(mouseX, mouseY);
+                else if (previewType == 2) new PopupCellPartition(this, previewCell, previewX, previewY).draw(mouseX, mouseY);
+                else if (previewType == 3) this.drawHoveringText(Collections.singletonList(I18n.format("gui.disk_terminal.eject_cell")), mouseX, mouseY);
             }
         }
 
@@ -628,7 +564,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
             // Get hovered item stack for vanilla item tooltip
             ItemStack hoveredStack = activeTab.getHoveredItemStack(relMouseX, relMouseY);
-            if (!ItemStacks.isEmpty(hoveredStack)) {
+            if (!hoveredStack.isEmpty()) {
                 this.renderToolTip(hoveredStack, mouseX, mouseY);
 
                 return;
@@ -660,12 +596,11 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         if (searchField != null) {
             ctx.searchFieldX = searchField.x - 2;
             ctx.searchFieldY = searchField.y - 2;
-            ctx.searchFieldWidth = searchField.w + 4;
-            ctx.searchFieldHeight = searchField.h + 4;
+            ctx.searchFieldWidth = searchField.width + 4;
+            ctx.searchFieldHeight = searchField.height + 4;
         }
 
         TooltipHandler.drawTooltips(ctx, new TooltipHandler.TooltipRenderer() {
-
             @Override
             public void drawHoveringText(List<String> lines, int x, int y) {
                 GuiCellTerminalBase.this.drawHoveringText(lines, x, y);
@@ -688,8 +623,8 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             if (dataManager.hasAdvancedSearchError()) {
                 int fx = this.searchField.x - 3;
                 int fy = this.searchField.y - 3;
-                int fw = this.searchField.w + 6;
-                int fh = this.searchField.h + 6;
+                int fw = this.searchField.width + 6;
+                int fh = this.searchField.height + 6;
                 drawRect(fx, fy, fx + fw, fy + fh, 0xFFFF0000);
             }
 
@@ -699,12 +634,10 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
         int relMouseX = mouseX - offsetX;
         int relMouseY = mouseY - offsetY;
-        final int currentScroll = this.getScrollBar()
-            .getCurrentScroll();
+        final int currentScroll = this.getScrollBar().getCurrentScroll();
 
         // Reset priority field visibility before rendering (fields are re-registered by headers during draw)
-        PriorityFieldManager.getInstance()
-            .resetVisibility();
+        PriorityFieldManager.getInstance().resetVisibility();
 
         // Draw based on current tab using widgets
         AbstractTabWidget activeTab = tabManager.getActiveTab();
@@ -722,18 +655,13 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             pfm.drawFieldsRelative(guiLeft, guiTop);
 
             // Cleanup fields for storages/buses that no longer exist in the data
-            Set<Long> activeIds = new HashSet<>(
-                dataManager.getStorageMap()
-                    .keySet());
-            activeIds.addAll(
-                dataManager.getStorageBusMap()
-                    .keySet());
+            Set<Long> activeIds = new HashSet<>(dataManager.getStorageMap().keySet());
+            activeIds.addAll(dataManager.getStorageBusMap().keySet());
             pfm.cleanupStaleFields(activeIds);
         }
 
         // Draw inline rename field overlay on top of everything else (applies to all tabs)
-        InlineRenameManager.getInstance()
-            .drawRenameField(this.fontRendererObj);
+        InlineRenameManager.getInstance().drawRenameField(this.fontRendererObj);
 
         // Draw controls help - delegate to tab controller
         drawControlsHelpForCurrentTab();
@@ -755,12 +683,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         int tabIndex = tabManager.getCurrentTab();
 
         TabRenderingHandler.ControlsHelpContext ctx = new TabRenderingHandler.ControlsHelpContext(
-            this.guiLeft,
-            this.guiTop,
-            this.ySize,
-            this.height,
-            tabIndex,
-            this.fontRendererObj);
+            this.guiLeft, this.guiTop, this.ySize, this.height, tabIndex, this.fontRendererObj);
 
         // Get help lines from the active tab widget (works for subnet tab too)
         AbstractTabWidget activeTab = tabManager.getActiveTab();
@@ -798,12 +721,18 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         int panelBottom = this.height - this.guiTop - bottomOffset;
         int panelTop = panelBottom - panelHeight;
 
-        return new Rectangle(this.guiLeft + panelLeft, this.guiTop + panelTop, panelWidth, panelHeight);
+        return new Rectangle(
+            this.guiLeft + panelLeft,
+            this.guiTop + panelTop,
+            panelWidth,
+            panelHeight
+        );
     }
 
     /**
      * Get JEI exclusion areas to prevent overlap with controls help widget and filter buttons.
      */
+    @Override
     public List<Rectangle> getJEIExclusionArea() {
         List<Rectangle> areas = new ArrayList<>();
         Rectangle controlsHelp = getControlsHelpBounds();
@@ -817,16 +746,18 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         // Add terminal style button bounds
         // TODO: move terminal style to the filterPanelManager
         if (this.terminalStyleButton != null && this.terminalStyleButton.visible) {
-            areas.add(
-                new Rectangle(
-                    this.terminalStyleButton.xPosition,
-                    this.terminalStyleButton.yPosition,
-                    this.terminalStyleButton.width,
-                    this.terminalStyleButton.height));
+            areas.add(new Rectangle(
+                this.terminalStyleButton.x,
+                this.terminalStyleButton.yPosition,
+                this.terminalStyleButton.width,
+                this.terminalStyleButton.height
+            ));
         }
 
         if (hasToolbox()) {
-            areas.add(new Rectangle(this.guiLeft + this.xSize + 1, this.guiTop + this.ySize - 90, 68, 68));
+            areas.add(new Rectangle(
+                this.guiLeft + this.xSize + 1, this.guiTop + this.ySize - 90, 68, 68
+            ));
         }
 
         return areas;
@@ -876,10 +807,10 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             ItemStack slotStack = slot.getStack();
 
             if (slotStack.getItem() instanceof IUpgradeModule
-                && ((IUpgradeModule) slotStack.getItem()).getType(slotStack) != null) {
+                    && ((IUpgradeModule) slotStack.getItem()).getType(slotStack) != null) {
                 // Check if upgrade insertion is enabled
-                if (DiskTerminalServerConfig.isInitialized() && !DiskTerminalServerConfig.getInstance()
-                    .isUpgradeInsertEnabled()) {
+                if (DiskTerminalServerConfig.isInitialized()
+                        && !DiskTerminalServerConfig.getInstance().isUpgradeInsertEnabled()) {
                     MessageHelper.error("disk_terminal.error.upgrade_insert_disabled");
 
                     return;
@@ -897,8 +828,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         // (slot == null). If it consumed the click, the cursor item changes (cleared or replaced
         // with next bookmark). We must suppress our subsequent activeTab.handleClick to prevent
         // sending a conflicting REMOVE_ITEM for a stale hoveredSlotIndex from the previous draw.
-        ItemStack cursorBefore = slot == null ? mc.thePlayer.inventory.getItemStack()
-            .copy() : null;
+        ItemStack cursorBefore = slot == null ? mc.thePlayer.inventory.getItemStack().copy() : null;
 
         super.handleMouseClick(slot, slotIdx, mouseButton, clickType);
 
@@ -908,7 +838,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     }
 
     @Override
-    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
+    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         // Handle modal search bar clicks first
         if (modalSearchBar != null && modalSearchBar.isVisible()) {
             if (modalSearchBar.handleMouseClick(mouseX, mouseY, mouseButton)) return;
@@ -926,15 +856,13 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
         // Handle inline rename: clicking outside the rename field saves and closes it
         // (does not consume the click, let it propagate to potentially start a new rename)
-        InlineRenameManager.getInstance()
-            .handleClickOutside(mouseX - guiLeft, mouseY - guiTop);
+        InlineRenameManager.getInstance().handleClickOutside(mouseX - guiLeft, mouseY - guiTop);
 
         // Handle search field clicks (right-click clear, double-click modal, regular focus)
         if (this.searchFieldHandler != null && this.searchFieldHandler.handleClick(mouseX, mouseY, mouseButton)) return;
 
         // Handle priority field clicks (only visible in certain tabs)
-        if (PriorityFieldManager.getInstance()
-            .handleClick(mouseX, mouseY, mouseButton)) return;
+        if (PriorityFieldManager.getInstance().handleClick(mouseX, mouseY, mouseButton)) return;
 
         // Handle upgrade insertion (player holding upgrade + left-click on cell/bus)
         if (mouseButton == 0 && handleWidgetUpgradeClick(mouseX, mouseY)) return;
@@ -984,12 +912,12 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
     @Override
     public void onPostSwitch(int newTab) {
-        getScrollBar().setRange(0, 0, 1); // Reset scrollbar
-        updateScrollbarForCurrentTab(); // Set new scrollbar range
-        updateSearchModeButtonVisibility(); // Show/hide search mode button
-        initFilterButtons(); // Filter buttons differ per tab
-        applyFiltersToDataManager(); // ^ which means we need to apply them
-        onSearchTextChanged(); // Then apply the search filter
+        getScrollBar().setRange(0, 0, 1);       // Reset scrollbar
+        updateScrollbarForCurrentTab();         // Set new scrollbar range
+        updateSearchModeButtonVisibility();     // Show/hide search mode button
+        initFilterButtons();                    // Filter buttons differ per tab
+        applyFiltersToDataManager();            // ^ which means we need to apply them
+        onSearchTextChanged();                  // Then apply the search filter
 
         // Update back button appearance based on whether we're in subnet overview
         if (this.subnetBackButton != null) {
@@ -1008,18 +936,18 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
      */
     protected boolean handleWidgetUpgradeClick(int mouseX, int mouseY) {
         ItemStack heldStack = mc.thePlayer.inventory.getItemStack();
-        if (ItemStacks.isEmpty(heldStack)) return false;
+        if (heldStack.isEmpty()) return false;
         if (!(heldStack.getItem() instanceof IUpgradeModule)) return false;
 
         // Distinguish real upgrades from storage components that also implement IUpgradeModule
         if (((IUpgradeModule) heldStack.getItem()).getType(heldStack) == null) return false;
 
         // Check if upgrade insertion is enabled
-        if (DiskTerminalServerConfig.isInitialized() && !DiskTerminalServerConfig.getInstance()
-            .isUpgradeInsertEnabled()) {
+        if (DiskTerminalServerConfig.isInitialized()
+                && !DiskTerminalServerConfig.getInstance().isUpgradeInsertEnabled()) {
             MessageHelper.error("disk_terminal.error.upgrade_insert_disabled");
 
-            return true; // Consume click to prevent other handlers
+            return true;  // Consume click to prevent other handlers
         }
 
         AbstractTabWidget activeTab = tabManager.getActiveTab();
@@ -1048,7 +976,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     }
 
     @Override
-    protected void actionPerformed(GuiButton btn) {
+    protected void actionPerformed(GuiButton btn) throws IOException {
         if (btn == terminalStyleButton) {
             // TODO: maybe add the guard to actionPerformed (or click) as a whole
             // Guard against repeated clicks while mouse is still down after initGui recreates buttons
@@ -1056,9 +984,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             if (now - lastStyleButtonClickTime < STYLE_BUTTON_COOLDOWN) return;
 
             lastStyleButtonClickTime = now;
-            terminalStyleButton.setStyle(
-                DiskTerminalClientConfig.getInstance()
-                    .cycleTerminalStyle());
+            terminalStyleButton.setStyle(DiskTerminalClientConfig.getInstance().cycleTerminalStyle());
             this.buttonList.clear();
             this.initGui();
 
@@ -1068,8 +994,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         if (btn == searchModeButton) {
             // Cycle search mode, persist it, and reapply filter
             currentSearchMode = searchModeButton.cycleMode();
-            DiskTerminalClientConfig.getInstance()
-                .setSearchMode(currentSearchMode);
+            DiskTerminalClientConfig.getInstance().setSearchMode(currentSearchMode);
             onSearchTextChanged();
 
             return;
@@ -1082,13 +1007,14 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         }
 
         /*
-         * if (btn == subnetVisibilityButton) {
-         * // Cycle subnet visibility mode and persist it
-         * currentSubnetVisibility = subnetVisibilityButton.cycleMode();
-         * DiskTerminalClientConfig.getInstance().setSubnetVisibility(currentSubnetVisibility);
-         * return;
-         * }
-         */
+        if (btn == subnetVisibilityButton) {
+            // Cycle subnet visibility mode and persist it
+            currentSubnetVisibility = subnetVisibilityButton.cycleMode();
+            DiskTerminalClientConfig.getInstance().setSubnetVisibility(currentSubnetVisibility);
+
+            return;
+        }
+        */
 
         // Handle filter button clicks
         if (btn instanceof GuiFilterButton) {
@@ -1115,10 +1041,9 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     }
 
     @Override
-    protected void keyTyped(char typedChar, int keyCode) {
+    protected void keyTyped(char typedChar, int keyCode) throws IOException {
         // Handle inline rename keys (Esc cancels, Enter confirms, typing updates field)
-        if (InlineRenameManager.getInstance()
-            .handleKey(typedChar, keyCode)) return;
+        if (InlineRenameManager.getInstance().handleKey(typedChar, keyCode)) return;
 
         // Handle network tool confirmation modal (blocks all other input)
         if (networkToolModal != null) {
@@ -1131,8 +1056,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         }
 
         // Handle priority field keyboard
-        if (PriorityFieldManager.getInstance()
-            .handleKeyTyped(typedChar, keyCode)) return;
+        if (PriorityFieldManager.getInstance().handleKeyTyped(typedChar, keyCode)) return;
 
         // Esc key should close modals
         if (keyCode == Keyboard.KEY_ESCAPE) {
@@ -1171,17 +1095,14 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
      * Scroll to a specific line index.
      */
     public void scrollToLine(int lineIndex) {
-        int currentScroll = this.getScrollBar()
-            .getCurrentScroll();
+        int currentScroll = this.getScrollBar().getCurrentScroll();
 
         // wheel() clamps delta to -1/+1, so we need to call it multiple times
         // Positive delta in wheel() scrolls up (towards 0), negative scrolls down
         while (currentScroll != lineIndex) {
             int delta = currentScroll < lineIndex ? -1 : 1;
-            this.getScrollBar()
-                .wheel(delta);
-            int newScroll = this.getScrollBar()
-                .getCurrentScroll();
+            this.getScrollBar().wheel(delta);
+            int newScroll = this.getScrollBar().getCurrentScroll();
             if (newScroll == currentScroll) break;
             currentScroll = newScroll;
         }
@@ -1201,8 +1122,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
      * Delegates to the subnet tab widget for parsing and display.
      */
     public void handleSubnetListUpdate(NBTTagCompound data) {
-        tabManager.getSubnetTab()
-            .handleSubnetListUpdate(data);
+        tabManager.getSubnetTab().handleSubnetListUpdate(data);
         updateScrollbarForCurrentTab();
     }
 
@@ -1232,11 +1152,11 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     @Override
     public void switchToNetwork(long networkId) {
         this.currentNetworkId = networkId;
-        DiskTerminalClientConfig.getInstance()
-            .setLastViewedNetworkId(networkId);
+        DiskTerminalClientConfig.getInstance().setLastViewedNetworkId(networkId);
 
         // Exit subnet overview if it was active (e.g. clicking a Load button in overview)
         if (isInSubnetOverviewMode()) tabManager.switchToTab(tabManager.getPreviousRealTab());
+
 
         // Reset data manager so the next update does a full rebuild with proper filters
         // instead of using snapshots from the old network context
@@ -1258,8 +1178,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     public void onGuiClosed() {
         // Persist the current scroll position for the active tab so it is restored when the GUI is reopened.
         tabManager.saveCurrentScrollPosition();
-        DiskTerminalClientConfig.getInstance()
-            .setLastViewedNetworkId(this.currentNetworkId);
+        DiskTerminalClientConfig.getInstance().setLastViewedNetworkId(this.currentNetworkId);
 
         // Unregister our chunked-payload handlers so any straggling packets after the GUI closes
         // are dropped instead of being applied to a stale data manager / tab widget.
@@ -1279,13 +1198,12 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         // Use the tab widget's visible item count (accounts for non-standard row heights)
         int visibleItems = tabManager.getActiveVisibleItemCount();
 
-        this.getScrollBar()
-            .setRange(0, Math.max(0, lineCount - visibleItems), 1);
+        this.getScrollBar().setRange(0, Math.max(0, lineCount - visibleItems), 1);
     }
 
     // JEI Ghost Ingredient support
 
-    public List<GhostTarget<?>> getPhantomTargets(Object ingredient) {
+    public List<com.hfstudio.diskterminal.gui.handler.GhostTarget<?>> getPhantomTargets(Object ingredient) {
         if (partitionPopup != null) return partitionPopup.getGhostTargets();
 
         AbstractTabWidget activeTab = tabManager.getActiveTab();
@@ -1310,7 +1228,6 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             filterPanelManager.getAllFilterStates(),
             getEffectiveSearchMode(),
             new INetworkTool.NetworkToolCallback() {
-
                 @Override
                 public void showError(String message) {
                     MessageHelper.error(message);
@@ -1342,11 +1259,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         }
 
         networkToolModal = new GuiToolConfirmationModal(
-            tool,
-            ctx,
-            this.fontRendererObj,
-            this.width,
-            this.height,
+            tool, ctx, this.fontRendererObj, this.width, this.height,
             () -> {
                 tool.execute(ctx);
                 networkToolModal = null;
@@ -1403,18 +1316,21 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
     @Override
     public void highlightInWorld(BlockPos pos, int dimension, String displayName) {
-        if (pos == null || pos.equals(new BlockPos(0, 0, 0))) return;
+        if (pos == null || pos.equals(BlockPos.ORIGIN)) return;
 
         // Check if in different dimension
-        if (dimension != Minecraft.getMinecraft().thePlayer.dimension) {
+        if (dimension != Minecraft.getMinecraft().player.dimension) {
             MessageHelper.error("disk_terminal.error.different_dimension");
             return;
         }
 
-        DiskTerminalNetwork.INSTANCE.sendToServer(new PacketHighlightBlock(pos, dimension));
+        DiskTerminalNetwork.INSTANCE.sendToServer(
+            new PacketHighlightBlock(pos, dimension)
+        );
 
         // Send green chat message with block name and coordinates
-        MessageHelper.success("gui.disk_terminal.highlighted", pos.getX(), pos.getY(), pos.getZ(), displayName);
+        MessageHelper.success("gui.disk_terminal.highlighted",
+            pos.getX(), pos.getY(), pos.getZ(), displayName);
     }
 
     @Override
@@ -1456,10 +1372,5 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         int relMouseY = screenMouseY - guiTop;
 
         return activeTab.getHoveredItemStack(relMouseX, relMouseY);
-    }
-
-    @Override
-    public net.minecraft.inventory.Slot getSlotUnderMouse() {
-        return com.hfstudio.diskterminal.gui.handler.SlotAccess.slotUnderMouse(this);
     }
 }

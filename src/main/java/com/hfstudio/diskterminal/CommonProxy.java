@@ -1,5 +1,6 @@
 package com.hfstudio.diskterminal;
 
+import com.hfstudio.diskterminal.config.DiskTerminalServerConfig;
 import com.hfstudio.diskterminal.gui.GuiHandler;
 import com.hfstudio.diskterminal.integration.storage.AE2StorageScanner;
 import com.hfstudio.diskterminal.integration.storage.StorageScannerRegistry;
@@ -16,6 +17,8 @@ import cpw.mods.fml.common.network.NetworkRegistry;
 public class CommonProxy {
 
     public void preInit(FMLPreInitializationEvent event) {
+        // Initialize server config (applies to both client and server)
+        DiskTerminalServerConfig.init(event.getModConfigurationDirectory());
         DiskTerminalNetwork.init();
         ItemRegistry.init();
     }
