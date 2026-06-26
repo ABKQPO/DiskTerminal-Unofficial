@@ -232,8 +232,6 @@ public class CellActionHandler {
         return false;
     }
 
-    // --- Helper methods ---
-
     public static ConfigResult getConfigInventory(ICellHandler cellHandler, ItemStack cellStack) {
         ConfigResult result = new ConfigResult();
 

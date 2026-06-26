@@ -21,7 +21,7 @@ import org.lwjgl.opengl.GL11;
  * <li>Timing (click detection)</li>
  * </ul>
  */
-public final class GuiConstants {
+public class GuiConstants {
 
     private GuiConstants() {}
 

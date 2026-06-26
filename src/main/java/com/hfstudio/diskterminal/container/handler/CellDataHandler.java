@@ -7,9 +7,8 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 
-import com.glodblock.github.common.item.ItemFluidDrop;
 import com.hfstudio.diskterminal.client.StorageType;
-import com.hfstudio.diskterminal.integration.ThaumicEnergisticsIntegration;
+import com.hfstudio.diskterminal.util.AEStackUtil;
 import com.hfstudio.diskterminal.util.ItemStacks;
 import com.hfstudio.diskterminal.util.PosUtil;
 
@@ -21,15 +20,13 @@ import appeng.api.storage.ICellInventory;
 import appeng.api.storage.ICellInventoryHandler;
 import appeng.api.storage.ICellWorkbenchItem;
 import appeng.api.storage.IMEInventoryHandler;
-import appeng.api.storage.data.IAEFluidStack;
-import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.AEStackTypeRegistry;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
 import appeng.helpers.IPriorityHost;
 import appeng.tile.AEBaseInvTile;
 import appeng.util.IterationCounter;
-import appeng.util.item.AEFluidStackType;
-import appeng.util.item.AEItemStackType;
 
 /**
  * Handles cell and storage data generation for NBT serialization.
@@ -119,94 +116,45 @@ public class CellDataHandler {
             .getHandler(cellStack);
         if (cellHandler == null) return cellData;
 
-        // Try each channel type in order
-        if (tryPopulateItemCell(cellData, cellHandler, cellStack, slotLimit)) return cellData;
-        if (tryPopulateFluidCell(cellData, cellHandler, cellStack, slotLimit)) return cellData;
-        tryPopulateEssentiaCell(cellData, cellHandler, cellStack, slotLimit);
+        for (IAEStackType<?> type : AEStackTypeRegistry.getSortedTypes()) {
+            if (tryPopulateCellByUnknownType(cellData, cellHandler, cellStack, type, slotLimit)) return cellData;
+        }
 
         return cellData;
     }
 
-    private static boolean tryPopulateItemCell(NBTTagCompound cellData, ICellHandler cellHandler, ItemStack cellStack,
-        int slotLimit) {
-        IAEStackType<IAEItemStack> type = AEItemStackType.ITEM_STACK_TYPE;
+    @SuppressWarnings("unchecked")
+    private static <T extends IAEStack<T>> boolean tryPopulateCellByUnknownType(NBTTagCompound cellData,
+        ICellHandler cellHandler, ItemStack cellStack, IAEStackType<?> type, int slotLimit) {
+        return tryPopulateCellByType(cellData, cellHandler, cellStack, (IAEStackType<T>) type, slotLimit);
+    }
+
+    private static <T extends IAEStack<T>> boolean tryPopulateCellByType(NBTTagCompound cellData,
+        ICellHandler cellHandler, ItemStack cellStack, IAEStackType<T> type, int slotLimit) {
         IMEInventoryHandler<?> rawHandler = cellHandler.getCellInventory(cellStack, null, type);
         if (!(rawHandler instanceof ICellInventoryHandler)) return false;
 
         @SuppressWarnings("unchecked")
-        ICellInventory<IAEItemStack> cellInv = ((ICellInventoryHandler<IAEItemStack>) rawHandler).getCellInv();
+        ICellInventoryHandler<T> handler = (ICellInventoryHandler<T>) rawHandler;
+        ICellInventory<T> cellInv = handler.getCellInv();
 
-        // If cellInv is null (e.g., VoidCells), fall back to ICellWorkbenchItem for config/upgrades
+        writeStackType(cellData, type);
+
         if (cellInv == null) {
-            if (!(cellStack.getItem() instanceof ICellWorkbenchItem)) return false;
-
-            ICellWorkbenchItem workbenchItem = (ICellWorkbenchItem) cellStack.getItem();
-            IInventory configInv = workbenchItem.getConfigInventory(cellStack);
-            IInventory upgradesInv = workbenchItem.getUpgradesInventory(cellStack);
-
-            if (configInv == null && upgradesInv == null) return false;
-
-            populateConfigInventory(cellData, configInv);
-            populateCellUpgrades(cellData, upgradesInv);
-
-            return true;
+            return populateWorkbenchOnlyData(cellData, cellStack);
         }
 
-        StorageType.ITEM.writeToNBT(cellData);
         populateCellStats(cellData, cellInv);
         populateConfigInventory(cellData, cellInv.getConfigInventory());
-        populateItemContents(cellData, cellInv, slotLimit);
+        populateGenericContents(cellData, cellInv, type, slotLimit);
         populateCellUpgrades(cellData, cellInv.getUpgradesInventory());
 
         return true;
     }
 
-    private static boolean tryPopulateFluidCell(NBTTagCompound cellData, ICellHandler cellHandler, ItemStack cellStack,
-        int slotLimit) {
-        IAEStackType<IAEFluidStack> type = AEFluidStackType.FLUID_STACK_TYPE;
-        IMEInventoryHandler<?> rawHandler = cellHandler.getCellInventory(cellStack, null, type);
-        if (!(rawHandler instanceof ICellInventoryHandler)) return false;
-
-        @SuppressWarnings("unchecked")
-        ICellInventory<IAEFluidStack> cellInv = ((ICellInventoryHandler<IAEFluidStack>) rawHandler).getCellInv();
-
-        if (cellInv == null) {
-            if (!(cellStack.getItem() instanceof ICellWorkbenchItem)) return false;
-
-            ICellWorkbenchItem workbenchItem = (ICellWorkbenchItem) cellStack.getItem();
-            IInventory configInv = workbenchItem.getConfigInventory(cellStack);
-            IInventory upgradesInv = workbenchItem.getUpgradesInventory(cellStack);
-
-            if (configInv == null && upgradesInv == null) return false;
-
-            StorageType.FLUID.writeToNBT(cellData);
-            populateConfigInventory(cellData, configInv);
-            populateCellUpgrades(cellData, upgradesInv);
-
-            return true;
-        }
-
-        StorageType.FLUID.writeToNBT(cellData);
-        populateCellStats(cellData, cellInv);
-        populateConfigInventory(cellData, cellInv.getConfigInventory());
-        populateFluidContents(cellData, cellInv, slotLimit);
-        populateCellUpgrades(cellData, cellInv.getUpgradesInventory());
-
-        return true;
-    }
-
-    private static boolean tryPopulateEssentiaCell(NBTTagCompound cellData, ICellHandler cellHandler,
-        ItemStack cellStack, int slotLimit) {
-        NBTTagCompound essentiaData = ThaumicEnergisticsIntegration
-            .tryPopulateEssentiaCell(cellHandler, cellStack, slotLimit);
-        if (essentiaData == null) return false;
-
-        for (Object key : essentiaData.func_150296_c()) {
-            String k = (String) key;
-            cellData.setTag(k, essentiaData.getTag(k));
-        }
-
-        return true;
+    private static void writeStackType(NBTTagCompound data, IAEStackType<?> type) {
+        data.setString("stackType", type.getId());
+        storageTypeFrom(type).writeToNBT(data);
     }
 
     private static void populateCellStats(NBTTagCompound cellData, ICellInventory<?> cellInv) {
@@ -232,48 +180,18 @@ public class CellDataHandler {
         cellData.setTag("partition", partitionList);
     }
 
-    private static void populateItemContents(NBTTagCompound cellData, ICellInventory<IAEItemStack> cellInv,
-        int slotLimit) {
-        IItemList<IAEItemStack> contents = cellInv
-            .getAvailableItems(AEItemStackType.ITEM_STACK_TYPE.createList(), IterationCounter.fetchNewId());
+    private static <T extends IAEStack<T>> void populateGenericContents(NBTTagCompound cellData,
+        ICellInventory<T> cellInv, IAEStackType<T> type, int slotLimit) {
+        IItemList<T> contents = cellInv.getAvailableItems(type.createList(), IterationCounter.fetchNewId());
         NBTTagList contentsList = new NBTTagList();
         int count = 0;
 
-        for (IAEItemStack stack : contents) {
+        for (T stack : contents) {
             if (count >= slotLimit) break;
 
-            ItemStack itemRep = stack.getItemStack();
-            if (ItemStacks.isEmpty(itemRep)) continue;
-
-            // Write the vanilla ItemStack NBT (id/Damage/tag) so the client can deserialize it with
-            // ItemStack.loadItemStackFromNBT. The real (possibly >64) count is carried separately in
-            // "Cnt" because IAEItemStack.getStackSize() can exceed the vanilla byte count field.
             NBTTagCompound stackNbt = new NBTTagCompound();
-            itemRep.writeToNBT(stackNbt);
+            AEStackUtil.writeStackToNBT(stackNbt, stack);
             stackNbt.setLong("Cnt", stack.getStackSize());
-            contentsList.appendTag(stackNbt);
-            count++;
-        }
-
-        cellData.setTag("contents", contentsList);
-    }
-
-    private static void populateFluidContents(NBTTagCompound cellData, ICellInventory<IAEFluidStack> cellInv,
-        int slotLimit) {
-        IItemList<IAEFluidStack> contents = cellInv
-            .getAvailableItems(AEFluidStackType.FLUID_STACK_TYPE.createList(), IterationCounter.fetchNewId());
-        NBTTagList contentsList = new NBTTagList();
-        int count = 0;
-
-        for (IAEFluidStack stack : contents) {
-            if (count >= slotLimit) break;
-
-            ItemStack itemRep = ItemFluidDrop.newStack(stack.getFluidStack());
-            if (ItemStacks.isEmpty(itemRep)) continue;
-
-            NBTTagCompound stackNbt = new NBTTagCompound();
-            itemRep.writeToNBT(stackNbt);
-            stackNbt.setLong("fluidAmount", stack.getStackSize());
             contentsList.appendTag(stackNbt);
             count++;
         }
@@ -299,6 +217,29 @@ public class CellDataHandler {
         }
 
         cellData.setTag("upgrades", upgradeList);
+    }
+
+    private static boolean populateWorkbenchOnlyData(NBTTagCompound cellData, ItemStack cellStack) {
+        if (!(cellStack.getItem() instanceof ICellWorkbenchItem)) return false;
+
+        ICellWorkbenchItem workbenchItem = (ICellWorkbenchItem) cellStack.getItem();
+        IInventory configInv = workbenchItem.getConfigInventory(cellStack);
+        IInventory upgradesInv = workbenchItem.getUpgradesInventory(cellStack);
+
+        if (configInv == null && upgradesInv == null) return false;
+
+        populateConfigInventory(cellData, configInv);
+        populateCellUpgrades(cellData, upgradesInv);
+
+        return true;
+    }
+
+    private static StorageType storageTypeFrom(IAEStackType<?> type) {
+        String id = type.getId();
+        if ("fluid".equals(id)) return StorageType.FLUID;
+        if ("essentia".equals(id)) return StorageType.ESSENTIA;
+
+        return StorageType.ITEM;
     }
 
     private static String getStorageName(IChestOrDrive storage, String defaultName) {

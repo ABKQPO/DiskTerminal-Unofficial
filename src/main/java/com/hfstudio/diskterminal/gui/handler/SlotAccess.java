@@ -11,7 +11,7 @@ import net.minecraft.inventory.Slot;
  * The {@code theSlot} field's access modifier varies between the 1.7.10 MC variants on the
  * dependency classpath, so it is read reflectively and cached. Returns null on any failure.
  */
-public final class SlotAccess {
+public class SlotAccess {
 
     private static Field theSlotField;
     private static boolean resolved;

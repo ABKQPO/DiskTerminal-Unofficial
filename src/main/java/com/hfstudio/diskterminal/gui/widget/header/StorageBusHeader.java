@@ -57,8 +57,6 @@ public class StorageBusHeader extends StorageHeader {
             () -> { if (onIOModeClick != null) onIOModeClick.run(); });
     }
 
-    // ---- Configuration ----
-
     public void setAccessModeSupplier(Supplier<Integer> supplier) {
         this.accessModeSupplier = supplier;
     }
@@ -70,8 +68,6 @@ public class StorageBusHeader extends StorageHeader {
     public void setOnIOModeClick(Runnable callback) {
         this.onIOModeClick = callback;
     }
-
-    // ---- Rendering ----
 
     @Override
     protected int drawHeaderContent(int mouseX, int mouseY) {
@@ -145,8 +141,6 @@ public class StorageBusHeader extends StorageHeader {
         ioModeButton.setPosition(GuiConstants.BUTTON_IO_MODE_X, y);
         ioModeButton.draw(mouseX, mouseY);
     }
-
-    // ---- Click handling ----
 
     @Override
     public boolean handleClick(int mouseX, int mouseY, int button) {

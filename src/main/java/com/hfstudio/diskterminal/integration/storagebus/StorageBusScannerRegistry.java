@@ -14,7 +14,7 @@ import appeng.api.networking.IGrid;
 /**
  * Registry for storage bus scanners.
  */
-public final class StorageBusScannerRegistry {
+public class StorageBusScannerRegistry {
 
     private static final List<IStorageBusScanner> scanners = new ArrayList<>();
 

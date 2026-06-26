@@ -26,7 +26,7 @@ import appeng.util.ReadableNumberConverter;
  * - **Content mode**: Shows item contents with count labels and partition indicators ("P").
  * Click toggles the item into/out of partition.
  * - **Partition mode**: Shows partition entries with amber tint.
- * Click sets/clears individual partition slots. Supports JEI ghost ingredient drop.
+ * Click sets/clears individual partition slots. Supports NEI ghost ingredient drop.
  * <p>
  * Configuration:
  * - {@code slotsPerRow}: Number of slots per row (8 for cells, 9 for storage buses)
@@ -62,7 +62,7 @@ public class SlotsLine extends AbstractLine {
     }
 
     /**
-     * Tracks a visible partition slot for JEI ghost ingredient integration.
+     * Tracks a visible partition slot for NEI ghost ingredient integration.
      */
     public static class PartitionSlotTarget {
 
@@ -104,7 +104,7 @@ public class SlotsLine extends AbstractLine {
     /** Maximum number of slots allowed */
     protected int maxSlots = Integer.MAX_VALUE;
 
-    /** Absolute GUI position offsets for JEI target registration */
+    /** Absolute GUI position offsets for NEI target registration */
     protected int guiLeft;
     protected int guiTop;
 
@@ -112,7 +112,7 @@ public class SlotsLine extends AbstractLine {
     protected int hoveredSlotIndex = -1;
     protected ItemStack hoveredStack = null;
 
-    // JEI targets accumulated during draw
+    // NEI targets accumulated during draw
     protected final List<PartitionSlotTarget> partitionTargets = new ArrayList<>();
 
     protected SlotClickCallback slotClickCallback;
@@ -186,7 +186,7 @@ public class SlotsLine extends AbstractLine {
     }
 
     /**
-     * Get the JEI partition slot targets accumulated during the last draw.
+     * Get the NEI partition slot targets accumulated during the last draw.
      * Only populated in PARTITION mode.
      */
     public List<PartitionSlotTarget> getPartitionTargets() {
@@ -265,8 +265,6 @@ public class SlotsLine extends AbstractLine {
         return hoveredStack;
     }
 
-    // ---- Content slot rendering ----
-
     protected void drawContentSlots(int mouseX, int mouseY) {
         List<ItemStack> items = itemsSupplier != null ? itemsSupplier.get() : Collections.emptyList();
         List<ItemStack> partition = partitionSupplier != null ? partitionSupplier.get() : Collections.emptyList();
@@ -306,8 +304,6 @@ public class SlotsLine extends AbstractLine {
         }
     }
 
-    // ---- Partition slot rendering ----
-
     protected void drawPartitionSlots(int mouseX, int mouseY) {
         List<ItemStack> partition = itemsSupplier != null ? itemsSupplier.get() : Collections.emptyList();
 
@@ -326,7 +322,7 @@ public class SlotsLine extends AbstractLine {
 
             int slotX = slotsXOffset + (i * SIZE);
 
-            // Register JEI ghost target
+            // Register NEI ghost target
             partitionTargets.add(new PartitionSlotTarget(absIndex, guiLeft + slotX, guiTop + y, SIZE, SIZE));
 
             // Draw partition item if present
@@ -346,8 +342,6 @@ public class SlotsLine extends AbstractLine {
             }
         }
     }
-
-    // ---- Drawing helpers ----
 
     protected void drawSlotBackground(int slotX, int slotY) {
         int texX = GuiConstants.MINI_SLOT_X;

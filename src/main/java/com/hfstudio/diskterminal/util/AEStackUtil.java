@@ -1,118 +1,175 @@
 package com.hfstudio.diskterminal.util;
 
+import java.util.Collection;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 
-import com.glodblock.github.common.item.ItemFluidDrop;
+import org.lwjgl.opengl.GL11;
 
-import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.AEStackTypeRegistry;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
-import appeng.util.item.AEFluidStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.util.item.AEItemStack;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
 /**
- * Utility class for working with IAEStack types.
- * Handles serialization, deserialization, and rendering of AE2 storage stacks.
+ * Utility methods for AE stack serialization, conversion, and GUI rendering.
  */
 public class AEStackUtil {
 
+    private static final String LEGACY_ITEM_KEY = "id";
+
     /**
-     * Write an IAEStack to NBT, preserving type information.
+     * Writes a stack using AE2's generic stack NBT format.
      */
     public static void writeStackToNBT(NBTTagCompound nbt, IAEStack<?> stack) {
-        if (stack == null) return;
+        if (nbt == null || stack == null) return;
 
-        if (stack instanceof IAEItemStack) {
-            nbt.setString("type", "item");
-            ((IAEItemStack) stack).writeToNBT(nbt);
-        } else if (stack instanceof IAEFluidStack) {
-            nbt.setString("type", "fluid");
-            ((IAEFluidStack) stack).writeToNBT(nbt);
+        NBTTagCompound generic = stack.toNBTGeneric();
+        for (Object key : generic.func_150296_c()) {
+            String name = (String) key;
+            nbt.setTag(name, generic.getTag(name));
         }
     }
 
     /**
-     * Read an IAEStack from NBT.
+     * Reads a stack using AE2's registered stack types, with legacy fallback for older payloads.
      */
     public static IAEStack<?> readStackFromNBT(NBTTagCompound nbt) {
-        if (!nbt.hasKey("type")) {
-            // Legacy format - try to detect type from keys
-            if (nbt.hasKey("FluidName")) {
-                return AEFluidStack.loadFluidStackFromNBT(nbt);
-            } else if (nbt.hasKey("id")) {
-                return AEItemStack.loadItemStackFromNBT(nbt);
-            }
-            return null;
+        if (nbt == null || nbt.hasNoTags()) return null;
+
+        if (nbt.hasKey("StackType")) {
+            IAEStack<?> stack = IAEStack.fromNBTGeneric(nbt);
+            if (stack != null) return stack;
         }
 
-        String type = nbt.getString("type");
-        switch (type) {
-            case "item":
-                return AEItemStack.loadItemStackFromNBT(nbt);
-            case "fluid":
-                return AEFluidStack.loadFluidStackFromNBT(nbt);
-            default:
-                return null;
-        }
+        return readLegacyStackFromNBT(nbt);
+    }
+
+    public static Collection<IAEStackType<?>> getRegisteredTypes() {
+        return AEStackTypeRegistry.getAllTypes();
     }
 
     /**
-     * Get a display ItemStack for an IAEStack.
-     * Used for compatibility with code that needs ItemStack representation.
+     * Converts an item-like ingredient into the first registered AE stack type that accepts it.
+     */
+    public static IAEStack<?> convertItemUsingRegisteredTypes(ItemStack stack) {
+        if (ItemStacks.isEmpty(stack)) return null;
+
+        ItemStack single = stack.copy();
+        single.stackSize = 1;
+
+        for (IAEStackType<?> type : AEStackTypeRegistry.getSortedTypes()) {
+            IAEStack<?> containerStack = type.getStackFromContainerItem(single);
+            if (containerStack != null) return containerStack;
+
+            IAEStack<?> convertedStack = type.convertStackFromItem(single);
+            if (convertedStack != null) return convertedStack;
+        }
+
+        return AEItemStack.create(single);
+    }
+
+    public static IAEStack<?> convertItemForType(ItemStack stack, IAEStackType<?> type) {
+        if (ItemStacks.isEmpty(stack) || type == null) return null;
+
+        ItemStack single = stack.copy();
+        single.stackSize = 1;
+
+        IAEStack<?> containerStack = type.getStackFromContainerItem(single);
+        if (containerStack != null) return containerStack;
+
+        IAEStack<?> convertedStack = type.convertStackFromItem(single);
+        if (convertedStack != null) return convertedStack;
+
+        return "item".equals(type.getId()) ? AEItemStack.create(single) : null;
+    }
+
+    /**
+     * Gets the display ItemStack exposed by a stack type for NEI and GUI compatibility.
      */
     public static ItemStack getDisplayStack(IAEStack<?> stack) {
         if (stack == null) return null;
 
-        if (stack instanceof IAEItemStack) {
-            return ((IAEItemStack) stack).getItemStack();
-        } else if (stack instanceof IAEFluidStack) {
-            return ItemFluidDrop.newStack(((IAEFluidStack) stack).getFluidStack());
-        }
+        ItemStack displayStack = stack.getItemStackForNEI();
+        if (!ItemStacks.isEmpty(displayStack)) return displayStack;
+
+        if (stack instanceof IAEItemStack itemStack) return itemStack.getItemStack();
 
         return null;
     }
 
-    /**
-     * Render an IAEStack in GUI using AE2's native rendering.
-     * This properly handles all stack types (items, fluids, essentia, etc.).
-     */
     @SideOnly(Side.CLIENT)
     public static void drawStackInGui(IAEStack<?> stack, int x, int y) {
         if (stack == null) return;
-        stack.drawInGui(Minecraft.getMinecraft(), x, y);
+
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glPushMatrix();
+
+        try {
+            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            stack.drawInGui(Minecraft.getMinecraft(), x, y);
+        } finally {
+            GL11.glPopMatrix();
+            GL11.glPopAttrib();
+        }
     }
 
-    /**
-     * Create an IAEItemStack from a regular ItemStack.
-     */
     public static IAEItemStack createItemStack(ItemStack stack) {
         if (ItemStacks.isEmpty(stack)) return null;
         return AEItemStack.create(stack);
     }
 
-    /**
-     * Get the stack size/amount for display.
-     */
     public static long getStackSize(IAEStack<?> stack) {
         return stack != null ? stack.getStackSize() : 0;
     }
 
-    /**
-     * Check if two IAEStacks are equal (ignoring stack size).
-     */
     public static boolean isSameType(IAEStack<?> a, IAEStack<?> b) {
         if (a == null || b == null) return a == b;
         return a.isSameType(b);
     }
 
-    /**
-     * Create a copy of an IAEStack.
-     */
     public static IAEStack<?> copy(IAEStack<?> stack) {
         return stack != null ? stack.copy() : null;
+    }
+
+    @SideOnly(Side.CLIENT)
+    public static String getDisplayName(IAEStack<?> stack) {
+        if (stack == null) return "";
+
+        String displayName = stack.getDisplayName();
+        if (displayName != null && !displayName.isEmpty()) return displayName;
+
+        ItemStack displayStack = getDisplayStack(stack);
+        return ItemStacks.isEmpty(displayStack) ? "" : displayStack.getDisplayName();
+    }
+
+    private static IAEStack<?> readLegacyStackFromNBT(NBTTagCompound nbt) {
+        if (nbt.hasKey(LEGACY_ITEM_KEY)) {
+            ItemStack itemStack = ItemStack.loadItemStackFromNBT(nbt);
+            if (ItemStacks.isEmpty(itemStack)) return null;
+
+            IAEStack<?> converted = convertItemUsingRegisteredTypes(itemStack);
+            if (converted != null) {
+                long count = nbt.hasKey("Cnt") ? nbt.getLong("Cnt") : itemStack.stackSize;
+                converted.setStackSize(count);
+                return converted;
+            }
+        }
+
+        for (IAEStackType<?> type : AEStackTypeRegistry.getSortedTypes()) {
+            try {
+                IAEStack<?> stack = type.loadStackFromNBT(nbt);
+                if (stack != null) return stack;
+            } catch (RuntimeException ignored) {
+                // Incompatible legacy payload for this registered type.
+            }
+        }
+
+        return null;
     }
 }

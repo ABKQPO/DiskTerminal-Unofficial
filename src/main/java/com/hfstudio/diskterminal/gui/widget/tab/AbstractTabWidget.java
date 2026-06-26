@@ -68,7 +68,7 @@ public abstract class AbstractTabWidget extends AbstractWidget {
     protected final FontRenderer fontRenderer;
     protected final RenderItem itemRender;
 
-    /** Absolute GUI position offsets (needed for JEI targets and priority fields) */
+    /** Absolute GUI position offsets (needed for NEI targets and priority fields) */
     protected int guiLeft;
     protected int guiTop;
 
@@ -105,8 +105,6 @@ public abstract class AbstractTabWidget extends AbstractWidget {
         this.itemRender = itemRender;
     }
 
-    // ---- Configuration ----
-
     public void setGuiOffsets(int guiLeft, int guiTop) {
         this.guiLeft = guiLeft;
         this.guiTop = guiTop;
@@ -126,8 +124,6 @@ public abstract class AbstractTabWidget extends AbstractWidget {
     public int getVisibleItemCount() {
         return rowsVisible;
     }
-
-    // ---- Row building ----
 
     /**
      * Build the list of visible row widgets for the current scroll window.
@@ -235,8 +231,6 @@ public abstract class AbstractTabWidget extends AbstractWidget {
         return isContentLine(allLines, nextIndex);
     }
 
-    // ---- Drawing ----
-
     @Override
     public void draw(int mouseX, int mouseY) {
         if (!visible) return;
@@ -253,8 +247,6 @@ public abstract class AbstractTabWidget extends AbstractWidget {
             Gui.drawRect(treeLineX, bottomContinuationFromY, treeLineX + 1, bottomY, GuiConstants.COLOR_TREE_LINE);
         }
     }
-
-    // ---- Event handling ----
 
     @Override
     public boolean handleClick(int mouseX, int mouseY, int button) {
@@ -314,8 +306,6 @@ public abstract class AbstractTabWidget extends AbstractWidget {
         return null;
     }
 
-    // ---- Cards helper ----
-
     /**
      * Create a CardsDisplay for a cell's upgrade icons, positioned at the left margin.
      * Shared by TerminalTabWidget, CellContentTabWidget, and TempAreaTabWidget.
@@ -352,8 +342,6 @@ public abstract class AbstractTabWidget extends AbstractWidget {
 
         return cards;
     }
-
-    // ---- JEI integration ----
 
     /**
      * Get the source data object for the widget under the mouse cursor.
@@ -401,10 +389,7 @@ public abstract class AbstractTabWidget extends AbstractWidget {
     public Map<IWidget, Object> getWidgetDataMap() {
         return Collections.unmodifiableMap(widgetDataMap);
     }
-
-    // ========================================================================
     // Tab controller responsibilities
-    // ========================================================================
 
     /** The GUI context, set once during initialization via {@link #init(GuiContext)}. */
     protected GuiContext guiContext;
@@ -477,8 +462,6 @@ public abstract class AbstractTabWidget extends AbstractWidget {
         return false;
     }
 
-    // ---- Upgrade support ----
-
     /**
      * Handle an upgrade item click on a hovered row.
      * Called when the player is holding an upgrade and left-clicks in the content area.
@@ -498,8 +481,7 @@ public abstract class AbstractTabWidget extends AbstractWidget {
                 .get(cell.getParentStorageId());
             if (storage == null) return false;
 
-            guiContext.sendPacket(
-                new com.hfstudio.diskterminal.network.PacketUpgradeCell(storage.getId(), cell.getSlot(), false));
+            guiContext.sendPacket(new PacketUpgradeCell(storage.getId(), cell.getSlot(), false));
 
             return true;
         }
@@ -508,7 +490,7 @@ public abstract class AbstractTabWidget extends AbstractWidget {
             StorageInfo storage = (StorageInfo) hoveredData;
             // Let the server iterate through cells and find one that actually accepts
             // Use shiftClick=true so server handles the cell selection
-            guiContext.sendPacket(new com.hfstudio.diskterminal.network.PacketUpgradeCell(storage.getId(), -1, true));
+            guiContext.sendPacket(new PacketUpgradeCell(storage.getId(), -1, true));
 
             return true;
         }
@@ -521,8 +503,7 @@ public abstract class AbstractTabWidget extends AbstractWidget {
                 .getStorageMap()
                 .get(cell.getParentStorageId());
             if (storage != null) {
-                guiContext.sendPacket(
-                    new com.hfstudio.diskterminal.network.PacketUpgradeCell(storage.getId(), cell.getSlot(), false));
+                guiContext.sendPacket(new PacketUpgradeCell(storage.getId(), cell.getSlot(), false));
 
                 return true;
             }
@@ -573,10 +554,8 @@ public abstract class AbstractTabWidget extends AbstractWidget {
         return true;
     }
 
-    // ---- JEI ghost targets ----
-
     /**
-     * Get JEI ghost ingredient targets for this tab.
+     * Get NEI ghost ingredient targets for this tab.
      * Only partition-related tabs provide targets. Default returns empty list.
      */
     public List<GhostTarget<?>> getPhantomTargets(Object ingredient) {

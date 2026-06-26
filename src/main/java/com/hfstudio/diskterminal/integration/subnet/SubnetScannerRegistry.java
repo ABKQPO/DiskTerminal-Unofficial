@@ -15,7 +15,7 @@ import appeng.api.networking.IGrid;
  * Registry for subnet scanners.
  * Scanners detect and collect information about subnets connected to an ME network.
  */
-public final class SubnetScannerRegistry {
+public class SubnetScannerRegistry {
 
     private static final List<ISubnetScanner> scanners = new ArrayList<>();
 

@@ -3,7 +3,6 @@ package com.hfstudio.diskterminal.gui.buttons;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.entity.RenderItem;
@@ -137,18 +136,6 @@ public class GuiFilterButton extends GuiAtlasButton {
     }
 
     private static ItemStack getGasIcon() {
-        // Try to get Mekanism Gas Tank, fall back to bucket if not available
-        if (!Loader.isModLoaded("mekanism")) return new ItemStack(Items.bucket);
-
-        try {
-            Class<?> mekanismBlocks = Class.forName("mekanism.common.MekanismBlocks");
-            Object gasTankBlock = mekanismBlocks.getField("GasTank")
-                .get(null);
-            if (gasTankBlock instanceof Block) return new ItemStack((Block) gasTankBlock);
-        } catch (Exception e) {
-            DiskTerminal.LOG.warn("Failed to get Mekanism Gas Tank block for gas cell filter icon", e);
-        }
-
         return new ItemStack(Items.bucket);
     }
 

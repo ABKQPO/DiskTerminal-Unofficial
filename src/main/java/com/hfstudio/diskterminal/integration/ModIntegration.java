@@ -6,14 +6,13 @@ import cpw.mods.fml.common.Loader;
  * Central registry for mod integration status.
  * Provides cached checks for whether optional mods are loaded.
  */
-public final class ModIntegration {
+public class ModIntegration {
 
     private ModIntegration() {}
 
     // Mod IDs
     public static final String AE2_FLUID_CRAFT = "ae2fc";
     public static final String THAUMIC_ENERGISTICS = "thaumicenergistics";
-    public static final String MEKANISM = "Mekanism";
     public static final String GREGTECH = "gregtech";
     public static final String NEI = "NotEnoughItems";
     public static final String BAUBLES = "Baubles";
@@ -22,7 +21,6 @@ public final class ModIntegration {
     // Cached status (initialized on first access)
     private static Boolean ae2FluidCraftLoaded;
     private static Boolean thaumicEnergisticsLoaded;
-    private static Boolean mekanismLoaded;
     private static Boolean gregtechLoaded;
     private static Boolean neiLoaded;
     private static Boolean baublesLoaded;
@@ -46,16 +44,6 @@ public final class ModIntegration {
             thaumicEnergisticsLoaded = Loader.isModLoaded(THAUMIC_ENERGISTICS);
         }
         return thaumicEnergisticsLoaded;
-    }
-
-    /**
-     * Check if Mekanism (gas storage) is loaded.
-     */
-    public static boolean isMekanismLoaded() {
-        if (mekanismLoaded == null) {
-            mekanismLoaded = Loader.isModLoaded(MEKANISM);
-        }
-        return mekanismLoaded;
     }
 
     /**
@@ -115,10 +103,9 @@ public final class ModIntegration {
     }
 
     /**
-     * Check if any gas storage mod is loaded.
-     * This determines whether gas-related UI elements should be shown.
+     * Gas storage is not part of the 1.7.10 port.
      */
     public static boolean hasGasStorage() {
-        return isMekanismLoaded();
+        return false;
     }
 }

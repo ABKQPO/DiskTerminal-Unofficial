@@ -78,8 +78,6 @@ public class TempAreaHeader extends AbstractHeader {
         this.nameMaxWidth = MAX_NAME_WIDTH;
     }
 
-    // ---- Configuration ----
-
     public void setHasCellSupplier(Supplier<Boolean> supplier) {
         this.hasCellSupplier = supplier;
     }
@@ -91,8 +89,6 @@ public class TempAreaHeader extends AbstractHeader {
     public void setOnSendClick(Runnable callback) {
         this.onSendClick = callback;
     }
-
-    // ---- Rendering ----
 
     @Override
     protected int drawHeaderContent(int mouseX, int mouseY) {
@@ -273,8 +269,6 @@ public class TempAreaHeader extends AbstractHeader {
         fontRenderer.drawString(sendText, textX, btnY + 2, 0x000000);
     }
 
-    // ---- Click handling ----
-
     @Override
     public boolean handleClick(int mouseX, int mouseY, int button) {
         if (!visible) return false;
@@ -320,8 +314,6 @@ public class TempAreaHeader extends AbstractHeader {
 
         return null;
     }
-
-    // ---- Slot rendering helpers ----
 
     private void drawSlotBackground(int slotX, int slotY) {
         // Mini slot: left half of slot (y uv 0-15)

@@ -106,8 +106,6 @@ public abstract class AbstractHeader extends AbstractWidget {
         this.itemRender = itemRender;
     }
 
-    // ---- Configuration ----
-
     public void setIconSupplier(Supplier<ItemStack> supplier) {
         this.iconSupplier = supplier;
     }
@@ -179,8 +177,6 @@ public abstract class AbstractHeader extends AbstractWidget {
         this.cardsDisplay = cards;
     }
 
-    // ---- Hover detection ----
-
     /**
      * Extend hover detection to include the CardsDisplay overflow area.
      * <p>
@@ -201,8 +197,6 @@ public abstract class AbstractHeader extends AbstractWidget {
         return false;
     }
 
-    // ---- Accessors ----
-
     /**
      * Get the Y position of the tree connector at the bottom of this header.
      * The first content line below should use this as its {@code lineAboveCutY}.
@@ -210,8 +204,6 @@ public abstract class AbstractHeader extends AbstractWidget {
     public int getConnectorY() {
         return y + GuiConstants.HEADER_CONNECTOR_Y_OFFSET;
     }
-
-    // ---- Rendering ----
 
     @Override
     public void draw(int mouseX, int mouseY) {
@@ -315,8 +307,6 @@ public abstract class AbstractHeader extends AbstractWidget {
         }
     }
 
-    // ---- Click handling ----
-
     @Override
     public boolean handleClick(int mouseX, int mouseY, int button) {
         if (!visible) return false;
@@ -382,8 +372,6 @@ public abstract class AbstractHeader extends AbstractWidget {
 
         return null;
     }
-
-    // ---- Utilities ----
 
     /**
      * Delegate to the shared static utility in AbstractWidget.

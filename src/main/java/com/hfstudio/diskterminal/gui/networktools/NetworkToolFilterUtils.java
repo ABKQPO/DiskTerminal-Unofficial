@@ -21,7 +21,7 @@ import com.hfstudio.diskterminal.util.ItemStacks;
  * Utility class for filtering cells and storage buses based on active filter states.
  * Used by network tools to determine which elements they should operate on.
  */
-public final class NetworkToolFilterUtils {
+public class NetworkToolFilterUtils {
 
     private NetworkToolFilterUtils() {}
 

@@ -27,7 +27,7 @@ import thaumicenergistics.common.storage.AEEssentiaStackType;
  * access so the core data handler stays decoupled; when Thaumic Energistics is absent, every method
  * is a no-op guarded by {@link Optional.Method}.
  */
-public final class ThaumicEnergisticsIntegration {
+public class ThaumicEnergisticsIntegration {
 
     public static final String MOD_ID = "thaumicenergistics";
 

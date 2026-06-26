@@ -51,8 +51,6 @@ public class StorageHeader extends AbstractHeader {
         super(y, fontRenderer, itemRender);
     }
 
-    // ---- Configuration ----
-
     public void setLocationSupplier(Supplier<String> supplier) {
         this.locationSupplier = supplier;
     }
@@ -82,8 +80,6 @@ public class StorageHeader extends AbstractHeader {
         this.guiLeft = guiLeft;
         this.guiTop = guiTop;
     }
-
-    // ---- Rendering ----
 
     @Override
     protected int drawHeaderContent(int mouseX, int mouseY) {
@@ -130,8 +126,6 @@ public class StorageHeader extends AbstractHeader {
             && mouseY >= y
             && mouseY < y + GuiConstants.ROW_HEIGHT;
     }
-
-    // ---- Click handling ----
 
     @Override
     public boolean handleClick(int mouseX, int mouseY, int button) {

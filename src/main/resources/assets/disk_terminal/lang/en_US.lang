@@ -182,7 +182,7 @@ disk_terminal.warning.upgrade_insert_failed_any_storage_bus=Couldn't insert upgr
 disk_terminal.warning.upgrade_insert_failed_any_temp_cell=Couldn't insert upgrade into any temporary cell.
 
 # Panel hints
-gui.disk_terminal.hint.partition=Click to remove, drag from JEI to add
+gui.disk_terminal.hint.partition=Click to remove, drag from NEI to add
 
 # Popup titles and buttons
 gui.disk_terminal.popup.partition_suffix= - Partition
@@ -287,7 +287,7 @@ gui.disk_terminal.button.write_only=Insert Only
 gui.disk_terminal.button.read_write=Extract/Insert
 
 # Controls help (bottom left widget)
-gui.disk_terminal.controls.jei_drag=Drag from JEI to add.
+gui.disk_terminal.controls.nei_drag=Drag from NEI to add.
 gui.disk_terminal.controls.click_to_remove=Click to remove from slot.
 gui.disk_terminal.controls.key_auto=§b%s§r: Partition (auto)
 gui.disk_terminal.controls.key_item=§b%s§r: Partition (item)

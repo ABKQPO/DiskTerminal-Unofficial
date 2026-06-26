@@ -6,35 +6,36 @@ import net.minecraftforge.fluids.FluidStack;
 import com.hfstudio.diskterminal.client.StorageType;
 import com.hfstudio.diskterminal.gui.overlay.MessageHelper;
 import com.hfstudio.diskterminal.integration.ThaumicEnergisticsIntegration;
+import com.hfstudio.diskterminal.util.AEStackUtil;
 import com.hfstudio.diskterminal.util.FluidStacks;
 import com.hfstudio.diskterminal.util.ItemStacks;
 
+import appeng.api.storage.data.AEStackTypeRegistry;
+import appeng.api.storage.data.IAEStack;
+import appeng.api.storage.data.IAEStackType;
+
 /**
- * Converts a dragged ingredient (from NEI, or any provider) into the ItemStack representation a
- * cell/storage-bus partition expects.
- * <p>
- * The 1.12 source bound this to JEI's ghost-ingredient API and Mekanism gas. Here it is
- * provider-neutral: it accepts {@link ItemStack} and {@link FluidStack} ingredients (NEI hands
- * both), maps fluids to the AE2FluidCraft drop representation, and routes essentia containers
- * through Thaumic Energistics. Gas support is dropped (no Mekanism).
+ * Converts external ghost ingredients into the ItemStack representation expected by AE2 config inventories.
  */
-public class JeiGhostHandler {
+public class GhostIngredientHandler {
 
-    private JeiGhostHandler() {}
+    private GhostIngredientHandler() {}
 
-    /**
-     * Convert an ingredient to the ItemStack a cell partition of {@code cellType} expects.
-     * Returns null when the ingredient is incompatible.
-     */
-    public static ItemStack convertJeiIngredientToItemStack(Object ingredient, StorageType cellType) {
+    public static ItemStack convertIngredientForCell(Object ingredient, StorageType cellType) {
         return convert(ingredient, cellType, false);
     }
 
-    /**
-     * Convert an ingredient to the ItemStack a storage bus partition of {@code busType} expects.
-     */
-    public static ItemStack convertJeiIngredientForStorageBus(Object ingredient, StorageType busType) {
+    public static ItemStack convertIngredientForStorageBus(Object ingredient, StorageType busType) {
         return convert(ingredient, busType, true);
+    }
+
+    public static ItemStack convertIngredientForType(Object ingredient, String stackTypeId, boolean bus) {
+        if (ingredient instanceof ItemStack) {
+            ItemStack stack = convertItemForType((ItemStack) ingredient, stackTypeId);
+            if (!ItemStacks.isEmpty(stack)) return stack;
+        }
+
+        return convert(ingredient, storageTypeFrom(stackTypeId), bus);
     }
 
     private static ItemStack convert(Object ingredient, StorageType type, boolean bus) {
@@ -82,5 +83,18 @@ public class JeiGhostHandler {
         }
 
         return null;
+    }
+
+    private static ItemStack convertItemForType(ItemStack itemStack, String stackTypeId) {
+        IAEStackType<?> type = AEStackTypeRegistry.getType(stackTypeId);
+        IAEStack<?> stack = AEStackUtil.convertItemForType(itemStack, type);
+        return AEStackUtil.getDisplayStack(stack);
+    }
+
+    private static StorageType storageTypeFrom(String stackTypeId) {
+        if ("fluid".equals(stackTypeId)) return StorageType.FLUID;
+        if ("essentia".equals(stackTypeId)) return StorageType.ESSENTIA;
+
+        return StorageType.ITEM;
     }
 }

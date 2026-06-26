@@ -22,8 +22,8 @@ import com.hfstudio.diskterminal.client.SearchFilterMode;
 import com.hfstudio.diskterminal.client.TempCellInfo;
 import com.hfstudio.diskterminal.config.DiskTerminalServerConfig;
 import com.hfstudio.diskterminal.gui.GuiConstants;
+import com.hfstudio.diskterminal.gui.handler.GhostIngredientHandler;
 import com.hfstudio.diskterminal.gui.handler.GhostTarget;
-import com.hfstudio.diskterminal.gui.handler.JeiGhostHandler;
 import com.hfstudio.diskterminal.gui.handler.QuickPartitionHandler;
 import com.hfstudio.diskterminal.gui.handler.TerminalDataManager;
 import com.hfstudio.diskterminal.gui.overlay.MessageHelper;
@@ -79,8 +79,6 @@ public class TempAreaTabWidget extends AbstractTabWidget {
         super(fontRenderer, itemRender);
     }
 
-    // ---- Tab controller methods ----
-
     @Override
     public List<Object> getLines(TerminalDataManager dataManager) {
         return dataManager.getTempAreaLines();
@@ -109,7 +107,7 @@ public class TempAreaTabWidget extends AbstractTabWidget {
                 "gui.disk_terminal.controls.temp_area.add_key",
                 KeyBindings.ADD_TO_STORAGE_BUS.getDisplayName()));
         lines.add("");
-        lines.add(I18n.format("gui.disk_terminal.controls.jei_drag"));
+        lines.add(I18n.format("gui.disk_terminal.controls.NEI_drag"));
         lines.add(I18n.format("gui.disk_terminal.controls.click_to_remove"));
 
         return lines;
@@ -140,8 +138,6 @@ public class TempAreaTabWidget extends AbstractTabWidget {
             getLines(guiContext.getDataManager()));
     }
 
-    // ---- JEI ghost targets ----
-
     @Override
     public List<GhostTarget<?>> getPhantomTargets(Object ingredient) {
         List<GhostTarget<?>> targets = new ArrayList<>();
@@ -170,7 +166,8 @@ public class TempAreaTabWidget extends AbstractTabWidget {
 
                     @Override
                     public void accept(Object ing) {
-                        ItemStack stack = JeiGhostHandler.convertJeiIngredientToItemStack(ing, cell.getStorageType());
+                        ItemStack stack = GhostIngredientHandler
+                            .convertIngredientForType(ing, cell.getStackTypeId(), false);
                         if (!ItemStacks.isEmpty(stack)) {
                             guiContext.sendPacket(
                                 new PacketTempCellPartitionAction(
@@ -186,8 +183,6 @@ public class TempAreaTabWidget extends AbstractTabWidget {
 
         return targets;
     }
-
-    // ---- Row building ----
 
     @Override
     protected IWidget createRowWidget(Object lineData, int y, List<?> allLines, int lineIndex) {
@@ -304,8 +299,6 @@ public class TempAreaTabWidget extends AbstractTabWidget {
         }
     }
 
-    // ---- TempAreaHeader creation ----
-
     private TempAreaHeader createTempAreaHeader(TempCellInfo tempCell, int y) {
         TempAreaHeader header = new TempAreaHeader(y, fontRenderer, itemRender);
         header.setIconSupplier(tempCell::getCellStack);
@@ -389,8 +382,6 @@ public class TempAreaTabWidget extends AbstractTabWidget {
 
         return header;
     }
-
-    // ---- Content line creation ----
 
     private IWidget createContentLine(CellContentRow row, int y) {
         CellInfo cell = row.getCell();
@@ -523,8 +514,6 @@ public class TempAreaTabWidget extends AbstractTabWidget {
         });
     }
 
-    // ---- Upgrade card click handling ----
-
     private void handleCardClick(CellInfo cell, int upgradeSlotIndex) {
         if (DiskTerminalServerConfig.isInitialized() && !DiskTerminalServerConfig.getInstance()
             .isUpgradeExtractEnabled()) {
@@ -538,8 +527,6 @@ public class TempAreaTabWidget extends AbstractTabWidget {
         boolean toInventory = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
         guiContext.sendPacket(PacketExtractUpgrade.forTempCell(tempSlotIndex, upgradeSlotIndex, toInventory));
     }
-
-    // ---- Keybind handling ----
 
     /**
      * Handle the add-to-temp-cell keybind (same key as ADD_TO_STORAGE_BUS).
@@ -565,10 +552,10 @@ public class TempAreaTabWidget extends AbstractTabWidget {
         ItemStack stack = null;
         if (hoveredSlot != null && hoveredSlot.getHasStack()) stack = hoveredSlot.getStack();
 
-        // Try JEI/bookmark if no inventory item
+        // Try NEI/bookmark if no inventory item
         if (ItemStacks.isEmpty(stack)) {
-            QuickPartitionHandler.HoveredIngredient jeiItem = QuickPartitionHandler.getHoveredIngredient();
-            if (jeiItem != null && !ItemStacks.isEmpty(jeiItem.stack)) stack = jeiItem.stack;
+            QuickPartitionHandler.HoveredIngredient NEIItem = QuickPartitionHandler.getHoveredIngredient();
+            if (NEIItem != null && !ItemStacks.isEmpty(NEIItem.stack)) stack = NEIItem.stack;
         }
 
         if (ItemStacks.isEmpty(stack)) {
@@ -672,8 +659,6 @@ public class TempAreaTabWidget extends AbstractTabWidget {
         return null;
     }
 
-    // ---- Upgrade support ----
-
     @Override
     public boolean handleUpgradeClick(Object hoveredData, ItemStack heldStack, boolean isShiftClick) {
         // Handle TempCellInfo (header) - specific temp cell slot
@@ -721,8 +706,6 @@ public class TempAreaTabWidget extends AbstractTabWidget {
 
         return true;
     }
-
-    // ---- Helpers ----
 
     /**
      * Find the temp slot index for a given cell by searching through temp area lines.

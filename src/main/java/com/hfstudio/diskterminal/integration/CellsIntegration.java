@@ -29,7 +29,7 @@ import appeng.parts.AEBasePart;
  * external-interface preview methods return empty here while the generic ItemStack/tile/filter
  * helpers remain fully functional.
  */
-public final class CellsIntegration {
+public class CellsIntegration {
 
     private CellsIntegration() {}
 

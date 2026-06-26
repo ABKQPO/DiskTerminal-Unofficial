@@ -43,7 +43,8 @@ public class SmallButton extends AbstractWidget {
 
         int texX = GuiConstants.SMALL_BUTTON_X + type.getTextureX();
         int texY = GuiConstants.SMALL_BUTTON_Y + (hovered ? SIZE : 0);
-        GuiConstants.drawAtlasSprite(this.x, this.y, texX, texY, SIZE, SIZE);
+        // Buttons (not tabs) are rendered with +1 pixel X offset for better alignment
+        GuiConstants.drawAtlasSprite(this.x + 1, this.y, texX, texY, SIZE, SIZE);
     }
 
     @Override

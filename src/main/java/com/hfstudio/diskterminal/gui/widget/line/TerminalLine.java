@@ -276,8 +276,6 @@ public class TerminalLine extends AbstractLine {
         return null;
     }
 
-    // ---- Drawing helpers ----
-
     private void drawCellName(int mouseX, int mouseY) {
         String name = cellNameSupplier != null ? cellNameSupplier.get() : "";
         if (name.isEmpty()) return;
@@ -346,11 +344,12 @@ public class TerminalLine extends AbstractLine {
 
     /**
      * Draw a textured button from atlas.png.
+     * Buttons are rendered with +1 pixel X offset for better visual alignment.
      */
     private void drawTexturedButton(int drawX, int drawY, int column, boolean hovered) {
         int texX = GuiConstants.TAB1_BUTTON_X + column * SIZE;
         int texY = GuiConstants.TAB1_BUTTON_Y + (hovered ? SIZE : 0);
-        GuiConstants.drawAtlasSprite(drawX, drawY, texX, texY, SIZE, SIZE);
+        GuiConstants.drawAtlasSprite(drawX + 1, drawY, texX, texY, SIZE, SIZE);
     }
 
     private int getUsageColor(float percent) {

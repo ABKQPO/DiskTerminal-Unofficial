@@ -337,8 +337,6 @@ public class PopupCellInventory extends Gui {
         return y;
     }
 
-    // ---- Drawing helpers (consistent with SlotsLine) ----
-
     private void drawSlotBackground(int slotX, int slotY) {
         int texX = GuiConstants.SLOT_BACKGROUND_X;
         int texY = GuiConstants.SLOT_BACKGROUND_Y;

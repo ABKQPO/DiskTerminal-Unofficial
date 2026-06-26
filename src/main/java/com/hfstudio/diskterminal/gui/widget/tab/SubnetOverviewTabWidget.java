@@ -25,8 +25,8 @@ import com.hfstudio.diskterminal.client.SubnetConnectionRow;
 import com.hfstudio.diskterminal.client.SubnetInfo;
 import com.hfstudio.diskterminal.config.DiskTerminalClientConfig;
 import com.hfstudio.diskterminal.gui.GuiConstants;
+import com.hfstudio.diskterminal.gui.handler.GhostIngredientHandler;
 import com.hfstudio.diskterminal.gui.handler.GhostTarget;
-import com.hfstudio.diskterminal.gui.handler.JeiGhostHandler;
 import com.hfstudio.diskterminal.gui.handler.TerminalDataManager;
 import com.hfstudio.diskterminal.gui.overlay.MessageHelper;
 import com.hfstudio.diskterminal.gui.widget.DoubleClickTracker;
@@ -133,10 +133,7 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
     public void setSubnetContext(SubnetOverviewContext context) {
         this.subnetContext = context;
     }
-
-    // ========================================================================
     // Subnet data management
-    // ========================================================================
 
     /**
      * Handle subnet list update from server.
@@ -311,10 +308,7 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
         // Request fresh subnet list from server
         if (subnetContext != null) subnetContext.requestSubnetList();
     }
-
-    // ========================================================================
     // Row widget creation (mirrors TempAreaTabWidget pattern)
-    // ========================================================================
 
     @Override
     protected IWidget createRowWidget(Object lineData, int y, List<?> allLines, int lineIndex) {
@@ -353,8 +347,6 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
         Object line = allLines.get(index);
         return (line instanceof SubnetConnectionRow) && ((SubnetConnectionRow) line).isPartitionRow();
     }
-
-    // ---- Tree line propagation (dual content/partition cut-Y, mirrors TempAreaTabWidget) ----
 
     @Override
     protected void propagateTreeLines(List<?> allLines, int scrollOffset) {
@@ -416,8 +408,6 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
             }
         }
     }
-
-    // ---- Header creation ----
 
     /**
      * Create a SubnetHeader for the main network entry (no connections, no arrow).
@@ -497,8 +487,6 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
 
         return header;
     }
-
-    // ---- Content / Partition line creation (mirrors TempAreaTabWidget.createContentLine) ----
 
     /**
      * Create a SlotsLine or ContinuationLine for a content/partition row.
@@ -657,10 +645,8 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
         });
     }
 
-    // ---- JEI ghost target integration ----
-
     /**
-     * Get JEI ghost ingredient targets for partition slots in the subnet overview.
+     * Get NEI ghost ingredient targets for partition slots in the subnet overview.
      * Wraps visible partition SlotsLine targets into proper GhostTarget
      * instances that send PacketSubnetPartitionAction.ADD_ITEM on accept.
      */
@@ -695,7 +681,7 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
                     @Override
                     public void accept(Object ing) {
                         // Subnet connections are always item-based storage buses for now
-                        ItemStack stack = JeiGhostHandler.convertJeiIngredientForStorageBus(ing, StorageType.ITEM);
+                        ItemStack stack = GhostIngredientHandler.convertIngredientForStorageBus(ing, StorageType.ITEM);
                         if (!ItemStacks.isEmpty(stack)) {
                             guiContext.sendPacket(
                                 new PacketSubnetPartitionAction(
@@ -714,8 +700,6 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
 
         return targets;
     }
-
-    // ---- Utility ----
 
     /**
      * Highlight a connection point's position in the world.
@@ -740,10 +724,7 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
                 .getZ(),
             subnet.getDisplayName());
     }
-
-    // ========================================================================
     // Tab overrides: Data and metadata
-    // ========================================================================
 
     /**
      * Return the flattened subnet lines for scrollbar calculation.
@@ -793,10 +774,7 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
     public boolean showSearchModeButton() {
         return true;
     }
-
-    // ========================================================================
     // Accessors
-    // ========================================================================
 
     /** Get the subnet list (for external queries). */
     public List<SubnetInfo> getSubnetList() {

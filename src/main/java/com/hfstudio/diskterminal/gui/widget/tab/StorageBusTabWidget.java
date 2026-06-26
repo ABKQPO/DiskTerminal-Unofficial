@@ -24,8 +24,8 @@ import com.hfstudio.diskterminal.client.TabStateManager;
 import com.hfstudio.diskterminal.config.DiskTerminalServerConfig;
 import com.hfstudio.diskterminal.gui.GuiConstants;
 import com.hfstudio.diskterminal.gui.PriorityFieldManager;
+import com.hfstudio.diskterminal.gui.handler.GhostIngredientHandler;
 import com.hfstudio.diskterminal.gui.handler.GhostTarget;
-import com.hfstudio.diskterminal.gui.handler.JeiGhostHandler;
 import com.hfstudio.diskterminal.gui.handler.QuickPartitionHandler;
 import com.hfstudio.diskterminal.gui.handler.TerminalDataManager;
 import com.hfstudio.diskterminal.gui.overlay.MessageHelper;
@@ -64,7 +64,7 @@ import appeng.api.AEApi;
  * DO_PARTITION (adds item to partition). Content slots show "P" indicator
  * for items that are in the partition.</li>
  * <li><b>Partition tab:</b> Shows bus partitions with amber tint. Tree button is
- * CLEAR_PARTITION (removes partition entry). Supports JEI ghost drops.</li>
+ * CLEAR_PARTITION (removes partition entry). Supports NEI ghost drops.</li>
  * </ul>
  *
  * Storage bus tabs use 9 slots per row at a narrower X offset (no inline cell slot).
@@ -90,8 +90,6 @@ public class StorageBusTabWidget extends AbstractTabWidget {
         this.isPartitionMode = (slotMode == SlotsLine.SlotMode.PARTITION);
         this.treeButtonType = isPartitionMode ? ButtonType.CLEAR_PARTITION : ButtonType.DO_PARTITION;
     }
-
-    // ---- Tab controller methods ----
 
     @Override
     public List<Object> getLines(TerminalDataManager dataManager) {
@@ -119,7 +117,7 @@ public class StorageBusTabWidget extends AbstractTabWidget {
                     KeyBindings.ADD_TO_STORAGE_BUS.getDisplayName()));
             lines.add(I18n.format("gui.disk_terminal.controls.storage_bus_capacity"));
             lines.add("");
-            lines.add(I18n.format("gui.disk_terminal.controls.jei_drag"));
+            lines.add(I18n.format("gui.disk_terminal.controls.NEI_drag"));
             lines.add(I18n.format("gui.disk_terminal.controls.click_to_remove"));
         } else {
             lines.add(I18n.format("gui.disk_terminal.controls.filter_indicator"));
@@ -164,8 +162,6 @@ public class StorageBusTabWidget extends AbstractTabWidget {
                 .getStorageBusMap());
     }
 
-    // ---- Upgrade support ----
-
     @Override
     public boolean handleUpgradeClick(Object hoveredData, ItemStack heldStack, boolean isShiftClick) {
         if (isShiftClick) {
@@ -202,8 +198,6 @@ public class StorageBusTabWidget extends AbstractTabWidget {
         return true;
     }
 
-    // ---- JEI ghost targets ----
-
     @Override
     public List<GhostTarget<?>> getPhantomTargets(Object ingredient) {
         if (!isPartitionMode) return Collections.emptyList();
@@ -230,7 +224,8 @@ public class StorageBusTabWidget extends AbstractTabWidget {
 
                     @Override
                     public void accept(Object ing) {
-                        ItemStack stack = JeiGhostHandler.convertJeiIngredientForStorageBus(ing, bus.getStorageType());
+                        ItemStack stack = GhostIngredientHandler
+                            .convertIngredientForType(ing, bus.getStackTypeId(), true);
                         if (!ItemStacks.isEmpty(stack)) {
                             guiContext.sendPacket(
                                 new PacketStorageBusPartitionAction(
@@ -246,8 +241,6 @@ public class StorageBusTabWidget extends AbstractTabWidget {
 
         return targets;
     }
-
-    // ---- Row building ----
 
     @Override
     protected IWidget createRowWidget(Object lineData, int y, List<?> allLines, int lineIndex) {
@@ -268,8 +261,6 @@ public class StorageBusTabWidget extends AbstractTabWidget {
 
         return allLines.get(index) instanceof StorageBusContentRow;
     }
-
-    // ---- Storage bus header creation ----
 
     private StorageBusHeader createBusHeader(StorageBusInfo bus, int y) {
         StorageBusHeader header = new StorageBusHeader(y, fontRenderer, itemRender);
@@ -342,8 +333,6 @@ public class StorageBusTabWidget extends AbstractTabWidget {
 
         return rightEdge;
     }
-
-    // ---- Content line creation ----
 
     private IWidget createContentLine(StorageBusContentRow row, int y) {
         StorageBusInfo bus = row.getStorageBus();
@@ -448,10 +437,10 @@ public class StorageBusTabWidget extends AbstractTabWidget {
                 boolean slotOccupied = slotIndex < partition.size() && !ItemStacks.isEmpty(partition.get(slotIndex));
 
                 if (!ItemStacks.isEmpty(heldStack)) {
-                    // Use the storage-bus JEI conversion rules for held inventory items so
+                    // Use the storage-bus NEI conversion rules for held inventory items so
                     // fluid/gas/essentia clicks get the normalization and user feedback.
-                    ItemStack stackToSend = JeiGhostHandler
-                        .convertJeiIngredientForStorageBus(heldStack, bus.getStorageType());
+                    ItemStack stackToSend = GhostIngredientHandler
+                        .convertIngredientForType(heldStack, bus.getStackTypeId(), true);
                     if (ItemStacks.isEmpty(stackToSend)) return;
 
                     guiContext.sendPacket(
@@ -481,8 +470,6 @@ public class StorageBusTabWidget extends AbstractTabWidget {
         });
     }
 
-    // ---- Keybind handling ----
-
     /**
      * Handle the add-to-storage-bus keybind.
      * Adds the hovered item to the partition of all selected storage buses.
@@ -510,10 +497,10 @@ public class StorageBusTabWidget extends AbstractTabWidget {
             stack = hoveredSlot.getStack();
         }
 
-        // If no inventory item, try JEI/bookmark
+        // If no inventory item, try NEI/bookmark
         if (ItemStacks.isEmpty(stack)) {
-            QuickPartitionHandler.HoveredIngredient jeiItem = QuickPartitionHandler.getHoveredIngredient();
-            if (jeiItem != null && !ItemStacks.isEmpty(jeiItem.stack)) stack = jeiItem.stack;
+            QuickPartitionHandler.HoveredIngredient NEIItem = QuickPartitionHandler.getHoveredIngredient();
+            if (NEIItem != null && !ItemStacks.isEmpty(NEIItem.stack)) stack = NEIItem.stack;
         }
 
         if (ItemStacks.isEmpty(stack)) {
@@ -598,8 +585,6 @@ public class StorageBusTabWidget extends AbstractTabWidget {
         return true;
     }
 
-    // ---- Cards helper ----
-
     private CardsDisplay createBusCards(StorageBusInfo bus, int rowY) {
         List<CardsDisplay.CardEntry> entries = buildCardEntries(bus);
         if (entries.isEmpty()) return null;
@@ -634,8 +619,6 @@ public class StorageBusTabWidget extends AbstractTabWidget {
 
         return entries;
     }
-
-    // ---- Upgrade card click handling ----
 
     private void handleBusCardClick(StorageBusInfo bus, int upgradeSlotIndex) {
         if (DiskTerminalServerConfig.isInitialized() && !DiskTerminalServerConfig.getInstance()

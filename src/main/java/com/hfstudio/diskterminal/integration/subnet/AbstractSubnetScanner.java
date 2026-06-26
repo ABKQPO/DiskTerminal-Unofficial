@@ -8,7 +8,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
-import com.gtnewhorizon.gtnhlib.blockpos.BlockPos;
 import com.hfstudio.diskterminal.container.handler.SubnetDataHandler.SubnetTracker;
 import com.hfstudio.diskterminal.util.ItemStacks;
 import com.hfstudio.diskterminal.util.PosUtil;
@@ -21,7 +20,6 @@ import appeng.api.networking.security.ISecurityGrid;
 import appeng.api.parts.IPart;
 import appeng.api.parts.IPartHost;
 import appeng.helpers.IInterfaceHost;
-import appeng.tile.networking.TileCableBus;
 
 /**
  * Abstract base class for subnet scanners providing common utility methods.
@@ -133,7 +131,8 @@ public abstract class AbstractSubnetScanner implements ISubnetScanner {
         IGridNode primaryNode = findPrimaryNode(grid);
         if (primaryNode == null) return grid.hashCode();
 
-        appeng.api.util.DimensionalCoord loc = primaryNode.getGridBlock().getLocation();
+        appeng.api.util.DimensionalCoord loc = primaryNode.getGridBlock()
+            .getLocation();
         if (loc == null) return grid.hashCode();
 
         int dim = loc.getDimension();
@@ -151,13 +150,15 @@ public abstract class AbstractSubnetScanner implements ISubnetScanner {
         // Get primary node for subnet info
         IGridNode primaryNode = findPrimaryNode(subnetGrid);
         if (primaryNode != null) {
-            appeng.api.util.DimensionalCoord loc = primaryNode.getGridBlock().getLocation();
+            appeng.api.util.DimensionalCoord loc = primaryNode.getGridBlock()
+                .getLocation();
             if (loc != null) {
                 nbt.setLong("pos", PosUtil.toLong(loc.x, loc.y, loc.z));
                 nbt.setInteger("dim", loc.getDimension());
 
                 // Get block item representation from world
-                TileEntity tile = loc.getWorld().getTileEntity(loc.x, loc.y, loc.z);
+                TileEntity tile = loc.getWorld()
+                    .getTileEntity(loc.x, loc.y, loc.z);
                 if (tile != null) {
                     ItemStack blockItem = getBlockItem(tile);
                     if (!ItemStacks.isEmpty(blockItem)) {

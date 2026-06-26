@@ -17,8 +17,6 @@ import com.hfstudio.diskterminal.gui.handler.TerminalDataManager;
  */
 public interface GuiContext {
 
-    // ---- Data access ----
-
     /** Get the terminal data manager for accessing cell/bus/line data. */
     TerminalDataManager getDataManager();
 
@@ -31,12 +29,8 @@ public interface GuiContext {
     /** Whether shift key is held. */
     boolean isShiftDown();
 
-    // ---- Network packet helpers ----
-
     /** Send a packet to the server. */
     void sendPacket(Object packet);
-
-    // ---- GUI-level actions ----
 
     /** Trigger a full rebuild of lines and scrollbar update. */
     void rebuildAndUpdateScrollbar();
@@ -59,8 +53,6 @@ public interface GuiContext {
     /** Show an overlay warning message. */
     void showWarning(String translationKey, Object... args);
 
-    // ---- Highlight in world ----
-
     /**
      * Highlight a block position in the world (double-click on headers).
      */
@@ -70,8 +62,6 @@ public interface GuiContext {
      * Highlight a cell's parent storage in the world (double-click on cells).
      */
     void highlightCellInWorld(CellInfo cell);
-
-    // ---- Selection state (for multi-select keybinds) ----
 
     /** Get the set of selected storage bus IDs. */
     Set<Long> getSelectedStorageBusIds();

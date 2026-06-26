@@ -13,11 +13,13 @@ import net.minecraftforge.common.util.Constants;
 import com.gtnewhorizon.gtnhlib.blockpos.BlockPos;
 import com.hfstudio.diskterminal.gui.rename.RenameTargetType;
 import com.hfstudio.diskterminal.gui.rename.Renameable;
+import com.hfstudio.diskterminal.util.AEStackUtil;
 import com.hfstudio.diskterminal.util.ItemStacks;
 import com.hfstudio.diskterminal.util.PosUtil;
 
 import appeng.api.config.Upgrades;
 import appeng.api.implementations.items.IUpgradeModule;
+import appeng.api.storage.data.IAEStack;
 
 /**
  * Client-side data holder for storage bus information received from server.
@@ -57,6 +59,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     private final int slotsPerUpgrade;
     private final int maxConfigSlots;
     private final StorageType storageType;
+    private final String stackTypeId;
     private final int accessRestriction; // 0=NO_ACCESS, 1=READ, 2=WRITE, 3=READ_WRITE
     private final String customName; // Storage bus custom name (takes priority over connectedName)
     private final String namePrefixKey; // Optional translated prefix prepended to the resolved display name
@@ -78,6 +81,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         this.side = EnumFacing.getFront(nbt.getInteger("side"));
         this.priority = nbt.getInteger("priority");
         this.storageType = StorageType.fromNBT(nbt);
+        this.stackTypeId = nbt.hasKey("stackType") ? nbt.getString("stackType") : stackTypeIdFrom(storageType);
         this.accessRestriction = nbt.hasKey("access") ? nbt.getInteger("access") : 3; // Default READ_WRITE
 
         // Per-implementation slot parameters (optional; default to AE2 values)
@@ -146,13 +150,15 @@ public class StorageBusInfo implements Renameable, Prioritizable {
             NBTTagList contentList = nbt.getTagList("contents", Constants.NBT.TAG_COMPOUND);
             for (int i = 0; i < contentList.tagCount(); i++) {
                 NBTTagCompound stackNbt = contentList.getCompoundTagAt(i);
-                ItemStack stack = ItemStacks.load(stackNbt);
+                IAEStack<?> aeStack = AEStackUtil.readStackFromNBT(stackNbt);
+                ItemStack stack = AEStackUtil.getDisplayStack(aeStack);
+                if (ItemStacks.isEmpty(stack)) stack = ItemStacks.load(stackNbt);
 
                 long count;
                 if (stackNbt.hasKey("Cnt")) {
                     count = stackNbt.getLong("Cnt");
                 } else {
-                    count = stack == null ? 0 : stack.stackSize;
+                    count = aeStack != null ? aeStack.getStackSize() : stack == null ? 0 : stack.stackSize;
                 }
 
                 this.contents.add(stack);
@@ -204,6 +210,10 @@ public class StorageBusInfo implements Renameable, Prioritizable {
 
     public StorageType getStorageType() {
         return storageType;
+    }
+
+    public String getStackTypeId() {
+        return stackTypeId;
     }
 
     public boolean isFluid() {
@@ -455,5 +465,12 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     @Override
     public long getRenameId() {
         return id;
+    }
+
+    private static String stackTypeIdFrom(StorageType storageType) {
+        if (storageType.isFluid()) return "fluid";
+        if (storageType.isEssentia()) return "essentia";
+
+        return "item";
     }
 }

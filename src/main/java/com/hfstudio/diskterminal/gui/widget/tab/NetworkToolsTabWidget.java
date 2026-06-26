@@ -36,16 +36,12 @@ public class NetworkToolsTabWidget extends AbstractTabWidget {
         super(fontRenderer, itemRender);
     }
 
-    // ---- Scroll calculation ----
-
     @Override
     public int getVisibleItemCount() {
         int contentHeight = rowsVisible * GuiConstants.ROW_HEIGHT;
 
         return contentHeight / NetworkToolRowWidget.ROW_HEIGHT;
     }
-
-    // ---- Row building ----
 
     /**
      * Build visible tool rows for the current scroll window.
@@ -98,8 +94,6 @@ public class NetworkToolsTabWidget extends AbstractTabWidget {
         // All lines are tools (no headers/content distinction)
         return true;
     }
-
-    // ---- Tab controller methods ----
 
     @Override
     @SuppressWarnings("unchecked")

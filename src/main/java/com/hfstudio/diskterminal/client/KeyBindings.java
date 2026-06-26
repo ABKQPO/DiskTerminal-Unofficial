@@ -10,7 +10,7 @@ import cpw.mods.fml.client.registry.ClientRegistry;
  * Keybindings for the Disk Terminal. All default to NONE (unbound) to avoid conflicts.
  * <p>
  * 1.7.10 has no KeyConflictContext / KeyModifier (those are Forge 1.8+), so bindings are plain
- * description/keyCode/category entries. The GAS quick-partition binding is dropped (no Mekanism).
+ * description/keyCode/category entries. The gas quick-partition binding is not part of this port.
  */
 public enum KeyBindings {
 

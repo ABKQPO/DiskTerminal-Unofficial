@@ -33,7 +33,7 @@ public class PacketSubnetListRequest implements IMessage {
                 if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase) {
                     ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx
                         .getServerHandler().playerEntity.openContainer;
-                    // The overview widget may have been recreated client-side (for example by JEI
+                    // The overview widget may have been recreated client-side (for example by NEI
                     // reinitializing the GUI), so force a full subnet snapshot instead of a delta.
                     container.requestSubnetRefresh(true);
                 }

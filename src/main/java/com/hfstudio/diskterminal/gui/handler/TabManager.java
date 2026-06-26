@@ -70,8 +70,6 @@ public class TabManager {
         void scrollToLine(int lineIndex);
     }
 
-    // ---- State ----
-
     private int currentTab;
     private int hoveredTab = -1;
     private AbstractTabWidget[] tabWidgets;
@@ -90,7 +88,7 @@ public class TabManager {
     private ItemStack tabIconPartition;
     private ItemStack tabIconStorageBus;
 
-    // Controls help widget cache (used for both rendering and JEI exclusion area calculation).
+    // Controls help widget cache (used for both rendering and NEI exclusion area calculation).
     // Stored here so the GUI can query the wrapped lines without maintaining its own tab-tracking logic.
     private List<String> cachedControlsHelpLines = new ArrayList<>();
     private int cachedControlsHelpTab = Integer.MIN_VALUE;
@@ -144,10 +142,7 @@ public class TabManager {
         // Fallback to terminal tab even if disabled (should not happen in practice)
         return GuiConstants.TAB_TERMINAL;
     }
-
-    // ========================================================================
     // Widget lifecycle
-    // ========================================================================
 
     /**
      * Create and initialize all tab widgets.
@@ -207,10 +202,7 @@ public class TabManager {
         this.subnetTab.setRowsVisible(rowsVisible);
         this.subnetTab.init(context);
     }
-
-    // ========================================================================
     // Getters
-    // ========================================================================
 
     /** Get the index of the currently selected tab. */
     public int getCurrentTab() {
@@ -267,10 +259,7 @@ public class TabManager {
 
         return tab != null ? tab.getVisibleItemCount() : GuiConstants.DEFAULT_ROWS;
     }
-
-    // ========================================================================
     // Tab switching
-    // ========================================================================
 
     /**
      * Handle a click on the tab header area.
@@ -368,10 +357,7 @@ public class TabManager {
         TabStateManager.getInstance()
             .setScrollPosition(tabType, scrollAccessor.getCurrentScroll());
     }
-
-    // ========================================================================
     // Subnet overview
-    // ========================================================================
 
     /** Get the subnet overview pseudo-tab widget. */
     public SubnetOverviewTabWidget getSubnetTab() {
@@ -385,10 +371,7 @@ public class TabManager {
     public int getPreviousRealTab() {
         return previousRealTab;
     }
-
-    // ========================================================================
     // Event delegation
-    // ========================================================================
 
     /**
      * Delegate a key press to the active tab widget for tab-specific keybinds.
@@ -445,10 +428,7 @@ public class TabManager {
 
         return baseTooltip;
     }
-
-    // ========================================================================
     // Controls help cache
-    // ========================================================================
 
     /**
      * Update the cached controls help wrapped lines.
@@ -460,7 +440,7 @@ public class TabManager {
     }
 
     /**
-     * Get the cached controls help wrapped lines for JEI exclusion area sizing.
+     * Get the cached controls help wrapped lines for NEI exclusion area sizing.
      * Returns empty list if the cache is stale (tab changed since last render).
      */
     public List<String> getCachedControlsHelpLines() {
@@ -470,10 +450,7 @@ public class TabManager {
 
         return cachedControlsHelpLines;
     }
-
-    // ========================================================================
     // Tab rendering
-    // ========================================================================
 
     /**
      * Draw all tab buttons in the background layer.

@@ -10,7 +10,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
  * handlers already run in a context where directly touching the open container is safe (matching
  * the wider GTNH ecosystem), so this simply runs the task inline.
  */
-public final class NetUtil {
+public class NetUtil {
 
     private NetUtil() {}
 

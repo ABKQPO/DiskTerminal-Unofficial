@@ -2,7 +2,6 @@ package com.hfstudio.diskterminal.gui.widget;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.item.ItemStack;
@@ -10,6 +9,7 @@ import net.minecraft.item.ItemStack;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 
+import com.hfstudio.diskterminal.util.AEStackUtil;
 import com.hfstudio.diskterminal.util.ItemStacks;
 
 import appeng.api.storage.data.IAEStack;
@@ -74,8 +74,6 @@ public abstract class AbstractWidget implements IWidget {
         this.y = y;
     }
 
-    // ---- Shared utilities ----
-
     /**
      * Truncate a string to fit within a pixel width, appending "..." if needed.
      * Correctly handles formatting codes via fontRenderer.getStringWidth.
@@ -104,24 +102,7 @@ public abstract class AbstractWidget implements IWidget {
     public static void renderAEStack(IAEStack<?> stack, int renderX, int renderY) {
         if (stack == null) return;
 
-        Minecraft mc = Minecraft.getMinecraft();
-
-        // Save GL state before rendering
-        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-        GL11.glPushMatrix();
-
-        try {
-            // Reset color and alpha
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-
-            // Use AE2's native rendering which handles all custom renderers properly
-            stack.drawInGui(mc, renderX, renderY);
-
-        } finally {
-            // Restore GL state
-            GL11.glPopMatrix();
-            GL11.glPopAttrib();
-        }
+        AEStackUtil.drawStackInGui(stack, renderX, renderY);
     }
 
     /**

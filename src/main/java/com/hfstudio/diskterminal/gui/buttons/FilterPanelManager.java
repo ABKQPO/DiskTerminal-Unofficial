@@ -13,7 +13,7 @@ import com.hfstudio.diskterminal.client.CellFilter.State;
 import com.hfstudio.diskterminal.client.SlotLimit;
 import com.hfstudio.diskterminal.config.DiskTerminalClientConfig;
 import com.hfstudio.diskterminal.gui.GuiConstants;
-import com.hfstudio.diskterminal.integration.ThaumicEnergisticsIntegration;
+import com.hfstudio.diskterminal.integration.ModIntegration;
 import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
 import com.hfstudio.diskterminal.network.PacketSlotLimitChange;
 
@@ -103,12 +103,19 @@ public class FilterPanelManager {
         boolean isCellTab = tab <= GuiConstants.TAB_PARTITION;
         boolean isStorageBusTab = tab >= GuiConstants.TAB_TEMP_AREA;
 
-        // Cell type filters
+        // Cell type filters - only show if corresponding mod is loaded
         if (isCellTab || isStorageBusTab) {
             filters.add(CellFilter.ITEM_CELLS);
-            filters.add(CellFilter.FLUID_CELLS);
 
-            if (ThaumicEnergisticsIntegration.isModLoaded()) filters.add(CellFilter.ESSENTIA_CELLS);
+            // Only show fluid filter if AE2FluidCraft is loaded
+            if (ModIntegration.hasFluidStorage()) {
+                filters.add(CellFilter.FLUID_CELLS);
+            }
+
+            // Only show essentia filter if Thaumic Energistics is loaded
+            if (ModIntegration.hasEssentiaStorage()) {
+                filters.add(CellFilter.ESSENTIA_CELLS);
+            }
         }
 
         // Content-based filters
@@ -331,7 +338,7 @@ public class FilterPanelManager {
     }
 
     /**
-     * Get the bounding rectangle of the filter panel for JEI exclusion.
+     * Get the bounding rectangle of the filter panel for NEI exclusion.
      */
     public Rectangle getBounds() {
         if (filterButtons.isEmpty() && slotLimitButton == null) return new Rectangle(0, 0, 0, 0);

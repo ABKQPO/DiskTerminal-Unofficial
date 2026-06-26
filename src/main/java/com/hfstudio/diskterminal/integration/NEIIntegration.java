@@ -13,7 +13,7 @@ import cpw.mods.fml.common.Optional;
  * item-list overlay, used by quick-partition and ghost-drag. All access is guarded by
  * {@link Optional.Method}; when NEI is absent the methods return null.
  */
-public final class NEIIntegration {
+public class NEIIntegration {
 
     public static final String MOD_ID = "NotEnoughItems";
 

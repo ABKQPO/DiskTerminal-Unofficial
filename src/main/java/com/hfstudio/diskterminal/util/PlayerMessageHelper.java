@@ -14,7 +14,7 @@ import com.hfstudio.diskterminal.network.PacketPlayerFeedback;
  * feedback via packets so the client can render messages through MessageHelper,
  * preserving overlay behavior while GUIs are open.
  */
-public final class PlayerMessageHelper {
+public class PlayerMessageHelper {
 
     private PlayerMessageHelper() {}
 

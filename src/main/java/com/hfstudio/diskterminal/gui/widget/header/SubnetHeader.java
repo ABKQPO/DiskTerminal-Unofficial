@@ -78,8 +78,6 @@ public class SubnetHeader extends AbstractHeader {
         isMain = isMainNetwork;
     }
 
-    // ---- Configuration ----
-
     /**
      * Set the direction supplier for the connection arrow.
      * When non-null, a colored direction arrow is drawn between the icon and the name.
@@ -108,8 +106,6 @@ public class SubnetHeader extends AbstractHeader {
     public void setOnLoadClick(Runnable callback) {
         this.onLoadClick = callback;
     }
-
-    // ---- Rendering ----
 
     @Override
     protected int drawHeaderContent(int mouseX, int mouseY) {
@@ -299,8 +295,6 @@ public class SubnetHeader extends AbstractHeader {
         }
     }
 
-    // ---- Click handling ----
-
     @Override
     public boolean handleClick(int mouseX, int mouseY, int button) {
         if (!visible) return false;
@@ -323,8 +317,6 @@ public class SubnetHeader extends AbstractHeader {
         // Delegate to base for rename (right-click on name) and double-click (header area)
         return super.handleClick(mouseX, mouseY, button);
     }
-
-    // ---- Tooltips ----
 
     @Override
     public List<String> getTooltip(int mouseX, int mouseY) {

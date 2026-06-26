@@ -81,8 +81,6 @@ public class NetworkToolRowWidget extends AbstractWidget {
         return tool;
     }
 
-    // ---- Drawing ----
-
     @Override
     public void draw(int mouseX, int mouseY) {
         if (!visible) return;
@@ -172,8 +170,6 @@ public class NetworkToolRowWidget extends AbstractWidget {
         fontRenderer.drawString(displayName, nameX, nameY, 0x000000);
     }
 
-    // ---- Click handling ----
-
     @Override
     public boolean handleClick(int mouseX, int mouseY, int button) {
         if (!visible || button != 0) return false;
@@ -188,8 +184,6 @@ public class NetworkToolRowWidget extends AbstractWidget {
 
         return false;
     }
-
-    // ---- Tooltips ----
 
     @Override
     public List<String> getTooltip(int mouseX, int mouseY) {

@@ -11,9 +11,11 @@ import net.minecraftforge.common.util.Constants;
 
 import com.hfstudio.diskterminal.gui.rename.RenameTargetType;
 import com.hfstudio.diskterminal.gui.rename.Renameable;
+import com.hfstudio.diskterminal.util.AEStackUtil;
 import com.hfstudio.diskterminal.util.ItemStacks;
 
 import appeng.api.implementations.items.IUpgradeModule;
+import appeng.api.storage.data.IAEStack;
 
 /**
  * Client-side data holder for cell information received from server.
@@ -26,6 +28,7 @@ public class CellInfo implements Renameable {
     private final int slot;
     private final int status;
     private final StorageType storageType;
+    private final String stackTypeId;
     private final ItemStack cellItem;
     private final long usedBytes;
     private final long totalBytes;
@@ -45,6 +48,7 @@ public class CellInfo implements Renameable {
         this.slot = nbt.getInteger("slot");
         this.status = nbt.getInteger("status");
         this.storageType = StorageType.fromNBT(nbt);
+        this.stackTypeId = nbt.hasKey("stackType") ? nbt.getString("stackType") : stackTypeIdFrom(storageType);
         this.cellItem = nbt.hasKey("cellItem") ? ItemStacks.load(nbt.getCompoundTag("cellItem")) : null;
         this.usedBytes = nbt.getLong("usedBytes");
         this.totalBytes = nbt.getLong("totalBytes");
@@ -102,25 +106,15 @@ public class CellInfo implements Renameable {
             NBTTagList contentList = nbt.getTagList("contents", Constants.NBT.TAG_COMPOUND);
             for (int i = 0; i < contentList.tagCount(); i++) {
                 NBTTagCompound stackNbt = contentList.getCompoundTagAt(i);
-                ItemStack stack = ItemStacks.load(stackNbt);
+                IAEStack<?> aeStack = AEStackUtil.readStackFromNBT(stackNbt);
+                ItemStack stack = AEStackUtil.getDisplayStack(aeStack);
+                if (ItemStacks.isEmpty(stack)) stack = ItemStacks.load(stackNbt);
 
-                // Read the actual count from AE2's "Cnt" key, or fluidAmount/essentiaAmount for special cells
                 long count;
-                if (stackNbt.hasKey("fluidAmount")) {
-                    // For fluid stacks, count is stored in mB
-                    count = stackNbt.getLong("fluidAmount");
-                } else if (stackNbt.hasKey("essentiaAmount")) {
-                    // For essentia stacks, count is stored by our integration
-                    count = stackNbt.getLong("essentiaAmount");
-                } else if (stackNbt.hasKey("gasAmount")) {
-                    // For gas stacks, count is stored by our integration
-                    count = stackNbt.getLong("gasAmount");
-                } else if (stackNbt.hasKey("Cnt")) {
-                    // For item stacks, AE2 stores count as "Cnt"
+                if (stackNbt.hasKey("Cnt")) {
                     count = stackNbt.getLong("Cnt");
                 } else {
-                    // Fallback to ItemStack count
-                    count = stack == null ? 0 : stack.stackSize;
+                    count = aeStack != null ? aeStack.getStackSize() : stack == null ? 0 : stack.stackSize;
                 }
 
                 this.contents.add(stack);
@@ -147,6 +141,10 @@ public class CellInfo implements Renameable {
 
     public StorageType getStorageType() {
         return storageType;
+    }
+
+    public String getStackTypeId() {
+        return stackTypeId;
     }
 
     public boolean isFluid() {
@@ -290,6 +288,13 @@ public class CellInfo implements Renameable {
     @Override
     public RenameTargetType getRenameTargetType() {
         return RenameTargetType.CELL;
+    }
+
+    private static String stackTypeIdFrom(StorageType storageType) {
+        if (storageType.isFluid()) return "fluid";
+        if (storageType.isEssentia()) return "essentia";
+
+        return "item";
     }
 
     @Override

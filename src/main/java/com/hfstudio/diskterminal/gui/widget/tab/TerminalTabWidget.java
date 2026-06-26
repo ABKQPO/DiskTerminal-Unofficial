@@ -42,8 +42,6 @@ import appeng.api.AEApi;
  */
 public class TerminalTabWidget extends AbstractTabWidget {
 
-    // ---- Hover preview state (updated during draw) ----
-
     /** The cell whose action button is currently hovered, or null if none */
     private CellInfo previewCell;
 
@@ -53,8 +51,6 @@ public class TerminalTabWidget extends AbstractTabWidget {
     public TerminalTabWidget(FontRenderer fontRenderer, RenderItem itemRender) {
         super(fontRenderer, itemRender);
     }
-
-    // ---- Hover preview accessors ----
 
     /**
      * Get the cell whose action button is currently hovered (for popup preview).
@@ -70,8 +66,6 @@ public class TerminalTabWidget extends AbstractTabWidget {
     public int getPreviewType() {
         return previewType;
     }
-
-    // ---- Drawing (with hover preview tracking) ----
 
     @Override
     public void draw(int mouseX, int mouseY) {
@@ -98,8 +92,6 @@ public class TerminalTabWidget extends AbstractTabWidget {
         }
     }
 
-    // ---- Row building ----
-
     @Override
     protected IWidget createRowWidget(Object lineData, int y, List<?> allLines, int lineIndex) {
         if (lineData instanceof StorageInfo) {
@@ -119,8 +111,6 @@ public class TerminalTabWidget extends AbstractTabWidget {
 
         return allLines.get(index) instanceof CellInfo;
     }
-
-    // ---- Storage header creation ----
 
     private StorageHeader createStorageHeader(StorageInfo storage, int y) {
         StorageHeader header = new StorageHeader(y, fontRenderer, itemRender);
@@ -154,8 +144,6 @@ public class TerminalTabWidget extends AbstractTabWidget {
 
         return header;
     }
-
-    // ---- Terminal line creation ----
 
     private TerminalLine createTerminalLine(CellInfo cell, int y) {
         TerminalLine line = new TerminalLine(y, fontRenderer, itemRender);
@@ -202,8 +190,6 @@ public class TerminalTabWidget extends AbstractTabWidget {
         return line;
     }
 
-    // ---- Cards helper ----
-
     private CardsDisplay createCellCards(CellInfo cell, int rowY) {
         return createCellCardsDisplay(cell, rowY, this::handleCardClick);
     }
@@ -219,8 +205,6 @@ public class TerminalTabWidget extends AbstractTabWidget {
         guiContext.sendPacket(
             PacketExtractUpgrade.forCell(cell.getParentStorageId(), cell.getSlot(), upgradeSlotIndex, toInventory));
     }
-
-    // ---- Tab controller methods ----
 
     @Override
     public List<Object> getLines(TerminalDataManager dataManager) {

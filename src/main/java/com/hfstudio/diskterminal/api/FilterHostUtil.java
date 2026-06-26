@@ -12,7 +12,7 @@ import com.hfstudio.diskterminal.util.ItemStacks;
 /**
  * Utility methods for working with {@link IFilterHost} instances.
  */
-public final class FilterHostUtil {
+public class FilterHostUtil {
 
     private FilterHostUtil() {}
 

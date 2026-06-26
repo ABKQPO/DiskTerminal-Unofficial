@@ -10,7 +10,7 @@ import net.minecraft.item.ItemStack;
  * inventories are plain {@code IInventory}. These helpers mirror the handful of
  * {@code IItemHandler} operations the port relies on so handler logic stays close to the original.
  */
-public final class InventoryHelper {
+public class InventoryHelper {
 
     private InventoryHelper() {}
 

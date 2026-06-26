@@ -16,8 +16,8 @@ import net.minecraft.item.ItemStack;
 import org.lwjgl.opengl.GL11;
 
 import com.hfstudio.diskterminal.client.CellInfo;
+import com.hfstudio.diskterminal.gui.handler.GhostIngredientHandler;
 import com.hfstudio.diskterminal.gui.handler.GhostTarget;
-import com.hfstudio.diskterminal.gui.handler.JeiGhostHandler;
 import com.hfstudio.diskterminal.gui.widget.AbstractWidget;
 import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
 import com.hfstudio.diskterminal.network.PacketPartitionAction;
@@ -25,7 +25,7 @@ import com.hfstudio.diskterminal.util.ItemStacks;
 
 /**
  * Popup overlay for editing cell partition.
- * Shows 63 slots, click to remove, JEI drag to add.
+ * Shows 63 slots, click to remove, NEI drag to add.
  */
 public class PopupCellPartition extends Gui {
 
@@ -207,20 +207,20 @@ public class PopupCellPartition extends Gui {
     }
 
     /**
-     * Convert any JEI ingredient to an ItemStack for use with AE2 cells.
-     * Handles ItemStack, FluidStack, EnchantmentData (JEI's hack for enchanted books),
+     * Convert any NEI ingredient to an ItemStack for use with AE2 cells.
+     * Handles ItemStack, FluidStack, EnchantmentData (NEI's hack for enchanted books),
      * and any future/unknown ingredient types.
      *
-     * @param ingredient The JEI ingredient to convert
+     * @param ingredient The NEI ingredient to convert
      * @return The converted ItemStack, or null if conversion failed or was rejected
      */
-    private ItemStack convertJeiIngredientToItemStack(Object ingredient) {
-        return JeiGhostHandler.convertJeiIngredientToItemStack(ingredient, cell.getStorageType());
+    private ItemStack convertIngredientForCell(Object ingredient) {
+        return GhostIngredientHandler.convertIngredientForType(ingredient, cell.getStackTypeId(), false);
     }
 
     /**
-     * Handle JEI ghost ingredient drop.
-     * FIXME: The green slots do not appear when dragging from JEI into the popup.
+     * Handle NEI ghost ingredient drop.
+     * FIXME: The green slots do not appear when dragging from NEI into the popup.
      * FIXME: The green slots are not cleared when the popup is closed.
      * FIXME: The green line is not rendered when dragging from bookmarks.
      * FIXME: The item is rendered behind the popup when dragging from bookmarks.
@@ -228,7 +228,7 @@ public class PopupCellPartition extends Gui {
     public boolean handleGhostDrop(int slotIndex, Object ingredient) {
         if (slotIndex < 0 || slotIndex >= MAX_PARTITION_SLOTS) return false;
 
-        ItemStack stack = convertJeiIngredientToItemStack(ingredient);
+        ItemStack stack = convertIngredientForCell(ingredient);
 
         if (ItemStacks.isEmpty(stack)) return false;
 
@@ -252,7 +252,7 @@ public class PopupCellPartition extends Gui {
         return true;
     }
 
-    // OLD EXPLICIT TYPE HANDLING - Uncomment this and remove convertJeiIngredientToItemStack
+    // OLD EXPLICIT TYPE HANDLING - Uncomment this and remove convertIngredientForCell
     // if you need to revert to the previous behavior due to issues with unknown ingredient types.
     /*
      * public boolean handleGhostDrop(int slotIndex, Object ingredient) {
@@ -326,7 +326,7 @@ public class PopupCellPartition extends Gui {
     }
 
     /**
-     * Get JEI ghost ingredient targets for this popup.
+     * Get NEI ghost ingredient targets for this popup.
      * The parent GUI will wrap these to handle clearing the drag state.
      */
     public List<GhostTarget<?>> getGhostTargets() {
@@ -377,8 +377,6 @@ public class PopupCellPartition extends Gui {
     public int getY() {
         return y;
     }
-
-    // ---- Drawing helpers (consistent with SlotsLine) ----
 
     private void drawPartitionSlotBackground(int slotX, int slotY) {
         // Use partition variant (right half of slot texture with amber tint)

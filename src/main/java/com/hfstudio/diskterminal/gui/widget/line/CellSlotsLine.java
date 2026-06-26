@@ -193,8 +193,6 @@ public class CellSlotsLine extends SlotsLine {
         return hoveredStack;
     }
 
-    // ---- Private helpers ----
-
     private void drawCellSlot(int mouseX, int mouseY) {
         int cellX = GuiConstants.CELL_INDENT;
         drawSlotBackground(cellX, y);

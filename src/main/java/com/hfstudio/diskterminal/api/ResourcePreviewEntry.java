@@ -9,7 +9,7 @@ import com.hfstudio.diskterminal.util.ItemStacks;
 /**
  * Immutable preview entry for an interface view.
  */
-public final class ResourcePreviewEntry {
+public class ResourcePreviewEntry {
 
     private final ResourceType resourceType;
     private final ItemStack displayStack;

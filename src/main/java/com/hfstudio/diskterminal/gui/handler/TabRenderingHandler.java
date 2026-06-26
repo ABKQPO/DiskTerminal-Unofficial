@@ -26,7 +26,8 @@ import com.hfstudio.diskterminal.util.ItemStacks;
 public class TabRenderingHandler {
 
     /** The location of the creative inventory tabs texture */
-    private static final ResourceLocation CREATIVE_INVENTORY_TABS = new ResourceLocation("textures/gui/container/creative_inventory/tabs.png");
+    private static final ResourceLocation CREATIVE_INVENTORY_TABS = new ResourceLocation(
+        "textures/gui/container/creative_inventory/tabs.png");
 
     private TabRenderingHandler() {}
 
@@ -129,27 +130,34 @@ public class TabRenderingHandler {
             int spriteW = 28;
             int spriteH = 32;
 
-            drawScaledTexturedRect(tabX, tabY, spriteU, spriteV, spriteW, spriteH, ctx.tabWidth, ctx.tabHeight);
+            // Unselected tabs: move up 3 pixels for visual separation
+            int actualTabY = isSelected ? tabY : tabY - 3;
+
+            drawScaledTexturedRect(tabX, actualTabY, spriteU, spriteV, spriteW, spriteH, ctx.tabWidth, ctx.tabHeight);
 
             // Gray-out overlay for disabled tabs (the vanilla sprite has no disabled variant).
             if (isDisabled) {
-                Gui.drawRect(tabX, tabY, tabX + ctx.tabWidth, tabY + ctx.tabHeight, 0x99303030);
+                Gui.drawRect(tabX, actualTabY, tabX + ctx.tabWidth, actualTabY + ctx.tabHeight, 0x99303030);
             } else if (isHovered && !isSelected) {
-                Gui.drawRect(tabX, tabY, tabX + ctx.tabWidth, tabY + ctx.tabHeight, 0x33FFFFFF);
+                Gui.drawRect(tabX, actualTabY, tabX + ctx.tabWidth, actualTabY + ctx.tabHeight, 0x33FFFFFF);
             }
 
             // Draw icon (composite for storage bus tabs)
             // Gray out icons for disabled tabs
             float iconAlpha = isDisabled ? 0.4f : 1.0f;
             if (i == GuiConstants.TAB_STORAGE_BUS_INVENTORY || i == GuiConstants.TAB_STORAGE_BUS_PARTITION) {
-                drawCompositeTabIcon(ctx, tabX + 3, tabY + 3, i, iconProvider, isDisabled);
+                drawCompositeTabIcon(ctx, tabX + 3, actualTabY + 3, i, iconProvider, isDisabled);
             } else {
                 ItemStack icon = iconProvider.getTabIcon(i);
                 if (!ItemStacks.isEmpty(icon)) {
                     GL11.glColor4f(iconAlpha, iconAlpha, iconAlpha, 1.0F);
                     RenderHelper.enableGUIStandardItemLighting();
-                    ctx.itemRender
-                        .renderItemAndEffectIntoGUI(ctx.mc.fontRenderer, ctx.mc.renderEngine, icon, tabX + 3, tabY + 3);
+                    ctx.itemRender.renderItemAndEffectIntoGUI(
+                        ctx.mc.fontRenderer,
+                        ctx.mc.renderEngine,
+                        icon,
+                        tabX + 3,
+                        actualTabY + 3);
                     RenderHelper.disableStandardItemLighting();
                     GL11.glDisable(GL11.GL_LIGHTING);
                 }
@@ -166,7 +174,7 @@ public class TabRenderingHandler {
     /**
      * Draw a composite icon for storage bus tabs using diagonal cut view.
      * Shows top-left half of one icon and bottom-right half of the storage bus icon.
-     * 
+     *
      * @param ctx          The rendering context
      * @param x            The x position to draw at
      * @param y            The y position to draw at
@@ -359,7 +367,7 @@ public class TabRenderingHandler {
         int panelHeight = contentHeight + (CONTROLS_HELP_PADDING * 2);
 
         // Position relative to screen bottom
-        // Leave margin for JEI bookmarks button at screen bottom
+        // Leave margin for NEI bookmarks button at screen bottom
         int bottomOffset = 28;
         int panelBottom = ctx.screenHeight - ctx.guiTop - bottomOffset;
         int panelTop = panelBottom - panelHeight;

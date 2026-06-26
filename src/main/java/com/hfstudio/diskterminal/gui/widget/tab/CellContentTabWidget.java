@@ -22,8 +22,8 @@ import com.hfstudio.diskterminal.client.TabStateManager;
 import com.hfstudio.diskterminal.config.DiskTerminalServerConfig;
 import com.hfstudio.diskterminal.gui.GuiConstants;
 import com.hfstudio.diskterminal.gui.PriorityFieldManager;
+import com.hfstudio.diskterminal.gui.handler.GhostIngredientHandler;
 import com.hfstudio.diskterminal.gui.handler.GhostTarget;
-import com.hfstudio.diskterminal.gui.handler.JeiGhostHandler;
 import com.hfstudio.diskterminal.gui.handler.QuickPartitionHandler;
 import com.hfstudio.diskterminal.gui.handler.TerminalDataManager;
 import com.hfstudio.diskterminal.gui.widget.CardsDisplay;
@@ -56,7 +56,7 @@ import appeng.api.AEApi;
  * DO_PARTITION (adds item to partition). Content slots show "P" indicator
  * for items that are in the partition.</li>
  * <li><b>Partition tab:</b> Shows cell partitions with amber tint. Tree button is
- * CLEAR_PARTITION (removes partition entry). Supports JEI ghost drops.</li>
+ * CLEAR_PARTITION (removes partition entry). Supports NEI ghost drops.</li>
  * </ul>
  *
  * Each row in the line list is one of:
@@ -91,8 +91,6 @@ public class CellContentTabWidget extends AbstractTabWidget {
         this.isPartitionMode = (slotMode == SlotsLine.SlotMode.PARTITION);
         this.treeButtonType = isPartitionMode ? ButtonType.CLEAR_PARTITION : ButtonType.DO_PARTITION;
     }
-
-    // ---- Tab controller methods ----
 
     @Override
     public List<Object> getLines(TerminalDataManager dataManager) {
@@ -148,7 +146,7 @@ public class CellContentTabWidget extends AbstractTabWidget {
             }
 
             lines.add("");
-            lines.add(I18n.format("gui.disk_terminal.controls.jei_drag"));
+            lines.add(I18n.format("gui.disk_terminal.controls.NEI_drag"));
             lines.add(I18n.format("gui.disk_terminal.controls.click_to_remove"));
         } else {
             lines.add(I18n.format("gui.disk_terminal.controls.partition_indicator"));
@@ -225,8 +223,6 @@ public class CellContentTabWidget extends AbstractTabWidget {
         return true;
     }
 
-    // ---- JEI ghost targets ----
-
     @Override
     public List<GhostTarget<?>> getPhantomTargets(Object ingredient) {
         if (!isPartitionMode) return Collections.emptyList();
@@ -256,7 +252,8 @@ public class CellContentTabWidget extends AbstractTabWidget {
                         // Defensive: verify the target index is still valid for this cell's type limit
                         if (slot.absoluteIndex < 0 || slot.absoluteIndex >= cell.getTotalTypes()) return;
 
-                        ItemStack stack = JeiGhostHandler.convertJeiIngredientToItemStack(ing, cell.getStorageType());
+                        ItemStack stack = GhostIngredientHandler
+                            .convertIngredientForType(ing, cell.getStackTypeId(), false);
                         if (!ItemStacks.isEmpty(stack)) {
                             guiContext.sendPacket(
                                 new PacketPartitionAction(
@@ -273,8 +270,6 @@ public class CellContentTabWidget extends AbstractTabWidget {
 
         return targets;
     }
-
-    // ---- Row building ----
 
     @Override
     protected IWidget createRowWidget(Object lineData, int y, List<?> allLines, int lineIndex) {
@@ -379,8 +374,6 @@ public class CellContentTabWidget extends AbstractTabWidget {
         return false;
     }
 
-    // ---- Storage header creation ----
-
     private StorageHeader createStorageHeader(StorageInfo storage, int y) {
         StorageHeader header = new StorageHeader(y, fontRenderer, itemRender);
         header.setIconSupplier(storage::getBlockItem);
@@ -416,8 +409,6 @@ public class CellContentTabWidget extends AbstractTabWidget {
 
         return header;
     }
-
-    // ---- Cell content line creation ----
 
     private IWidget createCellContentLine(CellContentRow row, int y) {
         CellInfo cell = row.getCell();
@@ -486,7 +477,7 @@ public class CellContentTabWidget extends AbstractTabWidget {
         });
         line.setTreeButton(treeBtn);
 
-        // GUI offsets for JEI targets
+        // GUI offsets for NEI targets
         line.setGuiOffsets(guiLeft, guiTop);
 
         return line;
@@ -574,8 +565,6 @@ public class CellContentTabWidget extends AbstractTabWidget {
         });
     }
 
-    // ---- Empty slot line creation ----
-
     /**
      * Empty cell slot: shows an empty cell slot placeholder (no content slots).
      */
@@ -600,8 +589,6 @@ public class CellContentTabWidget extends AbstractTabWidget {
 
         return line;
     }
-
-    // ---- Upgrade card click handling ----
 
     private void handleCardClick(CellInfo cell, int upgradeSlotIndex) {
         if (DiskTerminalServerConfig.isInitialized() && !DiskTerminalServerConfig.getInstance()

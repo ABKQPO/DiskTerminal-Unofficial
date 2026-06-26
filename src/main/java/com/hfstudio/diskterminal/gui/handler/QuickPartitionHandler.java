@@ -26,9 +26,9 @@ import com.hfstudio.diskterminal.util.ItemStacks;
  * Handles quick-partition keybind actions: find the hovered item, locate a suitable cell with an
  * empty partition, and send a partition packet.
  * <p>
- * The 1.12 source pulled the hovered ingredient from JEI's overlays; here we read the hovered
+ * The 1.12 source pulled the hovered ingredient from NEI's overlays; here we read the hovered
  * inventory slot directly and leave a hook ({@link #getModIngredientUnderMouse}) for the NEI bridge
- * (Phase 5). Gas support is dropped (no Mekanism).
+ * bridge. Gas support is not part of this port.
  */
 public class QuickPartitionHandler {
 

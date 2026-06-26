@@ -11,7 +11,7 @@ import com.hfstudio.diskterminal.util.ItemStacks;
 /**
  * Utility methods for stack comparison in GUI code.
  */
-public final class ComparisonUtils {
+public class ComparisonUtils {
 
     private ComparisonUtils() {}
 

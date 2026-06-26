@@ -13,7 +13,7 @@ import com.glodblock.github.common.item.ItemFluidDrop;
  * the in-network fluid representation is AE2FluidCraft's {@link ItemFluidDrop}, and fluid containers
  * are read through {@link FluidContainerRegistry}.
  */
-public final class FluidStacks {
+public class FluidStacks {
 
     private FluidStacks() {}
 

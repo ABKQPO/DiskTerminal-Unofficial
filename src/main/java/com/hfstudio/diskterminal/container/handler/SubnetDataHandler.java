@@ -7,12 +7,14 @@ import java.util.Map;
 import java.util.Set;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import com.hfstudio.diskterminal.integration.subnet.SubnetScannerRegistry;
+import com.hfstudio.diskterminal.network.PacketSubnetPartitionAction.Action;
 import com.hfstudio.diskterminal.util.PosUtil;
 
 import appeng.api.networking.IGrid;
@@ -231,8 +233,7 @@ public class SubnetDataHandler {
      * @return true if the partition was modified
      */
     public static boolean handleSubnetPartitionAction(Map<Long, SubnetTracker> trackerMap, long subnetId, long pos,
-        int side, com.hfstudio.diskterminal.network.PacketSubnetPartitionAction.Action action, int partitionSlot,
-        net.minecraft.item.ItemStack itemStack) {
+        int side, Action action, int partitionSlot, ItemStack itemStack) {
         return false;
     }
 

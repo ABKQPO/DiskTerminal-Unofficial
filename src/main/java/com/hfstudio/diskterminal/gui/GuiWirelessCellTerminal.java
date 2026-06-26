@@ -40,7 +40,7 @@ public class GuiWirelessCellTerminal extends GuiCellTerminalBase {
     }
 
     @Override
-    public List<Rectangle> getJEIExclusionArea() {
-        return super.getJEIExclusionArea();
+    public List<Rectangle> getNEIExclusionArea() {
+        return super.getNEIExclusionArea();
     }
 }

@@ -10,7 +10,7 @@ import net.minecraft.nbt.NBTTagCompound;
  * Centralizes the empty/load conventions so the rest of the port can read like
  * the 1.12 source while compiling against 1.7.10 semantics.
  */
-public final class ItemStacks {
+public class ItemStacks {
 
     private ItemStacks() {}
 

@@ -9,18 +9,15 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
-import com.gtnewhorizon.gtnhlib.blockpos.BlockPos;
 import com.hfstudio.diskterminal.container.handler.SubnetDataHandler.SubnetTracker;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import appeng.api.parts.IPart;
 import appeng.api.parts.IPartHost;
-import appeng.helpers.IInterfaceHost;
 import appeng.parts.misc.PartInterface;
 import appeng.parts.misc.PartStorageBus;
 import appeng.tile.misc.TileInterface;
-import appeng.tile.networking.TileCableBus;
 
 /**
  * Scanner for detecting subnets connected via Storage Bus -> Interface pattern in 1.7.10.
@@ -152,8 +149,8 @@ public class AE2SubnetScanner extends AbstractSubnetScanner {
     /**
      * Check all 6 sides of a tile for remote storage buses.
      */
-    private void scanAdjacentForRemoteBus(TileEntity centerTile, IGrid mainGrid, Map<IGrid, SubnetTracker> subnetsByGrid,
-        Object interfacePart) {
+    private void scanAdjacentForRemoteBus(TileEntity centerTile, IGrid mainGrid,
+        Map<IGrid, SubnetTracker> subnetsByGrid, Object interfacePart) {
         World world = centerTile.getWorldObj();
 
         for (ForgeDirection dir : ForgeDirection.VALID_DIRECTIONS) {

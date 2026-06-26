@@ -57,6 +57,7 @@ import com.hfstudio.diskterminal.gui.widget.tab.SubnetOverviewTabWidget;
 import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
 import com.hfstudio.diskterminal.network.PacketHighlightBlock;
 import com.hfstudio.diskterminal.network.PacketSlotLimitChange;
+import com.hfstudio.diskterminal.network.PacketSubnetListRequest;
 import com.hfstudio.diskterminal.network.PacketSwitchNetwork;
 import com.hfstudio.diskterminal.network.PacketTabChange;
 import com.hfstudio.diskterminal.network.chunked.PayloadDispatcher;
@@ -128,7 +129,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     protected SearchFieldHandler searchFieldHandler = null;
 
     /**
-     * Tracks whether AE2's JEI bookmark ghost handler consumed the current click via
+     * Tracks whether AE2's NEI bookmark ghost handler consumed the current click via
      * handleMouseClick. When this is true, mouseClicked skips the activeTab.handleClick
      * call to prevent double-fire: AE2's bookmark mechanism sends an ADD_ITEM via accept()
      * using the current mouse position, while our click callback would send a conflicting
@@ -296,7 +297,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
     @Override
     public void initGui() {
-        // JEI can close and later reopen the same GUI instance. onGuiClosed() unregisters the
+        // NEI can close and later reopen the same GUI instance. onGuiClosed() unregisters the
         // chunked payload handlers, so re-register them here before any refresh packets are sent.
         registerPayloadHandlers();
 
@@ -381,7 +382,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             DiskTerminalNetwork.INSTANCE.sendToServer(new PacketSwitchNetwork(this.currentNetworkId));
         }
 
-        // Reopening the GUI directly onto the subnet overview (for example after leaving via JEI)
+        // Reopening the GUI directly onto the subnet overview (for example after leaving via NEI)
         // does not fire a tab-switch event, so trigger the overview enter hook manually.
         if (isInSubnetOverviewMode()) tabManager.getSubnetTab()
             .onEnterOverview();
@@ -752,7 +753,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     }
 
     // Constants for controls help widget positioning
-    // JEI buttons are at guiLeft - 18, with ~4px margin from screen edge
+    // NEI buttons are at guiLeft - 18, with ~4px margin from screen edge
     // We position the panel to leave similar margins on both sides
     protected static final int CONTROLS_HELP_RIGHT_MARGIN = GuiConstants.CONTROLS_HELP_RIGHT_MARGIN;
     protected static final int CONTROLS_HELP_LEFT_MARGIN = GuiConstants.CONTROLS_HELP_LEFT_MARGIN;
@@ -788,7 +789,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     /**
      * Get the bounding rectangle for the controls help widget.
      * Uses cached wrapped lines from the last render for accurate sizing.
-     * Used for JEI exclusion areas.
+     * Used for NEI exclusion areas.
      */
     protected Rectangle getControlsHelpBounds() {
         List<String> wrappedLines = tabManager.getCachedControlsHelpLines();
@@ -805,7 +806,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         int panelLeft = -this.guiLeft + CONTROLS_HELP_LEFT_MARGIN;
 
         // Position relative to screen bottom
-        // Leave margin for JEI bookmarks button at screen bottom
+        // Leave margin for NEI bookmarks button at screen bottom
         int bottomOffset = 28;
         int panelBottom = this.height - this.guiTop - bottomOffset;
         int panelTop = panelBottom - panelHeight;
@@ -814,9 +815,9 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     }
 
     /**
-     * Get JEI exclusion areas to prevent overlap with controls help widget and filter buttons.
+     * Get NEI exclusion areas to prevent overlap with controls help widget and filter buttons.
      */
-    public List<Rectangle> getJEIExclusionArea() {
+    public List<Rectangle> getNEIExclusionArea() {
         List<Rectangle> areas = new ArrayList<>();
         Rectangle controlsHelp = getControlsHelpBounds();
 
@@ -904,13 +905,14 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             }
         }
 
-        // Detect when AE2's JEI bookmark ghost handler consumes the click.
+        // Detect when AE2's NEI bookmark ghost handler consumes the click.
         // AE2 processes bookmark drops in handleMouseClick when clicking outside real slots
         // (slot == null). If it consumed the click, the cursor item changes (cleared or replaced
         // with next bookmark). We must suppress our subsequent activeTab.handleClick to prevent
         // sending a conflicting REMOVE_ITEM for a stale hoveredSlotIndex from the previous draw.
         ItemStack cursorBefore = slot == null && mc.thePlayer.inventory.getItemStack() != null
-            ? mc.thePlayer.inventory.getItemStack().copy()
+            ? mc.thePlayer.inventory.getItemStack()
+                .copy()
             : null;
 
         super.handleMouseClick(slot, slotIdx, mouseButton, clickType);
@@ -978,7 +980,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
         super.mouseClicked(mouseX, mouseY, mouseButton);
 
-        // If AE2's JEI bookmark ghost handler already processed this click (via handleMouseClick),
+        // If AE2's NEI bookmark ghost handler already processed this click (via handleMouseClick),
         // skip our widget handler to avoid sending a conflicting partition action
         if (ghostDropConsumedClick) return;
 
@@ -988,8 +990,6 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         AbstractTabWidget activeTab = tabManager.getActiveTab();
         if (activeTab != null) activeTab.handleClick(relMouseX, relMouseY, mouseButton);
     }
-
-    // ---- TabManager.TabSwitchListener implementation ----
 
     @Override
     public void onPreSwitch(int oldTab) {
@@ -1205,8 +1205,6 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         updateScrollbarForCurrentTab();
         restoreInitialScrollIfNeeded();
     }
-
-    // --- Subnet overview delegation ---
     // All subnet interaction logic now lives in SubnetOverviewTabWidget.
     // These methods implement SubnetOverviewContext and provide thin wrappers for the GUI.
 
@@ -1241,8 +1239,6 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         }
     }
 
-    // --- SubnetOverviewContext implementation ---
-
     @Override
     public void switchToNetwork(long networkId) {
         this.currentNetworkId = networkId;
@@ -1265,7 +1261,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
     @Override
     public void requestSubnetList() {
-        DiskTerminalNetwork.INSTANCE.sendToServer(new com.hfstudio.diskterminal.network.PacketSubnetListRequest());
+        DiskTerminalNetwork.INSTANCE.sendToServer(new PacketSubnetListRequest());
     }
 
     @Override
@@ -1305,7 +1301,8 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
      * SlotFake slots and returns false for anything else — causing the GUI to close on unhandled drags.
      */
     @Override
-    public boolean handleDragNDrop(net.minecraft.client.gui.inventory.GuiContainer gui, int mouseX, int mouseY, ItemStack draggedStack, int button) {
+    public boolean handleDragNDrop(net.minecraft.client.gui.inventory.GuiContainer gui, int mouseX, int mouseY,
+        ItemStack draggedStack, int button) {
         // Check partition popups first (they overlay tabs)
         List<com.hfstudio.diskterminal.gui.handler.GhostTarget<?>> targets = getPhantomTargets(draggedStack);
 
@@ -1390,8 +1387,6 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             },
             () -> networkToolModal = null);
     }
-
-    // ---- GuiContext interface implementation ----
 
     @Override
     public TerminalDataManager getDataManager() {
@@ -1478,8 +1473,8 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
     /**
      * Get the ItemStack under the mouse from our virtual slot widgets.
-     * Used by the JEI plugin to support recipe/usage lookups (R/U keybinds)
-     * on items displayed in virtual slots that JEI cannot detect normally.
+     * Used by the NEI plugin to support recipe/usage lookups (R/U keybinds)
+     * on items displayed in virtual slots that NEI cannot detect normally.
      *
      * @param screenMouseX Mouse X in screen coordinates
      * @param screenMouseY Mouse Y in screen coordinates

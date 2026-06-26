@@ -10,7 +10,7 @@ import com.hfstudio.diskterminal.gui.GuiConstants;
  * when a new widget object is created. This static tracker stores the last click time and
  * target ID, allowing widgets to detect double-clicks across instance recreations.
  */
-public final class DoubleClickTracker {
+public class DoubleClickTracker {
 
     private DoubleClickTracker() {}
 

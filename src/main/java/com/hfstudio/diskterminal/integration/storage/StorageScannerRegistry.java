@@ -17,7 +17,7 @@ import appeng.api.networking.IGrid;
  * Built-in scanners for AE2 (ME Drive, ME Chest) are registered automatically.
  * Optional mod integrations register their scanners during init if the mods are present.
  */
-public final class StorageScannerRegistry {
+public class StorageScannerRegistry {
 
     private static final List<IStorageScanner> scanners = new ArrayList<>();
 

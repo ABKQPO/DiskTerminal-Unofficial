@@ -19,7 +19,7 @@ import net.minecraft.util.StatCollector;
  * This ensures players get both persistent feedback (chat) and
  * immediate visual feedback (overlay) with appropriate colors.
  */
-public final class MessageHelper {
+public class MessageHelper {
 
     private MessageHelper() {}
 

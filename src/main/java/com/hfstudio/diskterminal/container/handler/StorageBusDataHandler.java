@@ -16,6 +16,8 @@ import net.minecraftforge.fluids.FluidStack;
 import com.glodblock.github.common.item.ItemFluidDrop;
 import com.hfstudio.diskterminal.client.StorageType;
 import com.hfstudio.diskterminal.integration.storagebus.StorageBusScannerRegistry;
+import com.hfstudio.diskterminal.network.PacketStorageBusPartitionAction.Action;
+import com.hfstudio.diskterminal.util.AEStackUtil;
 import com.hfstudio.diskterminal.util.InventoryHelper;
 import com.hfstudio.diskterminal.util.ItemStacks;
 import com.hfstudio.diskterminal.util.PosUtil;
@@ -25,17 +27,14 @@ import appeng.api.config.Settings;
 import appeng.api.config.Upgrades;
 import appeng.api.networking.IGrid;
 import appeng.api.storage.IMEInventoryHandler;
-import appeng.api.storage.data.IAEFluidStack;
-import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
+import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
 import appeng.api.util.IConfigManager;
 import appeng.helpers.ICustomNameObject;
 import appeng.parts.automation.PartUpgradeable;
 import appeng.parts.misc.PartStorageBus;
 import appeng.util.IterationCounter;
-import appeng.util.item.AEFluidStackType;
-import appeng.util.item.AEItemStackType;
 
 /**
  * Handles storage bus data collection and NBT generation.
@@ -191,43 +190,38 @@ public class StorageBusDataHandler {
         IMEInventoryHandler<?> handler = bus.getInternalHandler();
         if (handler == null) return;
 
-        NBTTagList contentsList = new NBTTagList();
-        boolean fluid = storageType == StorageType.FLUID;
+        IAEStackType<?> type = handler.getStackType();
+        if (type == null) return;
 
-        if (fluid) {
-            IItemList<IAEFluidStack> list = AEFluidStackType.FLUID_STACK_TYPE.createList();
-            ((IMEInventoryHandler<IAEFluidStack>) castHandler(handler))
-                .getAvailableItems(list, IterationCounter.fetchNewId());
-            for (IAEFluidStack stack : list) {
-                ItemStack rep = ItemFluidDrop.newStack(stack.getFluidStack());
-                if (ItemStacks.isEmpty(rep)) continue;
-
-                NBTTagCompound stackNbt = new NBTTagCompound();
-                rep.writeToNBT(stackNbt);
-                stackNbt.setLong("Cnt", stack.getStackSize());
-                contentsList.appendTag(stackNbt);
-            }
-        } else {
-            IItemList<IAEItemStack> list = AEItemStackType.ITEM_STACK_TYPE.createList();
-            ((IMEInventoryHandler<IAEItemStack>) castHandler(handler))
-                .getAvailableItems(list, IterationCounter.fetchNewId());
-            for (IAEItemStack stack : list) {
-                ItemStack rep = stack.getItemStack();
-                if (ItemStacks.isEmpty(rep)) continue;
-
-                NBTTagCompound stackNbt = new NBTTagCompound();
-                rep.writeToNBT(stackNbt);
-                stackNbt.setLong("Cnt", stack.getStackSize());
-                contentsList.appendTag(stackNbt);
-            }
-        }
-
-        busData.setTag("contents", contentsList);
+        busData.setString("stackType", type.getId());
+        addContentsForUnknownType(busData, handler, type);
     }
 
     @SuppressWarnings("unchecked")
-    private static IMEInventoryHandler<? extends IAEStack> castHandler(IMEInventoryHandler<?> handler) {
-        return (IMEInventoryHandler<? extends IAEStack>) handler;
+    private static <T extends IAEStack<T>> IMEInventoryHandler<T> castHandler(IMEInventoryHandler<?> handler) {
+        return (IMEInventoryHandler<T>) handler;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends IAEStack<T>> void addContentsForUnknownType(NBTTagCompound busData,
+        IMEInventoryHandler<?> handler, IAEStackType<?> type) {
+        addContentsForType(busData, castHandler(handler), (IAEStackType<T>) type);
+    }
+
+    private static <T extends IAEStack<T>> void addContentsForType(NBTTagCompound busData,
+        IMEInventoryHandler<T> handler, IAEStackType<T> type) {
+        IItemList<T> list = type.createList();
+        handler.getAvailableItems(list, IterationCounter.fetchNewId());
+
+        NBTTagList contentsList = new NBTTagList();
+        for (T stack : list) {
+            NBTTagCompound stackNbt = new NBTTagCompound();
+            AEStackUtil.writeStackToNBT(stackNbt, stack);
+            stackNbt.setLong("Cnt", stack.getStackSize());
+            contentsList.appendTag(stackNbt);
+        }
+
+        busData.setTag("contents", contentsList);
     }
 
     private static int computeAvailableSlotsFrom(NBTTagCompound busData, int capacityUpgrades) {
@@ -262,11 +256,10 @@ public class StorageBusDataHandler {
     /**
      * Check whether an ADD_ITEM request would create a duplicate filter entry on this bus.
      */
-    public static boolean isDuplicateFilterAdd(StorageBusTracker tracker,
-        com.hfstudio.diskterminal.network.PacketStorageBusPartitionAction.Action action, int partitionSlot,
+    public static boolean isDuplicateFilterAdd(StorageBusTracker tracker, Action action, int partitionSlot,
         ItemStack itemStack) {
         if (tracker == null) return false;
-        if (action != com.hfstudio.diskterminal.network.PacketStorageBusPartitionAction.Action.ADD_ITEM) return false;
+        if (action != Action.ADD_ITEM) return false;
         if (partitionSlot < 0 || ItemStacks.isEmpty(itemStack)) return false;
         if (!(tracker.storageBus instanceof PartStorageBus)) return false;
 
@@ -283,8 +276,7 @@ public class StorageBusDataHandler {
      *
      * @return true if the partition was modified
      */
-    public static boolean handlePartitionAction(StorageBusTracker tracker,
-        com.hfstudio.diskterminal.network.PacketStorageBusPartitionAction.Action action, int partitionSlot,
+    public static boolean handlePartitionAction(StorageBusTracker tracker, Action action, int partitionSlot,
         ItemStack itemStack) {
         if (!(tracker.storageBus instanceof PartStorageBus)) return false;
 
