@@ -124,6 +124,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     // Popup states
     protected PopupCellInventory inventoryPopup = null;
     protected PopupCellPartition partitionPopup = null;
+    private boolean renderingPopupTooltip = false;
 
     // Storage bus and temp area selection tracking (for quick-add keybinds)
     protected final Set<Long> selectedStorageBusIds = new HashSet<>();
@@ -551,14 +552,14 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
         if (inventoryPopup != null) {
             drawPopupHoverTooltip(
-                inventoryPopup.getHoveredTooltip(),
+                inventoryPopup.getHoveredStack(),
                 inventoryPopup.getHoveredTooltipX(),
                 inventoryPopup.getHoveredTooltipY());
         }
 
         if (partitionPopup != null) {
             drawPopupHoverTooltip(
-                partitionPopup.getHoveredTooltip(),
+                partitionPopup.getHoveredStack(),
                 partitionPopup.getHoveredTooltipX(),
                 partitionPopup.getHoveredTooltipY());
         }
@@ -567,10 +568,17 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     }
 
     /**
-     * Render a popup's hovered-item tooltip via the GUI's (protected) tooltip helper.
+     * Render a popup's hovered-item tooltip through the same pipeline as the rest of the GUI.
      */
-    private void drawPopupHoverTooltip(List<String> lines, int x, int y) {
-        if (lines != null && !lines.isEmpty()) this.drawHoveringText(lines, x, y);
+    private void drawPopupHoverTooltip(ItemStack stack, int x, int y) {
+        if (ItemStacks.isEmpty(stack)) return;
+
+        renderingPopupTooltip = true;
+        try {
+            this.renderToolTip(stack, x, y);
+        } finally {
+            renderingPopupTooltip = false;
+        }
     }
 
     private void drawPopupLayer(Runnable renderer) {
@@ -710,6 +718,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     public Slot getSlotUnderMouse() {
         int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
         int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
+        if (isPopupObscuringPoint(mouseX, mouseY)) return null;
 
         for (Object slotObject : this.inventorySlots.inventorySlots) {
             Slot slot = (Slot) slotObject;
@@ -719,8 +728,35 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         return null;
     }
 
+    @Override
+    protected Slot getSlot(int mouseX, int mouseY) {
+        if (isPopupObscuringPoint(mouseX, mouseY)) return null;
+
+        return super.getSlot(mouseX, mouseY);
+    }
+
     private boolean isMouseOverContainerSlot(Slot slot, int mouseX, int mouseY) {
+        if (isPopupObscuringPoint(mouseX, mouseY)) return false;
+
         return this.func_146978_c(slot.xDisplayPosition, slot.yDisplayPosition, 16, 16, mouseX, mouseY);
+    }
+
+    private boolean isPopupObscuringPoint(int mouseX, int mouseY) {
+        if (partitionPopup != null) return partitionPopup.isInsidePopup(mouseX, mouseY);
+        if (inventoryPopup != null) return inventoryPopup.isInsidePopup(mouseX, mouseY);
+
+        return false;
+    }
+
+    private boolean hasBlockingPopup() {
+        return partitionPopup != null || inventoryPopup != null;
+    }
+
+    @Override
+    public void renderToolTip(ItemStack stack, int mouseX, int mouseY) {
+        if (!renderingPopupTooltip && isPopupObscuringPoint(mouseX, mouseY)) return;
+
+        super.renderToolTip(stack, mouseX, mouseY);
     }
 
     private void drawPopupTooltipTail(int mouseX, int mouseY, float partialTicks) {
@@ -1181,7 +1217,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         if (ghostDropConsumedClick) return;
 
         // Delegate content area clicks to the active tab widget
-        if (hadPopupAtStart || !isInVirtualContentArea(mouseX, mouseY)) return;
+        if (hadPopupAtStart || hasBlockingPopup() || !isInVirtualContentArea(mouseX, mouseY)) return;
 
         int relMouseX = mouseX - guiLeft;
         int relMouseY = mouseY - guiTop;
@@ -1235,6 +1271,8 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
      * Delegates to the active tab widget for tab-specific logic.
      */
     protected boolean handleWidgetUpgradeClick(int mouseX, int mouseY) {
+        if (hasBlockingPopup()) return false;
+
         ItemStack heldStack = mc.thePlayer.inventory.getItemStack();
         if (ItemStacks.isEmpty(heldStack)) return false;
         if (!(heldStack.getItem() instanceof IUpgradeModule)) return false;
@@ -1709,8 +1747,13 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
      * @return The hovered ItemStack, or null if none
      */
     public ItemStack getVirtualHoveredItemStack(int screenMouseX, int screenMouseY) {
-        if (partitionPopup != null) return partitionPopup.getHoveredStack();
-        if (inventoryPopup != null) return inventoryPopup.getHoveredStack();
+        if (partitionPopup != null) {
+            return partitionPopup.isInsidePopup(screenMouseX, screenMouseY) ? partitionPopup.getHoveredStack() : null;
+        }
+
+        if (inventoryPopup != null) {
+            return inventoryPopup.isInsidePopup(screenMouseX, screenMouseY) ? inventoryPopup.getHoveredStack() : null;
+        }
 
         AbstractTabWidget activeTab = tabManager != null ? tabManager.getActiveTab() : null;
         if (activeTab == null) return null;

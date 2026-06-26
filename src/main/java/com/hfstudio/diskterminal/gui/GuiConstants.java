@@ -147,6 +147,9 @@ public class GuiConstants {
     /** Right edge of content area */
     public static final int CONTENT_RIGHT_EDGE = 180;
 
+    /** Extra pixels for row separators and selected row backgrounds. */
+    public static final int ROW_RIGHT_EXTENSION = 2;
+
     /** Inner padding for panels and popups */
     public static final int PADDING = 8;
 

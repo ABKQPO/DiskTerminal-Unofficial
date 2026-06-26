@@ -5,6 +5,8 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 
 import com.hfstudio.diskterminal.client.StorageType;
+import com.hfstudio.diskterminal.integration.storagebus.StorageBusScannerRegistry;
+import com.hfstudio.diskterminal.integration.storagebus.ThaumicEnergisticsBusScanner;
 import com.hfstudio.diskterminal.util.ItemStacks;
 
 import appeng.api.storage.ICellHandler;
@@ -38,6 +40,12 @@ public class ThaumicEnergisticsIntegration {
         if (!isModLoaded()) return null;
 
         return convertEssentiaContainer(container);
+    }
+
+    public static void registerStorageBusScanner() {
+        if (!isModLoaded()) return;
+
+        registerStorageBusScannerInternal();
     }
 
     @Optional.Method(modid = MOD_ID)
@@ -110,5 +118,10 @@ public class ThaumicEnergisticsIntegration {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    @Optional.Method(modid = MOD_ID)
+    private static void registerStorageBusScannerInternal() {
+        StorageBusScannerRegistry.register(ThaumicEnergisticsBusScanner.INSTANCE);
     }
 }

@@ -28,6 +28,7 @@ import appeng.api.storage.data.AEStackTypeRegistry;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
+import appeng.helpers.IInterfaceHost;
 import appeng.parts.misc.PartInterface;
 import appeng.parts.misc.PartStorageBus;
 import appeng.tile.inventory.IAEStackInventory;
@@ -121,43 +122,45 @@ public class AE2SubnetScanner extends AbstractSubnetScanner {
      * Scan for inbound connections where a remote Storage Bus points at our Interface.
      */
     private void scanInboundConnections(IGrid mainGrid, Map<IGrid, SubnetTracker> subnetsByGrid, int playerId) {
-        // Scan full-block TileInterface
-        for (IGridNode node : mainGrid.getMachines(TileInterface.class)) {
+        for (IGridNode node : mainGrid.getNodes()) {
             if (!node.isActive()) continue;
 
-            TileInterface iface = (TileInterface) node.getMachine();
+            Object machine = node.getMachine();
+            if (!(machine instanceof IInterfaceHost iface)) continue;
+
             TileEntity ifaceTile = iface.getTileEntity();
             if (ifaceTile == null) continue;
 
-            // Check all 6 adjacent sides for remote storage buses
-            scanAdjacentForRemoteBus(ifaceTile, mainGrid, subnetsByGrid, iface);
+            scanInterfaceHostForRemoteBuses(mainGrid, subnetsByGrid, iface, ifaceTile);
+        }
+    }
+
+    private void scanInterfaceHostForRemoteBuses(IGrid mainGrid, Map<IGrid, SubnetTracker> subnetsByGrid,
+        IInterfaceHost iface, TileEntity ifaceTile) {
+        if (iface instanceof PartInterface partInterface) {
+            ForgeDirection facing = partInterface.getSide();
+            if (facing == null || facing == ForgeDirection.UNKNOWN) return;
+
+            scanSideForRemoteBus(ifaceTile, mainGrid, subnetsByGrid, iface, facing);
+            return;
         }
 
-        // Scan cable-attached PartInterface
-        for (IGridNode node : mainGrid.getMachines(PartInterface.class)) {
-            if (!node.isActive()) continue;
+        scanAdjacentForRemoteBus(ifaceTile, mainGrid, subnetsByGrid, iface);
+    }
 
-            PartInterface iface = (PartInterface) node.getMachine();
-            TileEntity ifaceTile = iface.getTile();
-            if (ifaceTile == null) continue;
+    private void scanSideForRemoteBus(TileEntity ifaceTile, IGrid mainGrid, Map<IGrid, SubnetTracker> subnetsByGrid,
+        Object interfacePart, ForgeDirection facing) {
+        World world = ifaceTile.getWorldObj();
+        int adjX = ifaceTile.xCoord + facing.offsetX;
+        int adjY = ifaceTile.yCoord + facing.offsetY;
+        int adjZ = ifaceTile.zCoord + facing.offsetZ;
+        TileEntity adjacentTile = world.getTileEntity(adjX, adjY, adjZ);
+        if (adjacentTile == null) return;
 
-            // PartInterface faces one specific direction
-            ForgeDirection facing = iface.getSide();
-            if (facing == null || facing == ForgeDirection.UNKNOWN) continue;
-
-            // Check the adjacent tile in that direction
-            World world = ifaceTile.getWorldObj();
-            int adjX = ifaceTile.xCoord + facing.offsetX;
-            int adjY = ifaceTile.yCoord + facing.offsetY;
-            int adjZ = ifaceTile.zCoord + facing.offsetZ;
-            TileEntity adjacentTile = world.getTileEntity(adjX, adjY, adjZ);
-            if (adjacentTile == null) continue;
-
-            IGrid remoteGrid = checkForRemoteStorageBus(adjacentTile, facing.getOpposite(), mainGrid);
-            if (remoteGrid != null) {
-                SubnetTracker tracker = getOrCreateTracker(subnetsByGrid, remoteGrid);
-                tracker.addInboundConnection(iface, ifaceTile, facing);
-            }
+        IGrid remoteGrid = checkForRemoteStorageBus(adjacentTile, facing.getOpposite(), mainGrid);
+        if (remoteGrid != null) {
+            SubnetTracker tracker = getOrCreateTracker(subnetsByGrid, remoteGrid);
+            tracker.addInboundConnection(interfacePart, ifaceTile, facing);
         }
     }
 

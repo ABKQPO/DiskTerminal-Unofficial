@@ -6,7 +6,10 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 
+import com.glodblock.github.common.parts.PartFluidExportBus;
+import com.glodblock.github.common.parts.PartFluidImportBus;
 import com.glodblock.github.common.parts.PartFluidStorageBus;
+import com.hfstudio.diskterminal.client.BusRole;
 import com.hfstudio.diskterminal.client.StorageType;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler.StorageBusTracker;
@@ -32,7 +35,8 @@ public class AE2FluidCraftStorageBusScanner extends AbstractStorageBusScanner {
     }
 
     @Override
-    public void scanStorageBuses(IGrid grid, NBTTagList out, Map<Long, StorageBusTracker> trackerMap) {
+    public void scanStorageBuses(IGrid grid, NBTTagList out, Map<Long, StorageBusTracker> trackerMap,
+        int contentLimit) {
         if (grid == null) return;
 
         for (IGridNode gn : grid.getMachines(PartFluidStorageBus.class)) {
@@ -47,7 +51,7 @@ public class AE2FluidCraftStorageBusScanner extends AbstractStorageBusScanner {
                 bus.getSide()
                     .ordinal(),
                 StorageType.FLUID.ordinal());
-            NBTTagCompound nbt = StorageBusDataHandler.createFluidStorageBusData(bus, busId);
+            NBTTagCompound nbt = StorageBusDataHandler.createFluidStorageBusData(bus, busId, contentLimit);
             applyCapabilities(nbt);
             applySlotParameters(nbt);
             out.appendTag(nbt);
@@ -60,6 +64,18 @@ public class AE2FluidCraftStorageBusScanner extends AbstractStorageBusScanner {
                     bus.getSide()
                         .ordinal(),
                     StorageType.FLUID));
+        }
+
+        for (IGridNode gn : grid.getMachines(PartFluidImportBus.class)) {
+            if (!gn.isActive()) continue;
+
+            appendSharedBus((PartFluidImportBus) gn.getMachine(), BusRole.IMPORT, out, contentLimit, trackerMap);
+        }
+
+        for (IGridNode gn : grid.getMachines(PartFluidExportBus.class)) {
+            if (!gn.isActive()) continue;
+
+            appendSharedBus((PartFluidExportBus) gn.getMachine(), BusRole.EXPORT, out, contentLimit, trackerMap);
         }
     }
 }

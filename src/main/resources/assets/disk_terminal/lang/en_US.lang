@@ -1,13 +1,13 @@
 # Items
 itemGroup.disk_terminal=DiskTerminal-Unofficial
-item.disk_terminal.cell_terminal.name=Cell Terminal
-item.disk_terminal.wireless_cell_terminal.name=Wireless Cell Terminal
-item.disk_terminal.cell_terminal.tooltip=§bFor all your partitioning needs!
-item.disk_terminal.wireless_cell_terminal.temp_cells=§7Temporary Cells: §f%d
-item.disk_terminal.wireless_cell_terminal.linked=§aLinked
-item.disk_terminal.wireless_cell_terminal.unlinked=§cNot linked
-item.disk_terminal.wireless_cell_terminal.nolink=§cNot linked
-item.disk_terminal.wireless_cell_terminal.no_link=§cNot linked
+item.cell_terminal.name=Cell Terminal
+item.wireless_cell_terminal.name=Wireless Cell Terminal
+item.cell_terminal.tooltip=§bFor all your partitioning needs!
+item.wireless_cell_terminal.temp_cells=§7Temporary Cells: §f%d
+item.wireless_cell_terminal.linked=§aLinked
+item.wireless_cell_terminal.unlinked=§cNot linked
+item.wireless_cell_terminal.nolink=§cNot linked
+item.wireless_cell_terminal.no_link=§cNot linked
 
 # GUI
 gui.disk_terminal.cell_terminal.title=Cell Terminal
@@ -23,8 +23,8 @@ gui.disk_terminal.tab.terminal.tooltip=Cell Overview
 gui.disk_terminal.tab.inventory.tooltip=View Cell Contents
 gui.disk_terminal.tab.partition.tooltip=Edit Cell Partitions
 gui.disk_terminal.tab.temp_area.tooltip=Temporary Cell Staging Area
-gui.disk_terminal.tab.storage_bus_inventory.tooltip=View Storage Bus Contents
-gui.disk_terminal.tab.storage_bus_partition.tooltip=Edit Storage Bus Filters
+gui.disk_terminal.tab.storage_bus_inventory.tooltip=View Bus Contents
+gui.disk_terminal.tab.storage_bus_partition.tooltip=Edit Bus Filters
 
 # Terminal style button
 gui.disk_terminal.terminal_style=Terminal Style
@@ -80,7 +80,7 @@ gui.disk_terminal.upgrade.tooltip_hint_available_entries=Available entries to ap
 gui.disk_terminal.upgrade.tooltip_hint_entry_drive= - ME Drive/ME Chest header (or similar)
 gui.disk_terminal.upgrade.tooltip_hint_entry_cells= - Storage Cell slots (filled with a cell)
 gui.disk_terminal.upgrade.tooltip_hint_entry_cell_lines= - Storage Cell lines
-gui.disk_terminal.upgrade.tooltip_hint_entry_storage_bus= - Storage Buses header/lines (or similar)
+gui.disk_terminal.upgrade.tooltip_hint_entry_storage_bus= - Buses header/lines (or similar)
 
 # Persistent settings
 config.disk_terminal.gui=GUI Settings
@@ -124,10 +124,10 @@ config.disk_terminal.config.server.tabs.inventory=Inventory Tab
 config.disk_terminal.config.server.tabs.inventory.tooltip=Enable the Inventory tab (view cell contents)
 config.disk_terminal.config.server.tabs.partition=Partition Tab
 config.disk_terminal.config.server.tabs.partition.tooltip=Enable the Partition tab (edit cell filters)
-config.disk_terminal.config.server.tabs.storage_bus_inventory=Storage Bus Inventory Tab
-config.disk_terminal.config.server.tabs.storage_bus_inventory.tooltip=Enable the Storage Bus Inventory tab (view storage bus contents)
-config.disk_terminal.config.server.tabs.storage_bus_partition=Storage Bus Partition Tab
-config.disk_terminal.config.server.tabs.storage_bus_partition.tooltip=Enable the Storage Bus Partition tab (edit storage bus filters)
+config.disk_terminal.config.server.tabs.storage_bus_inventory=Bus Content Tab
+config.disk_terminal.config.server.tabs.storage_bus_inventory.tooltip=Enable the Bus Content tab (view bus contents)
+config.disk_terminal.config.server.tabs.storage_bus_partition=Bus Partition Tab
+config.disk_terminal.config.server.tabs.storage_bus_partition.tooltip=Enable the Bus Partition tab (edit bus filters)
 
 config.disk_terminal.config.server.polling=Polling Settings
 config.disk_terminal.config.server.polling.tooltip=Storage bus polling settings. WARNING: Polling can be expensive on large networks!
@@ -240,6 +240,8 @@ disk_terminal.storage_bus.invalid_item=Invalid item for this storage bus type
 gui.disk_terminal.storagebus.clear=Clear Filters
 gui.disk_terminal.storagebus.partitionall=Set Contents to Filter
 gui.disk_terminal.storage_bus.name=Storage Bus
+gui.disk_terminal.bus.import.name=Import Bus
+gui.disk_terminal.bus.export.name=Export Bus
 gui.disk_terminal.storage_bus.air=Air
 gui.disk_terminal.storage_bus.prefix.import=Import
 gui.disk_terminal.storage_bus.prefix.export=Export

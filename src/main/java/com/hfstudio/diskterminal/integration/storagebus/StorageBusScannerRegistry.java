@@ -29,11 +29,11 @@ public class StorageBusScannerRegistry {
         DiskTerminal.LOG.info("Registered storage bus scanner: {}", scanner.getId());
     }
 
-    public static void scanAll(IGrid grid, NBTTagList out, Map<Long, StorageBusTracker> trackerMap) {
+    public static void scanAll(IGrid grid, NBTTagList out, Map<Long, StorageBusTracker> trackerMap, int contentLimit) {
         for (IStorageBusScanner scanner : scanners) {
             if (!scanner.isAvailable()) continue;
             try {
-                scanner.scanStorageBuses(grid, out, trackerMap);
+                scanner.scanStorageBuses(grid, out, trackerMap, contentLimit);
             } catch (Exception e) {
                 DiskTerminal.LOG.error("Error scanning storage buses with {}: {}", scanner.getId(), e.getMessage());
             }

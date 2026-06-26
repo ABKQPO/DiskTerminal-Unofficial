@@ -102,18 +102,18 @@ public class ItemWirelessCellTerminal extends AEBasePoweredItem implements IWire
         boolean displayMoreInfo) {
         super.addCheckedInformation(stack, player, lines, displayMoreInfo);
 
-        lines.add(I18n.format("item.disk_terminal.cell_terminal.tooltip"));
+        lines.add(I18n.format("item.cell_terminal.tooltip"));
 
         int tempCellCount = getTempCellCount(stack);
         if (tempCellCount > 0) {
-            lines.add(I18n.format("item.disk_terminal.wireless_cell_terminal.temp_cells", tempCellCount));
+            lines.add(I18n.format("item.wireless_cell_terminal.temp_cells", tempCellCount));
         }
 
         String encKey = getEncryptionKey(stack);
         if (encKey == null || encKey.isEmpty()) {
-            lines.add(I18n.format("item.disk_terminal.wireless_cell_terminal.unlinked"));
+            lines.add(I18n.format("item.wireless_cell_terminal.unlinked"));
         } else {
-            lines.add(I18n.format("item.disk_terminal.wireless_cell_terminal.linked"));
+            lines.add(I18n.format("item.wireless_cell_terminal.linked"));
         }
     }
 

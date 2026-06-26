@@ -165,19 +165,6 @@ public class PopupCellPartition extends Gui {
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    /**
-     * Compute the tooltip for the hovered item, if any. The parent GUI draws it (it has the
-     * protected access to {@code drawHoveringText}); this avoids calling protected GuiScreen
-     * methods on an external reference.
-     *
-     * @return the tooltip lines and screen position, or null if nothing is hovered
-     */
-    public List<String> getHoveredTooltip() {
-        if (ItemStacks.isEmpty(hoveredStack)) return null;
-
-        return hoveredStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
-    }
-
     public int getHoveredTooltipX() {
         return hoveredX;
     }
@@ -359,6 +346,10 @@ public class PopupCellPartition extends Gui {
         return height;
     }
 
+    /**
+     * Get the hovered stack for the parent GUI to render as a tooltip.
+     * The parent owns the protected tooltip rendering methods and popup layering.
+     */
     public ItemStack getHoveredStack() {
         return hoveredStack;
     }

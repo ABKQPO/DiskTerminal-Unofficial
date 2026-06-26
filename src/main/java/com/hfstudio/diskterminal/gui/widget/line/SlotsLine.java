@@ -205,7 +205,7 @@ public class SlotsLine extends AbstractLine {
             Gui.drawRect(
                 GuiConstants.GUI_INDENT,
                 y - 1,
-                GuiConstants.CONTENT_RIGHT_EDGE + separatorRightOffset,
+                GuiConstants.CONTENT_RIGHT_EDGE + GuiConstants.ROW_RIGHT_EXTENSION + separatorRightOffset,
                 y,
                 GuiConstants.COLOR_SEPARATOR);
         }
@@ -216,7 +216,7 @@ public class SlotsLine extends AbstractLine {
             Gui.drawRect(
                 GuiConstants.GUI_INDENT,
                 y,
-                GuiConstants.CONTENT_RIGHT_EDGE,
+                GuiConstants.CONTENT_RIGHT_EDGE + GuiConstants.ROW_RIGHT_EXTENSION,
                 y + rowHeight,
                 GuiConstants.COLOR_SELECTION);
         }

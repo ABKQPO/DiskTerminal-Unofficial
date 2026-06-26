@@ -6,12 +6,15 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 
+import com.hfstudio.diskterminal.client.BusRole;
 import com.hfstudio.diskterminal.client.StorageType;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler.StorageBusTracker;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
+import appeng.parts.automation.PartExportBus;
+import appeng.parts.automation.PartImportBus;
 import appeng.parts.misc.PartStorageBus;
 
 /**
@@ -34,7 +37,8 @@ public class AE2StorageBusScanner extends AbstractStorageBusScanner {
     }
 
     @Override
-    public void scanStorageBuses(IGrid grid, NBTTagList out, Map<Long, StorageBusTracker> trackerMap) {
+    public void scanStorageBuses(IGrid grid, NBTTagList out, Map<Long, StorageBusTracker> trackerMap,
+        int contentLimit) {
         if (grid == null) return;
 
         // Item storage buses (exact PartStorageBus class registration)
@@ -50,7 +54,7 @@ public class AE2StorageBusScanner extends AbstractStorageBusScanner {
                 bus.getSide()
                     .ordinal(),
                 StorageType.ITEM.ordinal());
-            NBTTagCompound nbt = StorageBusDataHandler.createItemStorageBusData(bus, busId);
+            NBTTagCompound nbt = StorageBusDataHandler.createItemStorageBusData(bus, busId, contentLimit);
             applyCapabilities(nbt);
             applySlotParameters(nbt);
             out.appendTag(nbt);
@@ -63,6 +67,18 @@ public class AE2StorageBusScanner extends AbstractStorageBusScanner {
                     bus.getSide()
                         .ordinal(),
                     StorageType.ITEM));
+        }
+
+        for (IGridNode gn : grid.getMachines(PartImportBus.class)) {
+            if (!gn.isActive()) continue;
+
+            appendSharedBus((PartImportBus) gn.getMachine(), BusRole.IMPORT, out, contentLimit, trackerMap);
+        }
+
+        for (IGridNode gn : grid.getMachines(PartExportBus.class)) {
+            if (!gn.isActive()) continue;
+
+            appendSharedBus((PartExportBus) gn.getMachine(), BusRole.EXPORT, out, contentLimit, trackerMap);
         }
     }
 }

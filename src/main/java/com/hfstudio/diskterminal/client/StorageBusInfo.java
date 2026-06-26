@@ -59,12 +59,15 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     private final int slotsPerUpgrade;
     private final int maxConfigSlots;
     private final StorageType storageType;
+    private final BusRole busRole;
     private final String stackTypeId;
     private final int accessRestriction; // 0=NO_ACCESS, 1=READ, 2=WRITE, 3=READ_WRITE
     private final String customName; // Storage bus custom name (takes priority over connectedName)
     private final String namePrefixKey; // Optional translated prefix prepended to the resolved display name
     private final String connectedName;
     private final ItemStack connectedIcon;
+    private final ItemStack busIcon;
+    private final boolean connectedIconIsTarget;
     private final List<ItemStack> partition = new ArrayList<>();
     private final List<ItemStack> contents = new ArrayList<>();
     private final List<Long> contentCounts = new ArrayList<>();
@@ -81,6 +84,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         this.side = EnumFacing.getFront(nbt.getInteger("side"));
         this.priority = nbt.getInteger("priority");
         this.storageType = StorageType.fromNBT(nbt);
+        this.busRole = BusRole.fromNBT(nbt);
         this.stackTypeId = nbt.hasKey("stackType") ? nbt.getString("stackType") : stackTypeIdFrom(storageType);
         this.accessRestriction = nbt.hasKey("access") ? nbt.getInteger("access") : 3; // Default READ_WRITE
 
@@ -104,6 +108,9 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         // Connected inventory info
         this.connectedName = nbt.hasKey("connectedName") ? nbt.getString("connectedName") : null;
         this.connectedIcon = nbt.hasKey("connectedIcon") ? ItemStacks.load(nbt.getCompoundTag("connectedIcon")) : null;
+        this.connectedIconIsTarget = nbt.getBoolean("connectedIconIsTarget");
+        this.busIcon = nbt.hasKey("busIcon") ? ItemStacks.load(nbt.getCompoundTag("busIcon"))
+            : connectedIconIsTarget ? null : connectedIcon;
 
         // Parse upgrade items for display
         if (nbt.hasKey("upgrades")) {
@@ -214,6 +221,10 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         return storageType;
     }
 
+    public BusRole getBusRole() {
+        return busRole;
+    }
+
     public String getStackTypeId() {
         return stackTypeId;
     }
@@ -285,21 +296,22 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     }
 
     public String getDisplayName() {
-        return I18n.format("gui.disk_terminal.storage_bus.name");
+        return I18n.format(busRole.getNameKey());
     }
 
     public String getWarningDisplayName() {
         if (customName != null && !customName.isEmpty()) return customName;
 
         String baseName = getDisplayName();
-        if (namePrefixKey == null || namePrefixKey.isEmpty()) return baseName;
+        String prefixKey = getResolvedPrefixKey();
+        if (prefixKey == null || prefixKey.isEmpty()) return baseName;
 
-        return I18n.format(namePrefixKey) + " " + baseName;
+        return I18n.format(prefixKey) + " " + baseName;
     }
 
     /**
      * Get localized name for display.
-     * Priority: custom name &gt; connected inventory name &gt; "Air".
+     * Priority: custom name &gt; connected inventory name &gt; bus role name.
      */
     public String getLocalizedName() {
         String baseName;
@@ -316,12 +328,13 @@ public class StorageBusInfo implements Renameable, Prioritizable {
             baseName = connectedName;
 
         } else {
-            baseName = I18n.format("gui.disk_terminal.storage_bus.air");
+            baseName = getDisplayName();
         }
 
-        if (namePrefixKey == null || namePrefixKey.isEmpty()) return baseName;
+        String prefixKey = getResolvedPrefixKey();
+        if (prefixKey == null || prefixKey.isEmpty()) return baseName;
 
-        return I18n.format(namePrefixKey) + " " + baseName;
+        return I18n.format(prefixKey) + " " + baseName;
     }
 
     /**
@@ -336,6 +349,17 @@ public class StorageBusInfo implements Renameable, Prioritizable {
      */
     public ItemStack getConnectedInventoryIcon() {
         return connectedIcon;
+    }
+
+    /**
+     * Get the storage bus part icon used as an overlay when the main icon is the target block.
+     */
+    public ItemStack getBusIcon() {
+        return busIcon;
+    }
+
+    public boolean isConnectedIconTarget() {
+        return connectedIconIsTarget;
     }
 
     public String getLocationString() {
@@ -473,6 +497,12 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         if (storageType.isEssentia()) return "essentia";
 
         return "item";
+    }
+
+    private String getResolvedPrefixKey() {
+        if (namePrefixKey != null && !namePrefixKey.isEmpty()) return namePrefixKey;
+
+        return busRole.getPrefixKey();
     }
 
 }

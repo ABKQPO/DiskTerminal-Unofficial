@@ -6,11 +6,16 @@ import java.util.function.Supplier;
 
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.entity.RenderItem;
+import net.minecraft.item.ItemStack;
+
+import org.lwjgl.opengl.GL11;
 
 import com.hfstudio.diskterminal.gui.GuiConstants;
 import com.hfstudio.diskterminal.gui.PriorityFieldManager;
+import com.hfstudio.diskterminal.gui.widget.AbstractWidget;
 import com.hfstudio.diskterminal.gui.widget.button.ButtonType;
 import com.hfstudio.diskterminal.gui.widget.button.SmallButton;
+import com.hfstudio.diskterminal.util.ItemStacks;
 
 /**
  * Storage bus header widget for the Cell Terminal (tabs 4-5).
@@ -40,6 +45,12 @@ public class StorageBusHeader extends StorageHeader {
     /** Whether IO mode switching is supported */
     private Supplier<Boolean> supportsIOModeSupplier;
 
+    /** Supplier for the target block icon shown as an overlay on bus icons */
+    private Supplier<ItemStack> overlayIconSupplier;
+
+    /** Whether the main header icon is the target block rather than the bus itself */
+    private Supplier<Boolean> connectedIconTargetSupplier;
+
     /** Callback when the IO mode button is clicked */
     private Runnable onIOModeClick;
 
@@ -63,6 +74,14 @@ public class StorageBusHeader extends StorageHeader {
 
     public void setSupportsIOModeSupplier(Supplier<Boolean> supplier) {
         this.supportsIOModeSupplier = supplier;
+    }
+
+    public void setOverlayIconSupplier(Supplier<ItemStack> supplier) {
+        this.overlayIconSupplier = supplier;
+    }
+
+    public void setConnectedIconTargetSupplier(Supplier<Boolean> supplier) {
+        this.connectedIconTargetSupplier = supplier;
     }
 
     public void setOnIOModeClick(Runnable callback) {
@@ -138,6 +157,26 @@ public class StorageBusHeader extends StorageHeader {
         // Position at current header Y (since header Y can change per frame)
         ioModeButton.setPosition(GuiConstants.BUTTON_IO_MODE_X, y + 2);
         ioModeButton.draw(mouseX, mouseY);
+    }
+
+    @Override
+    protected void drawIcon() {
+        super.drawIcon();
+
+        boolean connectedIconIsTarget = connectedIconTargetSupplier != null && connectedIconTargetSupplier.get();
+        if (!connectedIconIsTarget) return;
+
+        ItemStack targetIcon = overlayIconSupplier != null ? overlayIconSupplier.get() : null;
+        if (ItemStacks.isEmpty(targetIcon)) return;
+
+        int iconX = GuiConstants.GUI_INDENT + TARGET_RENDER_X_OFFSET + 1;
+        int iconY = y + 1;
+
+        GL11.glPushMatrix();
+        GL11.glTranslatef(iconX, iconY, 64.0F);
+        GL11.glScalef(0.5F, 0.5F, 1.0F);
+        AbstractWidget.renderItemStack(itemRender, targetIcon, 0, 0);
+        GL11.glPopMatrix();
     }
 
     @Override

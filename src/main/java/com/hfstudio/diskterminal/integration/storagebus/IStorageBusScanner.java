@@ -28,7 +28,7 @@ public interface IStorageBusScanner {
      * Scan the grid for storage buses and append their NBT data to the provided list.
      * Also populate the tracker map with {busId -> tracker} entries for server-side actions.
      */
-    void scanStorageBuses(IGrid grid, NBTTagList out, Map<Long, StorageBusTracker> trackerMap);
+    void scanStorageBuses(IGrid grid, NBTTagList out, Map<Long, StorageBusTracker> trackerMap, int contentLimit);
 
     /**
      * Whether buses scanned by this implementation support priority editing.

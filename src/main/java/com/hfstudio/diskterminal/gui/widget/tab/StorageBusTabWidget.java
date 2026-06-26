@@ -101,12 +101,12 @@ public class StorageBusTabWidget extends AbstractTabWidget {
 
     @Override
     public SearchFilterMode getEffectiveSearchMode(SearchFilterMode userSelectedMode) {
-        return isPartitionMode ? SearchFilterMode.PARTITION : SearchFilterMode.INVENTORY;
+        return userSelectedMode;
     }
 
     @Override
     public boolean showSearchModeButton() {
-        return false;
+        return true;
     }
 
     @Override
@@ -278,7 +278,9 @@ public class StorageBusTabWidget extends AbstractTabWidget {
 
     private StorageBusHeader createBusHeader(StorageBusInfo bus, int y) {
         StorageBusHeader header = new StorageBusHeader(y, fontRenderer, itemRender);
-        header.setIconSupplier(bus::getConnectedInventoryIcon);
+        header.setIconSupplier(bus::getBusIcon);
+        header.setOverlayIconSupplier(bus::getConnectedInventoryIcon);
+        header.setConnectedIconTargetSupplier(bus::isConnectedIconTarget);
         header.setNameSupplier(bus::getLocalizedName);
         header.setHasCustomNameSupplier(bus::hasCustomName);
         // Use TabStateManager for expand/collapse state (persists across rebuilds)
@@ -438,14 +440,14 @@ public class StorageBusTabWidget extends AbstractTabWidget {
             line.setCountProvider(() -> bus::getContentCount);
         } else {
             line.setItemsSupplier(bus::getPartition);
-            line.setMaxSlots(GuiConstants.MAX_STORAGE_BUS_PARTITION_SLOTS);
+            line.setMaxSlots(bus.getAvailableConfigSlots());
         }
 
         line.setSlotClickCallback((slotIndex, mouseButton) -> {
             if (mouseButton != 0) return;
 
-            // Defensive: verify slotIndex is within the valid range
-            if (slotIndex < 0 || slotIndex >= GuiConstants.MAX_STORAGE_BUS_PARTITION_SLOTS) return;
+            // Defensive: verify slotIndex is within the currently available config slots.
+            if (slotIndex < 0 || slotIndex >= bus.getAvailableConfigSlots()) return;
 
             if (isPartitionMode) {
                 ItemStack heldStack = guiContext.getHeldStack();

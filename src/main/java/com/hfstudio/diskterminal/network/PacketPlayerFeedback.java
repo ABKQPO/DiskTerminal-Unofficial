@@ -1,6 +1,7 @@
 package com.hfstudio.diskterminal.network;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.IChatComponent;
 
 import com.hfstudio.diskterminal.gui.overlay.MessageHelper;
 import com.hfstudio.diskterminal.gui.overlay.MessageType;
@@ -19,7 +20,7 @@ import io.netty.buffer.ByteBuf;
  * This allows server-side code to display messages via the existing GUI overlay
  * and chat path on the client, without referencing client-only classes server-side.
  * <p>
- * Arguments are transmitted as plain strings and applied client-side during localization.
+ * Arguments are transmitted as strings or serialized chat components and applied client-side during localization.
  */
 public class PacketPlayerFeedback implements IMessage {
 
@@ -27,6 +28,7 @@ public class PacketPlayerFeedback implements IMessage {
     private boolean raw;
     private String keyOrMessage = "";
     private String[] args = new String[0];
+    private boolean[] componentArgs = new boolean[0];
 
     public PacketPlayerFeedback() {}
 
@@ -34,7 +36,7 @@ public class PacketPlayerFeedback implements IMessage {
         this.type = type;
         this.raw = false;
         this.keyOrMessage = translationKey == null ? "" : translationKey;
-        this.args = stringify(args);
+        encodeArgs(args);
     }
 
     public PacketPlayerFeedback(MessageType type, String rawMessage) {
@@ -42,6 +44,7 @@ public class PacketPlayerFeedback implements IMessage {
         this.raw = true;
         this.keyOrMessage = rawMessage == null ? "" : rawMessage;
         this.args = new String[0];
+        this.componentArgs = new boolean[0];
     }
 
     @Override
@@ -62,7 +65,11 @@ public class PacketPlayerFeedback implements IMessage {
         }
 
         this.args = new String[argCount];
-        for (int i = 0; i < argCount; i++) this.args[i] = ByteBufUtils.readUTF8String(buf);
+        this.componentArgs = new boolean[argCount];
+        for (int i = 0; i < argCount; i++) {
+            this.componentArgs[i] = buf.readBoolean();
+            this.args[i] = ByteBufUtils.readUTF8String(buf);
+        }
     }
 
     @Override
@@ -72,21 +79,56 @@ public class PacketPlayerFeedback implements IMessage {
         ByteBufUtils.writeUTF8String(buf, this.keyOrMessage);
         buf.writeInt(this.args.length);
 
-        for (String arg : this.args) {
-            ByteBufUtils.writeUTF8String(buf, arg == null ? "" : arg);
+        for (int i = 0; i < this.args.length; i++) {
+            boolean componentArg = i < this.componentArgs.length && this.componentArgs[i];
+            buf.writeBoolean(componentArg);
+            ByteBufUtils.writeUTF8String(buf, this.args[i] == null ? "" : this.args[i]);
         }
     }
 
-    private static String[] stringify(Object[] values) {
-        if (values == null || values.length == 0) return new String[0];
+    private void encodeArgs(Object[] values) {
+        if (values == null || values.length == 0) {
+            this.args = new String[0];
+            this.componentArgs = new boolean[0];
 
-        String[] strings = new String[values.length];
-        for (int i = 0; i < values.length; i++) {
-            Object value = values[i];
-            strings[i] = (value == null) ? "null" : String.valueOf(value);
+            return;
         }
 
-        return strings;
+        this.args = new String[values.length];
+        this.componentArgs = new boolean[values.length];
+        for (int i = 0; i < values.length; i++) {
+            Object value = values[i];
+            if (value instanceof IChatComponent component) {
+                this.args[i] = IChatComponent.Serializer.func_150696_a(component);
+                this.componentArgs[i] = true;
+            } else {
+                this.args[i] = (value == null) ? "null" : String.valueOf(value);
+                this.componentArgs[i] = false;
+            }
+        }
+    }
+
+    private Object[] decodeArgs() {
+        if (this.args.length == 0) return new Object[0];
+
+        Object[] decoded = new Object[this.args.length];
+        for (int i = 0; i < this.args.length; i++) {
+            if (i < this.componentArgs.length && this.componentArgs[i]) {
+                decoded[i] = decodeComponent(this.args[i]);
+            } else {
+                decoded[i] = this.args[i];
+            }
+        }
+
+        return decoded;
+    }
+
+    private static Object decodeComponent(String json) {
+        try {
+            return IChatComponent.Serializer.func_150699_a(json);
+        } catch (RuntimeException ignored) {
+            return json == null ? "" : json;
+        }
     }
 
     public static class Handler implements IMessageHandler<PacketPlayerFeedback, IMessage> {
@@ -106,7 +148,7 @@ public class PacketPlayerFeedback implements IMessage {
                         return;
                     }
 
-                    Object[] castArgs = message.args;
+                    Object[] castArgs = message.decodeArgs();
                     switch (message.type) {
                         case SUCCESS -> MessageHelper.success(message.keyOrMessage, castArgs);
                         case WARNING -> MessageHelper.warning(message.keyOrMessage, castArgs);

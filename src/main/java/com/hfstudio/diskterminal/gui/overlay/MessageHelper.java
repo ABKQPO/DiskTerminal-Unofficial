@@ -7,7 +7,6 @@ import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
-import net.minecraft.util.StatCollector;
 
 /**
  * Utility for sending messages to both the chat and the GUI overlay.
@@ -107,8 +106,8 @@ public class MessageHelper {
         chatMessage.setChatStyle(new ChatStyle().setColor(chatColor));
         player.addChatMessage(chatMessage);
 
-        // Create overlay message using localized text
-        String overlayText = StatCollector.translateToLocalFormatted(translationKey, args);
+        // Create overlay message from the same component so nested chat components resolve correctly.
+        String overlayText = chatMessage.getUnformattedText();
         OverlayMessageRenderer.setMessage(overlayText, type);
     }
 

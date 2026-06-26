@@ -237,16 +237,6 @@ public class PopupCellInventory extends Gui {
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    /**
-     * Get tooltip for the hovered item. The parent GUI draws it (it has protected
-     * drawHoveringText access); returns null when nothing is hovered.
-     */
-    public List<String> getHoveredTooltip() {
-        if (ItemStacks.isEmpty(hoveredStack)) return null;
-
-        return hoveredStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
-    }
-
     public int getHoveredTooltipX() {
         return hoveredX;
     }
@@ -377,6 +367,10 @@ public class PopupCellInventory extends Gui {
         return height;
     }
 
+    /**
+     * Get the hovered stack for the parent GUI to render as a tooltip.
+     * The parent owns the protected tooltip rendering methods and popup layering.
+     */
     public ItemStack getHoveredStack() {
         return hoveredStack;
     }

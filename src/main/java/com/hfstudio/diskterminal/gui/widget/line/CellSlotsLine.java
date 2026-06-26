@@ -102,7 +102,7 @@ public class CellSlotsLine extends SlotsLine {
             Gui.drawRect(
                 GuiConstants.GUI_INDENT,
                 y,
-                GuiConstants.CONTENT_RIGHT_EDGE,
+                GuiConstants.CONTENT_RIGHT_EDGE + GuiConstants.ROW_RIGHT_EXTENSION,
                 y + GuiConstants.ROW_HEIGHT,
                 GuiConstants.COLOR_SELECTION);
         }

@@ -69,6 +69,7 @@ import appeng.helpers.IPriorityHost;
 import appeng.helpers.WirelessTerminalGuiObject;
 import appeng.items.contents.NetworkToolViewer;
 import appeng.items.tools.ToolNetworkTool;
+import appeng.parts.automation.PartSharedItemBus;
 import appeng.parts.automation.PartUpgradeable;
 import appeng.util.Platform;
 
@@ -328,7 +329,9 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         this.storageBusById.clear();
 
         NBTTagCompound data = new NBTTagCompound();
-        data.setTag("storageBuses", StorageBusDataHandler.collectStorageBuses(getEffectiveGrid(), this.storageBusById));
+        data.setTag(
+            "storageBuses",
+            StorageBusDataHandler.collectStorageBuses(getEffectiveGrid(), this.storageBusById, busSlotLimit));
         sendChunked(TerminalChannels.BUSES, data, "storageBuses", "id");
     }
 
@@ -653,6 +656,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
             ItemStack remainder = InventoryHelper.insert(upgradesInv, slot, toInsert, false);
             if (ItemStacks.isEmpty(remainder)) {
                 upgradeStack.stackSize--;
+                upgradesInv.markDirty();
+                tracker.hostTile.markDirty();
 
                 if (fromSlot >= 0) {
                     if (upgradeStack.stackSize <= 0) player.inventory.setInventorySlotContents(fromSlot, null);
@@ -734,6 +739,11 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
         IChatComponent customName = getCustomInventoryName(tracker.storageBus);
         if (customName != null) return customName;
+
+        if (tracker.storageBus instanceof PartSharedItemBus<?>bus) {
+            ItemStack busStack = bus.getItemStack();
+            if (!ItemStacks.isEmpty(busStack)) return new ChatComponentText(busStack.getDisplayName());
+        }
 
         ItemStack busDisplay = CellsIntegration.getHostDisplayStack(tracker.storageBus);
         if (ItemStacks.isEmpty(busDisplay) && tracker.hostTile != null) {
@@ -955,6 +965,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
             }
         }
 
+        if (!canShiftInsertCellsOnActiveTab()) return super.transferStackInSlot(player, slotIndex);
+
         if (!DiskTerminalServerConfig.getInstance()
             .isCellInsertEnabled()) {
             PlayerMessageHelper.error(player, "disk_terminal.error.cell_insert_disabled");
@@ -980,6 +992,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
             if (remainderCount < stack.stackSize) {
                 slot.putStack(remainder);
                 slot.onSlotChanged();
+                cellInventory.markDirty();
+                tracker.tile.markDirty();
                 requestFullRefresh();
                 this.detectAndSendChanges();
 
@@ -988,6 +1002,12 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         }
 
         return super.transferStackInSlot(player, slotIndex);
+    }
+
+    private boolean canShiftInsertCellsOnActiveTab() {
+        return activeTab != GuiConstants.TAB_STORAGE_BUS_INVENTORY
+            && activeTab != GuiConstants.TAB_STORAGE_BUS_PARTITION
+            && activeTab != GuiConstants.TAB_NETWORK_TOOLS;
     }
 
     protected int getTerminalDimension() {

@@ -93,7 +93,7 @@ public class ContinuationLine extends SlotsLine {
             Gui.drawRect(
                 GuiConstants.GUI_INDENT,
                 y,
-                GuiConstants.CONTENT_RIGHT_EDGE,
+                GuiConstants.CONTENT_RIGHT_EDGE + GuiConstants.ROW_RIGHT_EXTENSION,
                 y + rowHeight,
                 GuiConstants.COLOR_SELECTION);
         }
