@@ -1,5 +1,6 @@
 package com.hfstudio.diskterminal.gui.widget.tab;
 
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -8,10 +9,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.item.ItemStack;
+
+import org.lwjgl.opengl.GL11;
 
 import com.hfstudio.diskterminal.client.CellContentRow;
 import com.hfstudio.diskterminal.client.CellInfo;
@@ -89,6 +94,10 @@ public abstract class AbstractTabWidget extends AbstractWidget {
      */
     protected int bottomContinuationFromY = -1;
 
+    protected int firstVisibleLineIndex = 0;
+    protected int lastVisibleLineIndex = -1;
+    protected final Map<IWidget, Integer> widgetLineIndexMap = new HashMap<>();
+
     /**
      * Maps each visible row widget to its source data object (the lineData from buildVisibleRows).
      * Used by the parent GUI to identify what data is under the mouse for upgrade insertion,
@@ -116,16 +125,6 @@ public abstract class AbstractTabWidget extends AbstractWidget {
         this.height = rowsVisible * GuiConstants.ROW_HEIGHT;
     }
 
-    /**
-     * Get the number of items that fit in the visible scroll area.
-     * Defaults to {@link #rowsVisible} (one item per 18px row).
-     * Tabs with non-standard row heights (e.g., NetworkTools at 36px per tool)
-     * override this to return the correct number.
-     */
-    public int getVisibleItemCount() {
-        return rowsVisible;
-    }
-
     protected int getRowStep(List<?> lines, int index) {
         return GuiConstants.ROW_HEIGHT;
     }
@@ -136,28 +135,46 @@ public abstract class AbstractTabWidget extends AbstractWidget {
      * {@link #createRowWidget(Object, int, List, int)} to map line data → widget.
      *
      * @param lines        All line data objects for this tab (from DataManager)
-     * @param scrollOffset The current scroll position (index of first visible line)
+     * @param scrollOffset The current scroll position in pixels
      */
     public void buildVisibleRows(List<?> lines, int scrollOffset) {
         visibleRows.clear();
         widgetDataMap.clear();
+        widgetLineIndexMap.clear();
+        firstVisibleLineIndex = 0;
+        lastVisibleLineIndex = -1;
 
-        int y = GuiConstants.CONTENT_START_Y;
+        int contentTop = GuiConstants.CONTENT_START_Y;
         int contentBottom = GuiConstants.CONTENT_START_Y + rowsVisible * GuiConstants.ROW_HEIGHT;
-        for (int i = scrollOffset; i < lines.size(); i++) {
+        int remainingOffset = Math.max(0, scrollOffset);
+        int i = 0;
+
+        while (i < lines.size()) {
             int rowStep = getRowStep(lines, i);
-            if (y + rowStep > contentBottom) break;
+            if (remainingOffset < rowStep) break;
+
+            remainingOffset -= rowStep;
+            i++;
+        }
+
+        firstVisibleLineIndex = i;
+        int y = contentTop - remainingOffset;
+
+        for (; i < lines.size() && y < contentBottom; i++) {
+            int rowStep = getRowStep(lines, i);
 
             Object lineData = lines.get(i);
             IWidget widget = createRowWidget(lineData, y, lines, i);
             if (widget != null) {
                 visibleRows.add(widget);
                 widgetDataMap.put(widget, lineData);
+                widgetLineIndexMap.put(widget, i);
+                lastVisibleLineIndex = i;
             }
             y += rowStep;
         }
 
-        propagateTreeLines(lines, scrollOffset);
+        propagateTreeLines(lines, firstVisibleLineIndex);
     }
 
     /**
@@ -194,7 +211,8 @@ public abstract class AbstractTabWidget extends AbstractWidget {
 
             if (widget instanceof AbstractHeader header) {
                 // Header's connector state: is the next visible line a content row?
-                boolean contentBelow = hasContentBelow(allLines, scrollOffset + i);
+                int lineIndex = getLineIndexForVisibleRow(i);
+                boolean contentBelow = hasContentBelow(allLines, lineIndex);
                 header.setDrawConnector(contentBelow);
                 lastCutY = header.getConnectorY();
 
@@ -222,7 +240,34 @@ public abstract class AbstractTabWidget extends AbstractWidget {
     }
 
     protected int getLastVisibleLineIndex(int scrollOffset) {
-        return scrollOffset + visibleRows.size() - 1;
+        return lastVisibleLineIndex;
+    }
+
+    protected int getLineIndexForVisibleRow(int visibleRowIndex) {
+        if (visibleRowIndex < 0 || visibleRowIndex >= visibleRows.size()) return -1;
+
+        return widgetLineIndexMap.getOrDefault(visibleRows.get(visibleRowIndex), -1);
+    }
+
+    public int getTotalContentHeight(List<?> lines) {
+        int total = 0;
+
+        for (int i = 0; i < lines.size(); i++) {
+            total += getRowStep(lines, i);
+        }
+
+        return total;
+    }
+
+    public int getPixelOffsetForLine(List<?> lines, int lineIndex) {
+        int clampedIndex = Math.max(0, Math.min(lineIndex, lines.size()));
+        int offset = 0;
+
+        for (int i = 0; i < clampedIndex; i++) {
+            offset += getRowStep(lines, i);
+        }
+
+        return offset;
     }
 
     /**
@@ -246,22 +291,41 @@ public abstract class AbstractTabWidget extends AbstractWidget {
     public void draw(int mouseX, int mouseY) {
         if (!visible) return;
 
+        enableContentScissor();
         // All widgets in visibleRows are guaranteed non-null and visible
-        for (IWidget widget : visibleRows) {
-            widget.draw(mouseX, mouseY);
-        }
+        try {
+            for (IWidget widget : visibleRows) {
+                widget.draw(mouseX, mouseY);
+            }
 
-        // Draw bottom tree continuation line when content exists below the visible window
-        if (bottomContinuationFromY >= 0) {
-            int treeLineX = GuiConstants.GUI_INDENT + 7;
-            int bottomY = GuiConstants.CONTENT_START_Y + rowsVisible * GuiConstants.ROW_HEIGHT;
-            Gui.drawRect(treeLineX, bottomContinuationFromY, treeLineX + 1, bottomY, GuiConstants.COLOR_TREE_LINE);
+            // Draw bottom tree continuation line when content exists below the visible window
+            if (bottomContinuationFromY >= 0) {
+                int treeLineX = GuiConstants.GUI_INDENT + 7;
+                int bottomY = GuiConstants.CONTENT_START_Y + rowsVisible * GuiConstants.ROW_HEIGHT;
+                Gui.drawRect(treeLineX, bottomContinuationFromY, treeLineX + 1, bottomY, GuiConstants.COLOR_TREE_LINE);
+            }
+        } finally {
+            GL11.glDisable(GL11.GL_SCISSOR_TEST);
         }
+    }
+
+    private void enableContentScissor() {
+        Minecraft mc = Minecraft.getMinecraft();
+        ScaledResolution resolution = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
+        int scaleFactor = resolution.getScaleFactor();
+        int scissorX = guiLeft * scaleFactor;
+        int scissorY = mc.displayHeight - (guiTop + GuiConstants.CONTENT_START_Y + height) * scaleFactor;
+        int scissorWidth = (GuiConstants.CONTENT_RIGHT_EDGE + GuiConstants.ROW_RIGHT_EXTENSION) * scaleFactor;
+        int scissorHeight = height * scaleFactor;
+
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        GL11.glScissor(scissorX, scissorY, scissorWidth, scissorHeight);
     }
 
     @Override
     public boolean handleClick(int mouseX, int mouseY, int button) {
         if (!visible) return false;
+        if (!isInContentViewport(mouseX, mouseY)) return false;
 
         // Process clicks in reverse order (last drawn = on top = gets first click)
         for (int i = visibleRows.size() - 1; i >= 0; i--) {
@@ -290,6 +354,7 @@ public abstract class AbstractTabWidget extends AbstractWidget {
     @Override
     public List<String> getTooltip(int mouseX, int mouseY) {
         if (!visible) return Collections.emptyList();
+        if (!isInContentViewport(mouseX, mouseY)) return Collections.emptyList();
 
         for (int i = visibleRows.size() - 1; i >= 0; i--) {
             IWidget widget = visibleRows.get(i);
@@ -305,6 +370,7 @@ public abstract class AbstractTabWidget extends AbstractWidget {
     @Override
     public ItemStack getHoveredItemStack(int mouseX, int mouseY) {
         if (!visible) return null;
+        if (!isInContentViewport(mouseX, mouseY)) return null;
 
         for (int i = visibleRows.size() - 1; i >= 0; i--) {
             IWidget widget = visibleRows.get(i);
@@ -362,6 +428,8 @@ public abstract class AbstractTabWidget extends AbstractWidget {
      * @return The data object, or null if nothing is hovered
      */
     public Object getDataForHoveredRow(int mouseX, int mouseY) {
+        if (!isInContentViewport(mouseX, mouseY)) return null;
+
         for (int i = visibleRows.size() - 1; i >= 0; i--) {
             IWidget widget = visibleRows.get(i);
             if (widget.isHovered(mouseX, mouseY)) return widgetDataMap.get(widget);
@@ -378,6 +446,8 @@ public abstract class AbstractTabWidget extends AbstractWidget {
      * no SlotsLine is hovered at all.
      */
     public boolean isMouseOverSlotGrid(int mouseX, int mouseY) {
+        if (!isInContentViewport(mouseX, mouseY)) return false;
+
         for (int i = visibleRows.size() - 1; i >= 0; i--) {
             IWidget widget = visibleRows.get(i);
             if (!widget.isHovered(mouseX, mouseY)) continue;
@@ -399,6 +469,23 @@ public abstract class AbstractTabWidget extends AbstractWidget {
      */
     public Map<IWidget, Object> getWidgetDataMap() {
         return Collections.unmodifiableMap(widgetDataMap);
+    }
+
+    protected boolean isInContentViewport(int mouseX, int mouseY) {
+        return mouseX >= 0 && mouseX < GuiConstants.CONTENT_RIGHT_EDGE
+            && mouseY >= GuiConstants.CONTENT_START_Y
+            && mouseY < GuiConstants.CONTENT_START_Y + height;
+    }
+
+    protected Rectangle clipTargetToContentViewport(SlotsLine.PartitionSlotTarget slot) {
+        int top = guiTop + GuiConstants.CONTENT_START_Y;
+        int bottom = top + height;
+        int clippedTop = Math.max(slot.absY, top);
+        int clippedBottom = Math.min(slot.absY + slot.height, bottom);
+
+        if (clippedTop >= clippedBottom) return null;
+
+        return new Rectangle(slot.absX, clippedTop, slot.width, clippedBottom - clippedTop);
     }
     // Tab controller responsibilities
 

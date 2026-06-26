@@ -173,17 +173,21 @@ public class CellDataHandler {
         NBTTagList partitionList = new NBTTagList();
         for (int i = 0; i < configInv.getSizeInventory(); i++) {
             IAEStack<?> partitionStack = configInv.getAEStackInSlot(i);
-            NBTTagCompound partNbt = new NBTTagCompound();
-            partNbt.setInteger("slot", i);
-            if (partitionStack != null) {
-                ItemStack displayStack = AEStackUtil.getDisplayStack(partitionStack);
-                if (!ItemStacks.isEmpty(displayStack)) displayStack.writeToNBT(partNbt);
-                AEStackUtil.writeStackToNBT(partNbt, partitionStack);
-            }
+            if (partitionStack == null) continue;
+
+            NBTTagCompound partNbt = createPartitionSlotData(i, partitionStack);
             partitionList.appendTag(partNbt);
         }
 
         cellData.setTag("partition", partitionList);
+    }
+
+    private static NBTTagCompound createPartitionSlotData(int slot, IAEStack<?> partitionStack) {
+        NBTTagCompound partNbt = new NBTTagCompound();
+        partNbt.setInteger("slot", slot);
+        AEStackUtil.writeStackToNBT(partNbt, partitionStack);
+
+        return partNbt;
     }
 
     private static <T extends IAEStack<T>> void populateGenericContents(NBTTagCompound cellData,

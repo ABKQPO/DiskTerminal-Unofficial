@@ -2,6 +2,7 @@ package com.hfstudio.diskterminal.items;
 
 import static com.google.common.base.Optional.absent;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import net.minecraft.client.resources.I18n;
@@ -27,6 +28,7 @@ import appeng.api.features.ILocatable;
 import appeng.api.features.IWirelessTermHandler;
 import appeng.api.util.IConfigManager;
 import appeng.core.AEConfig;
+import appeng.core.features.AEFeature;
 import appeng.core.localization.PlayerMessages;
 import appeng.items.tools.powered.powersink.AEBasePoweredItem;
 import appeng.util.ConfigManager;
@@ -50,6 +52,7 @@ public class ItemWirelessCellTerminal extends AEBasePoweredItem implements IWire
 
     public ItemWirelessCellTerminal() {
         super(AEConfig.instance.wirelessTerminalBattery, absent());
+        this.setFeature(EnumSet.of(AEFeature.WirelessAccessTerminal, AEFeature.PoweredTools));
         this.setUnlocalizedName("wireless_cell_terminal");
         this.setTextureName(Tags.MODID + ":wireless_cell_terminal");
         this.setCreativeTab(DiskTerminalCreativeTab.INSTANCE);
@@ -212,6 +215,12 @@ public class ItemWirelessCellTerminal extends AEBasePoweredItem implements IWire
 
     public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
         return slotChanged;
+    }
+
+    @SideOnly(Side.CLIENT)
+    @Override
+    public boolean isFull3D() {
+        return false;
     }
 
     @Optional.Method(modid = "Baubles|Expanded")

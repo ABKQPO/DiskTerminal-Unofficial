@@ -110,13 +110,6 @@ public class StorageBusTabWidget extends AbstractTabWidget {
     }
 
     @Override
-    public int getVisibleItemCount() {
-        int contentHeight = rowsVisible * GuiConstants.ROW_HEIGHT;
-
-        return Math.max(1, contentHeight / SLOT_ROW_HEIGHT);
-    }
-
-    @Override
     protected int getRowStep(List<?> lines, int index) {
         return isContentLine(lines, index) ? SLOT_ROW_HEIGHT : GuiConstants.ROW_HEIGHT;
     }
@@ -229,11 +222,14 @@ public class StorageBusTabWidget extends AbstractTabWidget {
 
             StorageBusInfo bus = ((StorageBusContentRow) data).getStorageBus();
             for (SlotsLine.PartitionSlotTarget slot : slotTargets) {
+                Rectangle targetArea = clipTargetToContentViewport(slot);
+                if (targetArea == null) continue;
+
                 targets.add(new GhostTarget<>() {
 
                     @Override
                     public Rectangle getArea() {
-                        return new Rectangle(slot.absX, slot.absY, slot.width, slot.height);
+                        return targetArea;
                     }
 
                     @Override

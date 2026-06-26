@@ -355,7 +355,7 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
 
         for (int i = 0; i < visibleRows.size(); i++) {
             IWidget widget = visibleRows.get(i);
-            int lineIndex = scrollOffset + i;
+            int lineIndex = getLineIndexForVisibleRow(i);
 
             if (widget instanceof AbstractHeader header) {
                 // If no content rows below but partition rows exist, connector still needed
@@ -668,11 +668,14 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
             SubnetInfo.ConnectionPoint conn = row.getConnection();
 
             for (SlotsLine.PartitionSlotTarget slot : slotTargets) {
+                Rectangle targetArea = clipTargetToContentViewport(slot);
+                if (targetArea == null) continue;
+
                 targets.add(new GhostTarget<>() {
 
                     @Override
                     public Rectangle getArea() {
-                        return new Rectangle(slot.absX, slot.absY, slot.width, slot.height);
+                        return targetArea;
                     }
 
                     @Override

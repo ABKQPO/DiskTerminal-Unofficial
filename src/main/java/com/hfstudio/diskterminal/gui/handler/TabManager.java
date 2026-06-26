@@ -250,15 +250,6 @@ public class TabManager {
         return tab.getLines(dataManager);
     }
 
-    /**
-     * Get the visible item count for the active widget.
-     * Accounts for non-standard row heights (e.g., NetworkTools at 36px per tool).
-     */
-    public int getActiveVisibleItemCount() {
-        AbstractTabWidget tab = getActiveTab();
-
-        return tab != null ? tab.getVisibleItemCount() : GuiConstants.DEFAULT_ROWS;
-    }
     // Tab switching
 
     /**

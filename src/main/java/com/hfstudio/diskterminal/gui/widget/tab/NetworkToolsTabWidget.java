@@ -8,7 +8,6 @@ import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
 
-import com.hfstudio.diskterminal.gui.GuiConstants;
 import com.hfstudio.diskterminal.gui.handler.TerminalDataManager;
 import com.hfstudio.diskterminal.gui.networktools.INetworkTool;
 import com.hfstudio.diskterminal.gui.networktools.NetworkToolRegistry;
@@ -37,35 +36,13 @@ public class NetworkToolsTabWidget extends AbstractTabWidget {
     }
 
     @Override
-    public int getVisibleItemCount() {
-        int contentHeight = rowsVisible * GuiConstants.ROW_HEIGHT;
-
-        return contentHeight / NetworkToolRowWidget.ROW_HEIGHT;
+    protected int getRowStep(List<?> lines, int index) {
+        return NetworkToolRowWidget.ROW_HEIGHT;
     }
 
-    /**
-     * Build visible tool rows for the current scroll window.
-     * Overrides the standard row building to use TOOL_ROW_HEIGHT spacing.
-     */
     @Override
-    public void buildVisibleRows(List<?> lines, int scrollOffset) {
-        visibleRows.clear();
-        widgetDataMap.clear();
-
-        int rowY = GuiConstants.CONTENT_START_Y;
-        int contentBottom = GuiConstants.CONTENT_START_Y + rowsVisible * GuiConstants.ROW_HEIGHT;
-
-        for (int i = scrollOffset; i < lines.size() && rowY + NetworkToolRowWidget.ROW_HEIGHT <= contentBottom; i++) {
-            Object lineData = lines.get(i);
-            IWidget widget = createRowWidget(lineData, rowY, lines, i);
-            if (widget != null) {
-                visibleRows.add(widget);
-                widgetDataMap.put(widget, lineData);
-            }
-            rowY += NetworkToolRowWidget.ROW_HEIGHT;
-        }
-
-        // No tree line propagation needed for tool rows
+    protected void propagateTreeLines(List<?> allLines, int scrollOffset) {
+        bottomContinuationFromY = -1;
     }
 
     @Override

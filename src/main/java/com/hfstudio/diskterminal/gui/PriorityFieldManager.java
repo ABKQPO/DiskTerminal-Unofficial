@@ -1,12 +1,15 @@
 package com.hfstudio.diskterminal.gui;
 
+import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiTextField;
+import net.minecraft.client.gui.ScaledResolution;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
@@ -46,6 +49,7 @@ public class PriorityFieldManager {
     // Field registry (persists across frame rebuilds)
     private final Map<Long, InlinePriorityField> fields = new HashMap<>();
     private InlinePriorityField focusedField = null;
+    private Rectangle contentViewport = null;
 
     private PriorityFieldManager() {}
 
@@ -72,7 +76,18 @@ public class PriorityFieldManager {
 
         int fieldX = guiLeft + GuiConstants.CONTENT_RIGHT_EDGE - FIELD_WIDTH - RIGHT_MARGIN;
         int fieldY = guiTop + y + 3;
-        field.updatePosition(fieldX, fieldY);
+        field.updatePosition(fieldX, fieldY, contentViewport);
+    }
+
+    /**
+     * Update the absolute content viewport used to clip floating priority fields.
+     */
+    public void setContentViewport(int guiLeft, int guiTop, int viewportHeight) {
+        this.contentViewport = new Rectangle(
+            guiLeft,
+            guiTop + GuiConstants.CONTENT_START_Y,
+            GuiConstants.CONTENT_RIGHT_EDGE + GuiConstants.ROW_RIGHT_EXTENSION,
+            viewportHeight);
     }
 
     /**
@@ -143,6 +158,12 @@ public class PriorityFieldManager {
      */
     public boolean handleKeyTyped(char typedChar, int keyCode) {
         if (focusedField == null) return false;
+        if (!focusedField.isVisible()) {
+            focusedField.onFocusLost();
+            focusedField = null;
+
+            return false;
+        }
 
         boolean consumed = focusedField.keyTyped(typedChar, keyCode);
 
@@ -189,6 +210,7 @@ public class PriorityFieldManager {
         private final GuiTextField textField;
         private final FontRenderer fontRenderer;
         private boolean visible = false;
+        private Rectangle visibleBounds = null;
         private int lastKnownPriority;
 
         public InlinePriorityField(Prioritizable target, FontRenderer fontRenderer) {
@@ -208,10 +230,11 @@ public class PriorityFieldManager {
             this.target = newTarget;
         }
 
-        public void updatePosition(int x, int y) {
+        public void updatePosition(int x, int y, Rectangle contentViewport) {
             this.textField.xPosition = x;
             this.textField.yPosition = y;
-            this.visible = true;
+            this.visibleBounds = calculateVisibleBounds(contentViewport);
+            this.visible = visibleBounds != null;
 
             // Sync text if priority changed externally (and field is not being edited)
             if (target.getPriority() != lastKnownPriority && !textField.isFocused()) {
@@ -220,31 +243,60 @@ public class PriorityFieldManager {
             }
         }
 
+        private Rectangle calculateVisibleBounds(Rectangle contentViewport) {
+            Rectangle fieldBounds = new Rectangle(
+                textField.xPosition - 1,
+                textField.yPosition - 1,
+                FIELD_WIDTH + 2,
+                FIELD_HEIGHT + 2);
+            if (contentViewport == null) return fieldBounds;
+
+            Rectangle clippedBounds = fieldBounds.intersection(contentViewport);
+            return clippedBounds.isEmpty() ? null : clippedBounds;
+        }
+
         public void draw() {
+            if (visibleBounds == null) return;
+
+            GL11.glEnable(GL11.GL_SCISSOR_TEST);
+            applyScissor(visibleBounds);
             int x = textField.xPosition;
             int y = textField.yPosition;
 
-            // Draw background
-            Gui.drawRect(x - 1, y - 1, x + FIELD_WIDTH + 1, y + FIELD_HEIGHT + 1, 0xFF373737);
-            Gui.drawRect(x, y, x + FIELD_WIDTH, y + FIELD_HEIGHT, textField.isFocused() ? 0xFF000000 : 0xFF1E1E1E);
+            try {
+                // Draw background
+                Gui.drawRect(x - 1, y - 1, x + FIELD_WIDTH + 1, y + FIELD_HEIGHT + 1, 0xFF373737);
+                Gui.drawRect(x, y, x + FIELD_WIDTH, y + FIELD_HEIGHT, textField.isFocused() ? 0xFF000000 : 0xFF1E1E1E);
 
-            // Draw text with scaling
-            String text = textField.getText();
-            if (!text.isEmpty()) {
-                GL11.glPushMatrix();
-                GL11.glTranslatef(x + 2, y + 1, 0);
-                GL11.glScalef(TEXT_SCALE, TEXT_SCALE, 1.0f);
-                fontRenderer.drawString(text, 0, 0, 0xE0E0E0);
-                GL11.glPopMatrix();
-            }
+                // Draw text with scaling
+                String text = textField.getText();
+                if (!text.isEmpty()) {
+                    GL11.glPushMatrix();
+                    GL11.glTranslatef(x + 2, y + 1, 0);
+                    GL11.glScalef(TEXT_SCALE, TEXT_SCALE, 1.0f);
+                    fontRenderer.drawString(text, 0, 0, 0xE0E0E0);
+                    GL11.glPopMatrix();
+                }
 
-            // Draw cursor if focused
-            if (textField.isFocused()) {
-                int cursorPos = textField.getCursorPosition();
-                String beforeCursor = text.substring(0, Math.min(cursorPos, text.length()));
-                int cursorX = (int) (fontRenderer.getStringWidth(beforeCursor) * TEXT_SCALE);
-                Gui.drawRect(x + 2 + cursorX, y + 1, x + 3 + cursorX, y + FIELD_HEIGHT - 1, 0xFFD0D0D0);
+                // Draw cursor if focused
+                if (textField.isFocused()) {
+                    int cursorPos = textField.getCursorPosition();
+                    String beforeCursor = text.substring(0, Math.min(cursorPos, text.length()));
+                    int cursorX = (int) (fontRenderer.getStringWidth(beforeCursor) * TEXT_SCALE);
+                    Gui.drawRect(x + 2 + cursorX, y + 1, x + 3 + cursorX, y + FIELD_HEIGHT - 1, 0xFFD0D0D0);
+                }
+            } finally {
+                GL11.glDisable(GL11.GL_SCISSOR_TEST);
             }
+        }
+
+        private void applyScissor(Rectangle bounds) {
+            Minecraft mc = Minecraft.getMinecraft();
+            ScaledResolution resolution = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
+            int scaleFactor = resolution.getScaleFactor();
+            int scissorX = bounds.x * scaleFactor;
+            int scissorY = mc.displayHeight - (bounds.y + bounds.height) * scaleFactor;
+            GL11.glScissor(scissorX, scissorY, bounds.width * scaleFactor, bounds.height * scaleFactor);
         }
 
         public boolean isVisible() {
@@ -256,6 +308,8 @@ public class PriorityFieldManager {
         }
 
         public boolean isMouseOver(int mouseX, int mouseY) {
+            if (visibleBounds == null || !visibleBounds.contains(mouseX, mouseY)) return false;
+
             return mouseX >= textField.xPosition && mouseX < textField.xPosition + FIELD_WIDTH
                 && mouseY >= textField.yPosition
                 && mouseY < textField.yPosition + FIELD_HEIGHT;

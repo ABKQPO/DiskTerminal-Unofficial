@@ -127,20 +127,11 @@ public class StorageBusInfo implements Renameable, Prioritizable {
             }
         }
 
+        fillPartitionSlots(getAvailableConfigSlots());
+
         // Parse partition (config inventory)
         if (nbt.hasKey("partition")) {
             NBTTagList partList = nbt.getTagList("partition", Constants.NBT.TAG_COMPOUND);
-
-            // Determine max slot to size the list properly
-            int maxSlot = 0;
-            for (int i = 0; i < partList.tagCount(); i++) {
-                NBTTagCompound partNbt = partList.getCompoundTagAt(i);
-                int slot = partNbt.hasKey("slot") ? partNbt.getInteger("slot") : i;
-                if (slot >= maxSlot) maxSlot = slot + 1;
-            }
-
-            // Pre-fill partition list with empty stacks
-            for (int i = 0; i < maxSlot; i++) this.partition.add(null);
 
             // Place items at their correct slot positions
             for (int i = 0; i < partList.tagCount(); i++) {
@@ -150,7 +141,10 @@ public class StorageBusInfo implements Renameable, Prioritizable {
                 IAEStack<?> aeStack = AEStackUtil.readStackFromNBT(partNbt);
                 ItemStack stack = AEStackUtil.getDisplayStack(aeStack);
                 if (ItemStacks.isEmpty(stack) && partNbt.hasKey("id")) stack = ItemStacks.load(partNbt);
-                if (!ItemStacks.isEmpty(stack)) this.partition.set(slot, stack);
+                if (!ItemStacks.isEmpty(stack)) {
+                    fillPartitionSlots(slot + 1);
+                    this.partition.set(slot, stack);
+                }
             }
         }
 
@@ -267,6 +261,10 @@ public class StorageBusInfo implements Renameable, Prioritizable {
 
     public List<ItemStack> getPartition() {
         return partition;
+    }
+
+    private void fillPartitionSlots(int size) {
+        while (this.partition.size() < size) this.partition.add(null);
     }
 
     public List<ItemStack> getContents() {

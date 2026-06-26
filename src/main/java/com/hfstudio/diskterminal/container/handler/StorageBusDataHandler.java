@@ -249,13 +249,9 @@ public class StorageBusDataHandler {
 
         for (int i = 0; i < configInv.getSizeInventory() && i < slotsToUse; i++) {
             IAEStack<?> partitionStack = configInv.getAEStackInSlot(i);
-            NBTTagCompound partNbt = new NBTTagCompound();
-            partNbt.setInteger("slot", i);
-            if (partitionStack != null) {
-                ItemStack displayStack = AEStackUtil.getDisplayStack(partitionStack);
-                if (!ItemStacks.isEmpty(displayStack)) displayStack.writeToNBT(partNbt);
-                AEStackUtil.writeStackToNBT(partNbt, partitionStack);
-            }
+            if (partitionStack == null) continue;
+
+            NBTTagCompound partNbt = createPartitionSlotData(i, partitionStack);
             partitionList.appendTag(partNbt);
         }
 
@@ -272,17 +268,21 @@ public class StorageBusDataHandler {
 
         for (int i = 0; i < configInv.getSizeInventory() && i < slotsToUse; i++) {
             IAEStack<?> partitionStack = configInv.getAEStackInSlot(i);
-            NBTTagCompound partNbt = new NBTTagCompound();
-            partNbt.setInteger("slot", i);
-            if (partitionStack != null) {
-                ItemStack displayStack = AEStackUtil.getDisplayStack(partitionStack);
-                if (!ItemStacks.isEmpty(displayStack)) displayStack.writeToNBT(partNbt);
-                AEStackUtil.writeStackToNBT(partNbt, partitionStack);
-            }
+            if (partitionStack == null) continue;
+
+            NBTTagCompound partNbt = createPartitionSlotData(i, partitionStack);
             partitionList.appendTag(partNbt);
         }
 
         busData.setTag("partition", partitionList);
+    }
+
+    private static NBTTagCompound createPartitionSlotData(int slot, IAEStack<?> partitionStack) {
+        NBTTagCompound partNbt = new NBTTagCompound();
+        partNbt.setInteger("slot", slot);
+        AEStackUtil.writeStackToNBT(partNbt, partitionStack);
+
+        return partNbt;
     }
 
     private static void addContentsData(NBTTagCompound busData, PartStorageBus bus, StorageType storageType,

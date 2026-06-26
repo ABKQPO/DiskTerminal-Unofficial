@@ -238,11 +238,14 @@ public class CellContentTabWidget extends AbstractTabWidget {
 
             CellInfo cell = ((CellContentRow) data).getCell();
             for (SlotsLine.PartitionSlotTarget slot : slotTargets) {
+                Rectangle targetArea = clipTargetToContentViewport(slot);
+                if (targetArea == null) continue;
+
                 targets.add(new GhostTarget<>() {
 
                     @Override
                     public Rectangle getArea() {
-                        return new Rectangle(slot.absX, slot.absY, slot.width, slot.height);
+                        return targetArea;
                     }
 
                     @Override
@@ -302,7 +305,7 @@ public class CellContentTabWidget extends AbstractTabWidget {
 
         for (int i = 0; i < visibleRows.size(); i++) {
             IWidget widget = visibleRows.get(i);
-            int lineIndex = scrollOffset + i;
+            int lineIndex = getLineIndexForVisibleRow(i);
 
             if (widget instanceof AbstractHeader header) {
                 header.setDrawConnector(hasContentBelow(allLines, lineIndex));
@@ -322,7 +325,7 @@ public class CellContentTabWidget extends AbstractTabWidget {
             lastCutY = line.getTreeLineCutY();
         }
 
-        int lastVisibleIndex = scrollOffset + visibleRows.size() - 1;
+        int lastVisibleIndex = getLastVisibleLineIndex(scrollOffset);
         if (lastVisibleIndex < 0) {
             bottomContinuationFromY = -1;
 

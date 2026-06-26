@@ -901,8 +901,9 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             .getCurrentScroll();
 
         // Reset priority field visibility before rendering (fields are re-registered by headers during draw)
-        PriorityFieldManager.getInstance()
-            .resetVisibility();
+        PriorityFieldManager priorityFields = PriorityFieldManager.getInstance();
+        priorityFields.setContentViewport(guiLeft, guiTop, rowsVisible * ROW_HEIGHT);
+        priorityFields.resetVisibility();
 
         // Draw based on current tab using widgets
         AbstractTabWidget activeTab = tabManager.getActiveTab();
@@ -1451,20 +1452,12 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
      * Scroll to a specific line index.
      */
     public void scrollToLine(int lineIndex) {
-        int currentScroll = this.getScrollBar()
-            .getCurrentScroll();
+        AbstractTabWidget activeTab = tabManager.getActiveTab();
+        if (activeTab == null) return;
 
-        // wheel() clamps delta to -1/+1, so we need to call it multiple times
-        // Positive delta in wheel() scrolls up (towards 0), negative scrolls down
-        while (currentScroll != lineIndex) {
-            int delta = currentScroll < lineIndex ? -1 : 1;
-            this.getScrollBar()
-                .wheel(delta);
-            int newScroll = this.getScrollBar()
-                .getCurrentScroll();
-            if (newScroll == currentScroll) break;
-            currentScroll = newScroll;
-        }
+        int targetScroll = activeTab.getPixelOffsetForLine(tabManager.getActiveLines(dataManager), lineIndex);
+        this.getScrollBar()
+            .setCurrentScroll(targetScroll);
     }
 
     public void postUpdate(NBTTagCompound data) {
@@ -1550,13 +1543,12 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
     protected void updateScrollbarForCurrentTab() {
         List<Object> lines = tabManager.getActiveLines(dataManager);
-        int lineCount = lines.size();
-
-        // Use the tab widget's visible item count (accounts for non-standard row heights)
-        int visibleItems = tabManager.getActiveVisibleItemCount();
+        AbstractTabWidget activeTab = tabManager.getActiveTab();
+        int contentHeight = activeTab != null ? activeTab.getTotalContentHeight(lines) : 0;
+        int viewportHeight = rowsVisible * ROW_HEIGHT;
 
         this.getScrollBar()
-            .setRange(0, Math.max(0, lineCount - visibleItems), 1);
+            .setRange(0, Math.max(0, contentHeight - viewportHeight), ROW_HEIGHT);
     }
 
     // NEI Ghost Ingredient support (NEI drag-and-drop)

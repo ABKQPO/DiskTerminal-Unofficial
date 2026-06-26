@@ -98,13 +98,6 @@ public class TempAreaTabWidget extends AbstractTabWidget {
     }
 
     @Override
-    public int getVisibleItemCount() {
-        int contentHeight = rowsVisible * GuiConstants.ROW_HEIGHT;
-
-        return Math.max(1, contentHeight / SLOT_ROW_HEIGHT);
-    }
-
-    @Override
     protected int getRowStep(List<?> lines, int index) {
         return isContentLine(lines, index) ? SLOT_ROW_HEIGHT : GuiConstants.ROW_HEIGHT;
     }
@@ -170,11 +163,14 @@ public class TempAreaTabWidget extends AbstractTabWidget {
             if (tempSlotIndex < 0) continue;
 
             for (SlotsLine.PartitionSlotTarget slot : slotTargets) {
+                Rectangle targetArea = clipTargetToContentViewport(slot);
+                if (targetArea == null) continue;
+
                 targets.add(new GhostTarget<>() {
 
                     @Override
                     public Rectangle getArea() {
-                        return new Rectangle(slot.absX, slot.absY, slot.width, slot.height);
+                        return targetArea;
                     }
 
                     @Override
@@ -254,7 +250,7 @@ public class TempAreaTabWidget extends AbstractTabWidget {
 
         for (int i = 0; i < visibleRows.size(); i++) {
             IWidget widget = visibleRows.get(i);
-            int lineIndex = scrollOffset + i;
+            int lineIndex = getLineIndexForVisibleRow(i);
 
             if (widget instanceof AbstractHeader header) {
                 // Only draw connector if non-partition content rows follow below
@@ -292,7 +288,7 @@ public class TempAreaTabWidget extends AbstractTabWidget {
         // Draw a bottom continuation line if there is more content of the SAME TYPE
         // below the visible window. Don't draw between content→partition transitions,
         // as they are separate tree branches.
-        int lastVisibleIndex = scrollOffset + visibleRows.size() - 1;
+        int lastVisibleIndex = getLastVisibleLineIndex(scrollOffset);
         boolean nextIsContent = lastVisibleIndex + 1 < allLines.size() && isContentLine(allLines, lastVisibleIndex + 1);
 
         if (nextIsContent) {
