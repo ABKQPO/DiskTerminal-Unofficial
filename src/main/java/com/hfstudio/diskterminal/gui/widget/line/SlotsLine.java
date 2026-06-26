@@ -387,7 +387,6 @@ public class SlotsLine extends AbstractLine {
     }
 
     protected void drawPartitionIndicator(int slotX, int slotY) {
-        GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         GL11.glPushMatrix();
         GL11.glScalef(0.5f, 0.5f, 0.5f);

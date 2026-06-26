@@ -215,8 +215,10 @@ public class CellActionHandler {
                 upgradeStack.stackSize--;
 
                 if (fromSlot >= 0) {
+                    if (upgradeStack.stackSize <= 0) player.inventory.setInventorySlotContents(fromSlot, null);
                     player.inventory.markDirty();
                 } else {
+                    if (upgradeStack.stackSize <= 0) player.inventory.setItemStack(null);
                     ((EntityPlayerMP) player).updateHeldItem();
                 }
 

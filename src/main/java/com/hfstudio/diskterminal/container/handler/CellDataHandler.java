@@ -242,8 +242,15 @@ public class CellDataHandler {
         for (IAEItemStack stack : contents) {
             if (count >= slotLimit) break;
 
+            ItemStack itemRep = stack.getItemStack();
+            if (ItemStacks.isEmpty(itemRep)) continue;
+
+            // Write the vanilla ItemStack NBT (id/Damage/tag) so the client can deserialize it with
+            // ItemStack.loadItemStackFromNBT. The real (possibly >64) count is carried separately in
+            // "Cnt" because IAEItemStack.getStackSize() can exceed the vanilla byte count field.
             NBTTagCompound stackNbt = new NBTTagCompound();
-            stack.writeToNBT(stackNbt);
+            itemRep.writeToNBT(stackNbt);
+            stackNbt.setLong("Cnt", stack.getStackSize());
             contentsList.appendTag(stackNbt);
             count++;
         }

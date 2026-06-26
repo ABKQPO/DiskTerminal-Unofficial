@@ -150,6 +150,9 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     // When true, we're waiting for a network switch response - ignore incoming data until confirmed
     protected boolean awaitingNetworkSwitch = false;
 
+    // RenderItem instance for rendering items in GUI (1.7.10 doesn't have this in GuiContainer)
+    protected final net.minecraft.client.renderer.entity.RenderItem itemRender = new net.minecraft.client.renderer.entity.RenderItem();
+
     public GuiCellTerminalBase(Container container) {
         super(container);
 
@@ -1292,7 +1295,30 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             .setRange(0, Math.max(0, lineCount - visibleItems), 1);
     }
 
-    // JEI Ghost Ingredient support
+    // NEI Ghost Ingredient support (NEI drag-and-drop)
+
+    /**
+     * NEI drag-and-drop handler. Dispatches to our GhostTarget widgets (partition popups and tab widgets).
+     * Without this override, NEI drags fall through to AEBaseGui's default handler, which only handles
+     * SlotFake slots and returns false for anything else — causing the GUI to close on unhandled drags.
+     */
+    @Override
+    public boolean handleDragNDrop(net.minecraft.client.gui.inventory.GuiContainer gui, int mouseX, int mouseY, ItemStack draggedStack, int button) {
+        // Check partition popups first (they overlay tabs)
+        List<com.hfstudio.diskterminal.gui.handler.GhostTarget<?>> targets = getPhantomTargets(draggedStack);
+
+        for (com.hfstudio.diskterminal.gui.handler.GhostTarget<?> target : targets) {
+            java.awt.Rectangle area = target.getArea();
+            if (area.contains(mouseX, mouseY)) {
+                // GhostTarget<Object> accepts any ingredient type; cast to raw to call accept
+                ((com.hfstudio.diskterminal.gui.handler.GhostTarget) target).accept(draggedStack);
+                return true;
+            }
+        }
+
+        // Fall through to AEBaseGui's SlotFake handler
+        return super.handleDragNDrop(gui, mouseX, mouseY, draggedStack, button);
+    }
 
     public List<com.hfstudio.diskterminal.gui.handler.GhostTarget<?>> getPhantomTargets(Object ingredient) {
         if (partitionPopup != null) return partitionPopup.getGhostTargets();

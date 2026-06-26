@@ -91,7 +91,6 @@ public class PopupCellPartition extends Gui {
         // Reset GL state to known good state before drawing
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glEnable(GL11.GL_BLEND);
-        GL11.glEnable(GL11.GL_ALPHA_TEST);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
         // Draw popup background (similar to vanilla container style)
@@ -148,7 +147,6 @@ public class PopupCellPartition extends Gui {
         fr.drawString(hint, x + (width - hintWidth) / 2, y + height - FOOTER_HEIGHT + 2, 0x606060);
 
         // Reset state for subsequent rendering
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
     }

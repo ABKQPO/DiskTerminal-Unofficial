@@ -8,8 +8,10 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 
 import org.lwjgl.opengl.GL11;
 
@@ -22,6 +24,9 @@ import com.hfstudio.diskterminal.util.ItemStacks;
  * Extracted from GuiCellTerminalBase to reduce complexity.
  */
 public class TabRenderingHandler {
+
+    /** The location of the creative inventory tabs texture */
+    private static final ResourceLocation CREATIVE_INVENTORY_TABS = new ResourceLocation("textures/gui/container/creative_inventory/tabs.png");
 
     private TabRenderingHandler() {}
 
@@ -111,36 +116,26 @@ public class TabRenderingHandler {
 
             if (isHovered) hoveredTab = i;
 
-            // Tab background - gray out disabled tabs
-            int bgColor;
+            // Draw the tab using the vanilla creative-inventory tab sprite for a native MC look.
+            // The creative tabs.png lays out top-row tabs as 28x32 sprites: unselected at uv
+            // (28,0), selected at uv (28,32) (the selected sprite has the dark notch that merges
+            // with the panel). We render at the configured tabWidth/tabHeight so layout is unchanged.
+            ctx.mc.getTextureManager()
+                .bindTexture(CREATIVE_INVENTORY_TABS);
+            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+
+            int spriteU = 28;
+            int spriteV = isSelected ? 32 : 0;
+            int spriteW = 28;
+            int spriteH = 32;
+
+            drawScaledTexturedRect(tabX, tabY, spriteU, spriteV, spriteW, spriteH, ctx.tabWidth, ctx.tabHeight);
+
+            // Gray-out overlay for disabled tabs (the vanilla sprite has no disabled variant).
             if (isDisabled) {
-                bgColor = GuiConstants.COLOR_TAB_DISABLED;
-            } else if (isSelected) {
-                bgColor = GuiConstants.COLOR_TAB_SELECTED;
-            } else if (isHovered) {
-                bgColor = GuiConstants.COLOR_TAB_HOVER;
-            } else {
-                bgColor = GuiConstants.COLOR_TAB_NORMAL;
-            }
-            Gui.drawRect(tabX, tabY, tabX + ctx.tabWidth, tabY + ctx.tabHeight, bgColor);
-
-            // Tab border (3D effect) - dimmer for disabled tabs
-            int highlightColor = isDisabled ? 0xFF888888 : 0xFFFFFFFF;
-            int shadowColor = isDisabled ? 0xFF303030 : 0xFF555555;
-            Gui.drawRect(tabX, tabY, tabX + ctx.tabWidth, tabY + 1, highlightColor); // top
-            Gui.drawRect(tabX, tabY, tabX + 1, tabY + ctx.tabHeight, highlightColor); // left
-            Gui.drawRect(tabX + ctx.tabWidth - 1, tabY, tabX + ctx.tabWidth, tabY + ctx.tabHeight, shadowColor); // right
-
-            // If selected, remove bottom border to connect with main GUI
-            if (isSelected && !isDisabled) {
-                Gui.drawRect(
-                    tabX + 1,
-                    tabY + ctx.tabHeight - 1,
-                    tabX + ctx.tabWidth - 1,
-                    tabY + ctx.tabHeight,
-                    0xFFC6C6C6);
-            } else {
-                Gui.drawRect(tabX, tabY + ctx.tabHeight - 1, tabX + ctx.tabWidth, tabY + ctx.tabHeight, shadowColor); // bottom
+                Gui.drawRect(tabX, tabY, tabX + ctx.tabWidth, tabY + ctx.tabHeight, 0x99303030);
+            } else if (isHovered && !isSelected) {
+                Gui.drawRect(tabX, tabY, tabX + ctx.tabWidth, tabY + ctx.tabHeight, 0x33FFFFFF);
             }
 
             // Draw icon (composite for storage bus tabs)
@@ -253,6 +248,37 @@ public class TabRenderingHandler {
         GL11.glLineWidth(1.0f);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    /**
+     * Draw a textured rectangle with scaling support.
+     * Renders a texture region (spriteU, spriteV, spriteW, spriteH) at screen position (x, y)
+     * scaled to (targetW, targetH).
+     *
+     * @param x       Screen X position
+     * @param y       Screen Y position
+     * @param spriteU Texture U coordinate
+     * @param spriteV Texture V coordinate
+     * @param spriteW Texture width in pixels
+     * @param spriteH Texture height in pixels
+     * @param targetW Target width on screen
+     * @param targetH Target height on screen
+     */
+    private static void drawScaledTexturedRect(int x, int y, int spriteU, int spriteV, int spriteW, int spriteH,
+        int targetW, int targetH) {
+        float texScale = 1.0F / 256.0F;
+        float u0 = spriteU * texScale;
+        float v0 = spriteV * texScale;
+        float u1 = (spriteU + spriteW) * texScale;
+        float v1 = (spriteV + spriteH) * texScale;
+
+        Tessellator tessellator = Tessellator.instance;
+        tessellator.startDrawingQuads();
+        tessellator.addVertexWithUV(x, y + targetH, 0, u0, v1);
+        tessellator.addVertexWithUV(x + targetW, y + targetH, 0, u1, v1);
+        tessellator.addVertexWithUV(x + targetW, y, 0, u1, v0);
+        tessellator.addVertexWithUV(x, y, 0, u0, v0);
+        tessellator.draw();
     }
 
     /**

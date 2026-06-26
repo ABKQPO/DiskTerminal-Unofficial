@@ -133,10 +133,12 @@ public class GuiToolConfirmationModal {
             cancelHovered,
             false);
 
-        // Restore GL state
+        // Restore GL state. GUI render pass expects lighting OFF, so do NOT re-enable it here
+        // (raw GL11 has no GlStateManager-style context restore; re-enabling would darken later
+        // GUI elements drawn after this modal).
         GL11.glEnable(GL11.GL_DEPTH_TEST);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_LIGHTING);
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         GL11.glPopMatrix();
     }
 
