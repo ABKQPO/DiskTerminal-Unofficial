@@ -285,7 +285,7 @@ public class GuiConstants {
     /** Search field texture coordinates in the main terminal texture. */
     public static final int SEARCH_FIELD_TEXTURE_X = 131;
     public static final int SEARCH_FIELD_TEXTURE_Y = 38;
-    public static final int SEARCH_FIELD_TEXTURE_WIDTH = 70;
+    public static final int SEARCH_FIELD_TEXTURE_WIDTH = 71;
     public static final int SEARCH_FIELD_TEXTURE_HEIGHT = 11;
     public static final int SEARCH_FIELD_TEXTURE_EDGE = 4;
 

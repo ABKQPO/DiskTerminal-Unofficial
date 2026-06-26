@@ -549,9 +549,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         super.drawScreen(mouseX, mouseY, partialTicks);
 
-        // Draw popups on top
         if (inventoryPopup != null) {
-            inventoryPopup.draw(mouseX, mouseY);
             drawPopupHoverTooltip(
                 inventoryPopup.getHoveredTooltip(),
                 inventoryPopup.getHoveredTooltipX(),
@@ -559,7 +557,6 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         }
 
         if (partitionPopup != null) {
-            partitionPopup.draw(mouseX, mouseY);
             drawPopupHoverTooltip(
                 partitionPopup.getHoveredTooltip(),
                 partitionPopup.getHoveredTooltipX(),
@@ -574,6 +571,23 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
      */
     private void drawPopupHoverTooltip(List<String> lines, int x, int y) {
         if (lines != null && !lines.isEmpty()) this.drawHoveringText(lines, x, y);
+    }
+
+    private void drawPopupLayer(Runnable renderer) {
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glPushMatrix();
+        GL11.glTranslatef(-this.guiLeft, -this.guiTop, 0.0F);
+        GL11.glDepthMask(true);
+        GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
+
+        try {
+            renderer.run();
+            GL11.glDepthMask(true);
+            GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
+        } finally {
+            GL11.glPopMatrix();
+            GL11.glPopAttrib();
+        }
     }
 
     @Override
@@ -810,9 +824,9 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     }
 
     private void drawSearchFieldBackground() {
-        int x = this.searchField.x - 2;
+        int x = this.searchField.x + 1;
         int y = this.searchField.y;
-        int width = this.searchField.w + 4;
+        int width = this.searchField.w - 2;
         int height = GuiConstants.SEARCH_FIELD_TEXTURE_HEIGHT;
         if (dataManager.hasAdvancedSearchError()) {
             drawRect(x - 1, y - 1, x + width + 1, y + height + 1, 0xFFFF0000);
@@ -885,6 +899,14 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
         // Draw controls help - delegate to tab controller
         drawControlsHelpForCurrentTab();
+
+        if (inventoryPopup != null) {
+            drawPopupLayer(() -> inventoryPopup.draw(mouseX, mouseY));
+        }
+
+        if (partitionPopup != null) {
+            drawPopupLayer(() -> partitionPopup.draw(mouseX, mouseY));
+        }
     }
 
     // Constants for controls help widget positioning
@@ -1122,6 +1144,17 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             return;
         }
 
+        boolean hadPopupAtStart = inventoryPopup != null || partitionPopup != null;
+        if (inventoryPopup != null) {
+            if (inventoryPopup.handleClick(mouseX, mouseY, mouseButton)) return;
+
+            inventoryPopup = null;
+        }
+
+        if (partitionPopup != null) {
+            if (partitionPopup.handleClick(mouseX, mouseY, mouseButton)) return;
+        }
+
         // Handle inline rename: clicking outside the rename field saves and closes it
         // (does not consume the click, let it propagate to potentially start a new rename)
         InlineRenameManager.getInstance()
@@ -1136,17 +1169,6 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
         // Handle upgrade insertion (player holding upgrade + left-click on cell/bus)
         if (mouseButton == 0 && handleWidgetUpgradeClick(mouseX, mouseY)) return;
-
-        boolean hadPopupAtStart = inventoryPopup != null || partitionPopup != null;
-        if (inventoryPopup != null) {
-            if (inventoryPopup.handleClick(mouseX, mouseY, mouseButton)) return;
-
-            inventoryPopup = null;
-        }
-
-        if (partitionPopup != null) {
-            if (partitionPopup.handleClick(mouseX, mouseY, mouseButton)) return;
-        }
 
         if (!hadPopupAtStart && tabManager.handleClick(mouseX, mouseY, guiLeft, guiTop)) return;
 

@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.item.ItemStack;
 
+import codechicken.nei.ItemPanels;
 import codechicken.nei.guihook.GuiContainerManager;
 import codechicken.nei.recipe.GuiCraftingRecipe;
 import codechicken.nei.recipe.GuiUsageRecipe;
@@ -32,6 +33,15 @@ public class NEIIntegration {
         return getStackUnderMouseInternal();
     }
 
+    /**
+     * Get the stack currently dragged from the NEI item or bookmark panel.
+     */
+    public static ItemStack getDraggedStack() {
+        if (!isModLoaded()) return null;
+
+        return getDraggedStackInternal();
+    }
+
     public static boolean showRecipe(ItemStack stack) {
         if (!isModLoaded() || stack == null) return false;
 
@@ -53,6 +63,14 @@ public class NEIIntegration {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    @Optional.Method(modid = MOD_ID)
+    private static ItemStack getDraggedStackInternal() {
+        ItemStack itemPanelStack = ItemPanels.itemPanel.draggedStack;
+        if (itemPanelStack != null) return itemPanelStack;
+
+        return ItemPanels.bookmarkPanel.draggedStack;
     }
 
     @Optional.Method(modid = MOD_ID)

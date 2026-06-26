@@ -18,7 +18,9 @@ import org.lwjgl.opengl.GL11;
 import com.hfstudio.diskterminal.client.CellInfo;
 import com.hfstudio.diskterminal.gui.handler.GhostIngredientHandler;
 import com.hfstudio.diskterminal.gui.handler.GhostTarget;
+import com.hfstudio.diskterminal.gui.handler.QuickPartitionHandler;
 import com.hfstudio.diskterminal.gui.widget.AbstractWidget;
+import com.hfstudio.diskterminal.integration.NEIIntegration;
 import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
 import com.hfstudio.diskterminal.network.PacketPartitionAction;
 import com.hfstudio.diskterminal.util.ItemStacks;
@@ -98,6 +100,8 @@ public class PopupCellPartition extends Gui {
         if (dragging) moveTo(mouseX - dragOffsetX, mouseY - dragOffsetY);
 
         // Reset GL state to known good state before drawing
+        GL11.glDepthMask(true);
+        GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         GL11.glEnable(GL11.GL_BLEND);
@@ -204,7 +208,8 @@ public class PopupCellPartition extends Gui {
 
             if (slotIndex < MAX_PARTITION_SLOTS && slotIndex < editablePartition.size()) {
                 ItemStack heldStack = Minecraft.getMinecraft().thePlayer.inventory.getItemStack();
-                ItemStack replacement = convertIngredientForCell(heldStack);
+                Object replacementIngredient = getReplacementIngredient(heldStack);
+                ItemStack replacement = convertIngredientForCell(replacementIngredient);
 
                 if (!ItemStacks.isEmpty(replacement)) {
                     editablePartition.set(slotIndex, replacement.copy());
@@ -221,7 +226,7 @@ public class PopupCellPartition extends Gui {
                 }
 
                 ItemStack removed = editablePartition.get(slotIndex);
-                if (ItemStacks.isEmpty(heldStack) && !ItemStacks.isEmpty(removed)) {
+                if (replacementIngredient == null && ItemStacks.isEmpty(heldStack) && !ItemStacks.isEmpty(removed)) {
                     editablePartition.set(slotIndex, null);
 
                     DiskTerminalNetwork.INSTANCE.sendToServer(
@@ -237,6 +242,15 @@ public class PopupCellPartition extends Gui {
         }
 
         return true;
+    }
+
+    private Object getReplacementIngredient(ItemStack heldStack) {
+        if (!ItemStacks.isEmpty(heldStack)) return heldStack;
+
+        ItemStack draggedStack = NEIIntegration.getDraggedStack();
+        if (!ItemStacks.isEmpty(draggedStack)) return draggedStack;
+
+        return QuickPartitionHandler.getModIngredientUnderMouse();
     }
 
     /**
@@ -313,7 +327,7 @@ public class PopupCellPartition extends Gui {
             int slotX = x + slotOffsetX + (i % SLOTS_PER_ROW) * SLOT_SIZE;
             int slotY = slotStartY + (i / SLOTS_PER_ROW) * SLOT_SIZE;
 
-            Rectangle area = new Rectangle(slotX, slotY, SLOT_SIZE - 1, SLOT_SIZE - 1);
+            Rectangle area = new Rectangle(slotX, slotY, SLOT_SIZE, SLOT_SIZE);
 
             targets.add(new GhostTarget<>() {
 

@@ -110,6 +110,8 @@ public class PopupCellInventory extends Gui {
         if (dragging) moveTo(mouseX - dragOffsetX, mouseY - dragOffsetY);
 
         // Reset GL state to known good state before drawing
+        GL11.glDepthMask(true);
+        GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         GL11.glEnable(GL11.GL_BLEND);
