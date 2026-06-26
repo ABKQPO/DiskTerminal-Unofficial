@@ -22,7 +22,6 @@ public enum Mods implements IMod, ITargetMod {
     WirelessCraftingTerminal("ae2wct"),
     Thaumcraft("thaumcraft"),
     AE2("appliedenergistics2"),
-    GregTech("gregtech"),
     ;
     // spotless:on
 

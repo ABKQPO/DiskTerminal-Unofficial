@@ -34,10 +34,16 @@ public class DeltaSnapshot {
 
         public final NBTTagCompound payload;
         public final boolean isFull;
+        public final boolean isEmpty;
 
         public DeltaResult(NBTTagCompound payload, boolean isFull) {
+            this(payload, isFull, false);
+        }
+
+        public DeltaResult(NBTTagCompound payload, boolean isFull, boolean isEmpty) {
             this.payload = payload;
             this.isFull = isFull;
+            this.isEmpty = isEmpty;
         }
     }
 
@@ -124,7 +130,9 @@ public class DeltaSnapshot {
         delta.setTag("updated", updated);
         delta.setTag("removed", removedIds);
 
-        return new DeltaResult(delta, false);
+        boolean empty = added.tagCount() == 0 && updated.tagCount() == 0 && removedIds.tagCount() == 0;
+
+        return new DeltaResult(delta, false, empty);
     }
 
     /**

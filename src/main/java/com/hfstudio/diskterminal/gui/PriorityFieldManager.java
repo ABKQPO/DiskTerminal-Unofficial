@@ -97,12 +97,31 @@ public class PriorityFieldManager {
     public void drawFieldsRelative(int guiLeft, int guiTop) {
         GL11.glPushMatrix();
         GL11.glTranslatef(-guiLeft, -guiTop, 0);
+        boolean scissorEnabled = enableContentScissor();
 
-        for (InlinePriorityField field : fields.values()) {
-            if (field.isVisible()) field.draw();
+        try {
+            for (InlinePriorityField field : fields.values()) {
+                if (field.isVisible()) field.draw();
+            }
+        } finally {
+            if (scissorEnabled) GL11.glDisable(GL11.GL_SCISSOR_TEST);
+            GL11.glPopMatrix();
         }
+    }
 
-        GL11.glPopMatrix();
+    private boolean enableContentScissor() {
+        if (contentViewport == null) return false;
+
+        Minecraft mc = Minecraft.getMinecraft();
+        ScaledResolution resolution = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
+        int scaleFactor = resolution.getScaleFactor();
+        int scissorX = contentViewport.x * scaleFactor;
+        int scissorY = mc.displayHeight - (contentViewport.y + contentViewport.height) * scaleFactor;
+
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        GL11.glScissor(scissorX, scissorY, contentViewport.width * scaleFactor, contentViewport.height * scaleFactor);
+
+        return true;
     }
 
     /**
@@ -258,45 +277,30 @@ public class PriorityFieldManager {
         public void draw() {
             if (visibleBounds == null) return;
 
-            GL11.glEnable(GL11.GL_SCISSOR_TEST);
-            applyScissor(visibleBounds);
             int x = textField.xPosition;
             int y = textField.yPosition;
 
-            try {
-                // Draw background
-                Gui.drawRect(x - 1, y - 1, x + FIELD_WIDTH + 1, y + FIELD_HEIGHT + 1, 0xFF373737);
-                Gui.drawRect(x, y, x + FIELD_WIDTH, y + FIELD_HEIGHT, textField.isFocused() ? 0xFF000000 : 0xFF1E1E1E);
+            // Draw background
+            Gui.drawRect(x - 1, y - 1, x + FIELD_WIDTH + 1, y + FIELD_HEIGHT + 1, 0xFF373737);
+            Gui.drawRect(x, y, x + FIELD_WIDTH, y + FIELD_HEIGHT, textField.isFocused() ? 0xFF000000 : 0xFF1E1E1E);
 
-                // Draw text with scaling
-                String text = textField.getText();
-                if (!text.isEmpty()) {
-                    GL11.glPushMatrix();
-                    GL11.glTranslatef(x + 2, y + 1, 0);
-                    GL11.glScalef(TEXT_SCALE, TEXT_SCALE, 1.0f);
-                    fontRenderer.drawString(text, 0, 0, 0xE0E0E0);
-                    GL11.glPopMatrix();
-                }
-
-                // Draw cursor if focused
-                if (textField.isFocused()) {
-                    int cursorPos = textField.getCursorPosition();
-                    String beforeCursor = text.substring(0, Math.min(cursorPos, text.length()));
-                    int cursorX = (int) (fontRenderer.getStringWidth(beforeCursor) * TEXT_SCALE);
-                    Gui.drawRect(x + 2 + cursorX, y + 1, x + 3 + cursorX, y + FIELD_HEIGHT - 1, 0xFFD0D0D0);
-                }
-            } finally {
-                GL11.glDisable(GL11.GL_SCISSOR_TEST);
+            // Draw text with scaling
+            String text = textField.getText();
+            if (!text.isEmpty()) {
+                GL11.glPushMatrix();
+                GL11.glTranslatef(x + 2, y + 1, 0);
+                GL11.glScalef(TEXT_SCALE, TEXT_SCALE, 1.0f);
+                fontRenderer.drawString(text, 0, 0, 0xE0E0E0);
+                GL11.glPopMatrix();
             }
-        }
 
-        private void applyScissor(Rectangle bounds) {
-            Minecraft mc = Minecraft.getMinecraft();
-            ScaledResolution resolution = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
-            int scaleFactor = resolution.getScaleFactor();
-            int scissorX = bounds.x * scaleFactor;
-            int scissorY = mc.displayHeight - (bounds.y + bounds.height) * scaleFactor;
-            GL11.glScissor(scissorX, scissorY, bounds.width * scaleFactor, bounds.height * scaleFactor);
+            // Draw cursor if focused
+            if (textField.isFocused()) {
+                int cursorPos = textField.getCursorPosition();
+                String beforeCursor = text.substring(0, Math.min(cursorPos, text.length()));
+                int cursorX = (int) (fontRenderer.getStringWidth(beforeCursor) * TEXT_SCALE);
+                Gui.drawRect(x + 2 + cursorX, y + 1, x + 3 + cursorX, y + FIELD_HEIGHT - 1, 0xFFD0D0D0);
+            }
         }
 
         public boolean isVisible() {

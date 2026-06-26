@@ -14,6 +14,7 @@ import java.util.Set;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraftforge.common.util.Constants;
 
 import com.gtnewhorizon.gtnhlib.blockpos.BlockPos;
 import com.hfstudio.diskterminal.client.AdvancedSearchParser;
@@ -145,18 +146,18 @@ public class TerminalDataManager {
      * Apply the STORAGES channel payload (FULL or DELTA).
      */
     public void applyStorages(PayloadMode mode, NBTTagCompound data) {
-        Set<Long> previousIds = new HashSet<>(this.storageMap.keySet());
+        boolean hasNewEntries = hasAddedEntries(mode, data);
         DeltaApplier.apply(mode, data, this.storageMap, StorageInfo::new, StorageInfo::getId);
-        finishUpdate(Section.STORAGES, hasNewIds(this.storageMap.keySet(), previousIds));
+        finishUpdate(Section.STORAGES, hasNewEntries);
     }
 
     /**
      * Apply the BUSES channel payload (FULL or DELTA).
      */
     public void applyBuses(PayloadMode mode, NBTTagCompound data) {
-        Set<Long> previousIds = new HashSet<>(this.storageBusMap.keySet());
+        boolean hasNewEntries = hasAddedEntries(mode, data);
         DeltaApplier.apply(mode, data, this.storageBusMap, StorageBusInfo::new, StorageBusInfo::getId);
-        finishUpdate(Section.BUSES, hasNewIds(this.storageBusMap.keySet(), previousIds));
+        finishUpdate(Section.BUSES, hasNewEntries);
     }
 
     /**
@@ -210,12 +211,11 @@ public class TerminalDataManager {
         }
     }
 
-    private boolean hasNewIds(Set<Long> currentIds, Set<Long> previousIds) {
-        for (Long id : currentIds) {
-            if (!previousIds.contains(id)) return true;
-        }
+    private boolean hasAddedEntries(PayloadMode mode, NBTTagCompound data) {
+        if (mode == PayloadMode.FULL) return true;
 
-        return false;
+        return data.getTagList("added", Constants.NBT.TAG_COMPOUND)
+            .tagCount() > 0;
     }
 
     /**

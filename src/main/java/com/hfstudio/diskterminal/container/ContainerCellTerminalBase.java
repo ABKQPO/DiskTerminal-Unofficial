@@ -400,6 +400,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
             result = new DeltaSnapshot.DeltaResult(fullPayload, true);
         }
 
+        if (!result.isFull && result.isEmpty) return;
+
         ChunkedNBTSender.send(player, channel, result.isFull ? PayloadMode.FULL : PayloadMode.DELTA, result.payload);
     }
 

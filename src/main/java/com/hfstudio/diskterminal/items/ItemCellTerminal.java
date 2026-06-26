@@ -39,7 +39,7 @@ public class ItemCellTerminal extends Item implements IPartItem {
     @SideOnly(Side.CLIENT)
     public void addInformation(ItemStack stack, EntityPlayer player, List<String> tooltip, boolean advanced) {
         super.addInformation(stack, player, tooltip, advanced);
-        tooltip.add(I18n.format("item.disk_terminal.cell_terminal.tooltip"));
+        tooltip.add(I18n.format("item.cell_terminal.tooltip"));
     }
 
     @Override
