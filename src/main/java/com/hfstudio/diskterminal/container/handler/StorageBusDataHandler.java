@@ -11,14 +11,11 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
-import net.minecraftforge.fluids.FluidStack;
 
-import com.glodblock.github.common.item.ItemFluidDrop;
 import com.hfstudio.diskterminal.client.StorageType;
 import com.hfstudio.diskterminal.integration.storagebus.StorageBusScannerRegistry;
 import com.hfstudio.diskterminal.network.PacketStorageBusPartitionAction.Action;
 import com.hfstudio.diskterminal.util.AEStackUtil;
-import com.hfstudio.diskterminal.util.InventoryHelper;
 import com.hfstudio.diskterminal.util.ItemStacks;
 import com.hfstudio.diskterminal.util.PosUtil;
 
@@ -27,6 +24,7 @@ import appeng.api.config.Settings;
 import appeng.api.config.Upgrades;
 import appeng.api.networking.IGrid;
 import appeng.api.storage.IMEInventoryHandler;
+import appeng.api.storage.StorageName;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
@@ -34,6 +32,7 @@ import appeng.api.util.IConfigManager;
 import appeng.helpers.ICustomNameObject;
 import appeng.parts.automation.PartUpgradeable;
 import appeng.parts.misc.PartStorageBus;
+import appeng.tile.inventory.IAEStackInventory;
 import appeng.util.IterationCounter;
 
 /**
@@ -135,7 +134,7 @@ public class StorageBusDataHandler {
         addConnectedInventoryInfo(busData, hostTile, side);
 
         int capacityUpgrades = bus.getInstalledUpgrades(Upgrades.CAPACITY);
-        addPartitionData(busData, bus.getInventoryByName("config"), capacityUpgrades, storageType);
+        addPartitionData(busData, bus, capacityUpgrades);
         addContentsData(busData, bus, storageType);
         addUpgradesData(busData, bus.getInventoryByName("upgrades"));
 
@@ -168,18 +167,22 @@ public class StorageBusDataHandler {
         busData.setTag("connectedIcon", iconNbt);
     }
 
-    private static void addPartitionData(NBTTagCompound busData, IInventory configInv, int capacityUpgrades,
-        StorageType storageType) {
+    private static void addPartitionData(NBTTagCompound busData, PartStorageBus bus, int capacityUpgrades) {
+        IAEStackInventory configInv = bus.getAEInventoryByName(StorageName.CONFIG);
         if (configInv == null) return;
 
         int slotsToUse = computeAvailableSlotsFrom(busData, capacityUpgrades);
         NBTTagList partitionList = new NBTTagList();
 
         for (int i = 0; i < configInv.getSizeInventory() && i < slotsToUse; i++) {
-            ItemStack partItem = configInv.getStackInSlot(i);
+            IAEStack<?> partitionStack = configInv.getAEStackInSlot(i);
             NBTTagCompound partNbt = new NBTTagCompound();
             partNbt.setInteger("slot", i);
-            if (!ItemStacks.isEmpty(partItem)) partItem.writeToNBT(partNbt);
+            if (partitionStack != null) {
+                ItemStack displayStack = AEStackUtil.getDisplayStack(partitionStack);
+                if (!ItemStacks.isEmpty(displayStack)) displayStack.writeToNBT(partNbt);
+                AEStackUtil.writeStackToNBT(partNbt, partitionStack);
+            }
             partitionList.appendTag(partNbt);
         }
 
@@ -257,16 +260,18 @@ public class StorageBusDataHandler {
      * Check whether an ADD_ITEM request would create a duplicate filter entry on this bus.
      */
     public static boolean isDuplicateFilterAdd(StorageBusTracker tracker, Action action, int partitionSlot,
-        ItemStack itemStack) {
+        NBTTagCompound stackData) {
         if (tracker == null) return false;
         if (action != Action.ADD_ITEM) return false;
-        if (partitionSlot < 0 || ItemStacks.isEmpty(itemStack)) return false;
+        if (partitionSlot < 0 || stackData == null || stackData.hasNoTags()) return false;
         if (!(tracker.storageBus instanceof PartStorageBus)) return false;
 
-        IInventory config = ((PartStorageBus) tracker.storageBus).getInventoryByName("config");
+        PartStorageBus bus = (PartStorageBus) tracker.storageBus;
+        IAEStackInventory config = bus.getAEInventoryByName(StorageName.CONFIG);
         if (config == null || partitionSlot >= config.getSizeInventory()) return false;
 
-        int existing = findItemInConfig(config, itemStack);
+        IAEStack<?> stack = AEStackUtil.readPartitionStack(stackData, bus.getStackType());
+        int existing = findStackInConfig(config, stack);
 
         return existing >= 0 && existing != partitionSlot;
     }
@@ -277,43 +282,41 @@ public class StorageBusDataHandler {
      * @return true if the partition was modified
      */
     public static boolean handlePartitionAction(StorageBusTracker tracker, Action action, int partitionSlot,
-        ItemStack itemStack) {
+        NBTTagCompound stackData) {
         if (!(tracker.storageBus instanceof PartStorageBus)) return false;
 
         PartStorageBus bus = (PartStorageBus) tracker.storageBus;
-        IInventory config = bus.getInventoryByName("config");
+        IAEStackInventory config = bus.getAEInventoryByName(StorageName.CONFIG);
         if (config == null) return false;
 
-        boolean fluid = tracker.storageType == StorageType.FLUID;
-        ItemStack normalized = fluid ? normalizeFluidConfigStack(itemStack) : itemStack;
+        IAEStack<?> partitionStack = AEStackUtil.readPartitionStack(stackData, bus.getStackType());
         int slots = config.getSizeInventory();
 
         switch (action) {
             case ADD_ITEM:
-                if (partitionSlot >= 0 && partitionSlot < slots && !ItemStacks.isEmpty(normalized)) {
-                    InventoryHelper.setSlot(config, partitionSlot, normalized);
+                if (partitionSlot >= 0 && partitionSlot < slots && partitionStack != null) {
+                    setConfigSlot(config, partitionSlot, partitionStack);
                 }
                 break;
             case REMOVE_ITEM:
-                if (partitionSlot >= 0 && partitionSlot < slots) InventoryHelper.setSlot(config, partitionSlot, null);
+                if (partitionSlot >= 0 && partitionSlot < slots) setConfigSlot(config, partitionSlot, null);
                 break;
             case TOGGLE_ITEM:
-                if (!ItemStacks.isEmpty(normalized)) {
-                    int existing = findItemInConfig(config, normalized);
+                if (partitionStack != null) {
+                    int existing = findStackInConfig(config, partitionStack);
                     if (existing >= 0) {
-                        InventoryHelper.setSlot(config, existing, null);
+                        setConfigSlot(config, existing, null);
                     } else {
-                        int empty = InventoryHelper.findEmptySlot(config);
-                        if (empty >= 0) InventoryHelper.setSlot(config, empty, normalized);
+                        int empty = findEmptySlot(config);
+                        if (empty >= 0) setConfigSlot(config, empty, partitionStack);
                     }
                 }
                 break;
             case CLEAR_ALL:
-                InventoryHelper.clear(config);
+                clearConfig(config);
                 break;
             case SET_ALL_FROM_CONTENTS:
-                // Filling from connected contents is deferred; clear keeps behavior predictable.
-                InventoryHelper.clear(config);
+                setPartitionFromContents(config, bus);
                 break;
         }
 
@@ -322,24 +325,65 @@ public class StorageBusDataHandler {
         return true;
     }
 
-    private static int findItemInConfig(IInventory inv, ItemStack stack) {
+    private static int findStackInConfig(IAEStackInventory inv, IAEStack<?> stack) {
+        if (stack == null) return -1;
+
         for (int i = 0; i < inv.getSizeInventory(); i++) {
-            if (ItemStack.areItemStacksEqual(inv.getStackInSlot(i), stack)) return i;
+            IAEStack<?> slotStack = inv.getAEStackInSlot(i);
+            if (slotStack != null && slotStack.isSameType(stack)) return i;
         }
 
         return -1;
     }
 
-    private static ItemStack normalizeFluidConfigStack(ItemStack stack) {
-        if (ItemStacks.isEmpty(stack)) return stack;
-        if (stack.getItem() instanceof ItemFluidDrop) {
-            FluidStack fs = ItemFluidDrop.getFluidStack(stack);
-            if (fs != null && fs.getFluid() != null) {
-                return ItemFluidDrop.newStack(new FluidStack(fs.getFluid(), 1000));
-            }
+    private static int findEmptySlot(IAEStackInventory inv) {
+        for (int i = 0; i < inv.getSizeInventory(); i++) {
+            if (inv.getAEStackInSlot(i) == null) return i;
         }
 
-        return stack;
+        return -1;
+    }
+
+    private static void clearConfig(IAEStackInventory inv) {
+        for (int i = 0; i < inv.getSizeInventory(); i++) setConfigSlot(inv, i, null);
+    }
+
+    private static void setConfigSlot(IAEStackInventory inv, int slot, IAEStack<?> stack) {
+        inv.putAEStackInSlot(slot, stack);
+        inv.markDirty();
+    }
+
+    private static void setPartitionFromContents(IAEStackInventory config, PartStorageBus bus) {
+        clearConfig(config);
+
+        IMEInventoryHandler<?> handler = bus.getInternalHandler();
+        if (handler == null) return;
+
+        IAEStackType<?> type = handler.getStackType();
+        if (type == null) return;
+
+        setPartitionFromContentsForUnknownType(config, handler, type);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends IAEStack<T>> void setPartitionFromContentsForUnknownType(IAEStackInventory config,
+        IMEInventoryHandler<?> handler, IAEStackType<?> type) {
+        setPartitionFromContentsForType(config, castHandler(handler), (IAEStackType<T>) type);
+    }
+
+    private static <T extends IAEStack<T>> void setPartitionFromContentsForType(IAEStackInventory config,
+        IMEInventoryHandler<T> handler, IAEStackType<T> type) {
+        IItemList<T> contents = type.createList();
+        handler.getAvailableItems(contents, IterationCounter.fetchNewId());
+
+        int slot = 0;
+        for (T stack : contents) {
+            if (slot >= config.getSizeInventory()) break;
+
+            T partitionStack = stack.copy();
+            partitionStack.setStackSize(1);
+            setConfigSlot(config, slot++, partitionStack);
+        }
     }
 
     /**
@@ -373,15 +417,45 @@ public class StorageBusDataHandler {
      */
     public static boolean busHasPartition(StorageBusTracker tracker) {
         if (tracker.storageBus instanceof PartStorageBus) {
-            IInventory configInv = ((PartStorageBus) tracker.storageBus).getInventoryByName("config");
+            IAEStackInventory configInv = ((PartStorageBus) tracker.storageBus)
+                .getAEInventoryByName(StorageName.CONFIG);
             if (configInv == null) return false;
 
             for (int i = 0; i < configInv.getSizeInventory(); i++) {
-                if (!ItemStacks.isEmpty(configInv.getStackInSlot(i))) return true;
+                if (configInv.getAEStackInSlot(i) != null) return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Check if a storage bus can see at least one stack from its connected inventory.
+     */
+    public static boolean busHasConnectedInventory(StorageBusTracker tracker) {
+        if (!(tracker.storageBus instanceof PartStorageBus)) return false;
+
+        IMEInventoryHandler<?> handler = ((PartStorageBus) tracker.storageBus).getInternalHandler();
+        if (handler == null) return false;
+
+        IAEStackType<?> type = handler.getStackType();
+        if (type == null) return false;
+
+        return hasContentsForUnknownType(handler, type);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends IAEStack<T>> boolean hasContentsForUnknownType(IMEInventoryHandler<?> handler,
+        IAEStackType<?> type) {
+        return hasContentsForType(castHandler(handler), (IAEStackType<T>) type);
+    }
+
+    private static <T extends IAEStack<T>> boolean hasContentsForType(IMEInventoryHandler<T> handler,
+        IAEStackType<T> type) {
+        IItemList<T> contents = type.createList();
+        handler.getAvailableItems(contents, IterationCounter.fetchNewId());
+
+        return contents.size() > 0;
     }
 
     private static ItemStack getBlockAsItemStack(World world, int x, int y, int z) {

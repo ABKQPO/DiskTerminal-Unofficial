@@ -2,6 +2,8 @@ package com.hfstudio.diskterminal.network.chunked;
 
 import net.minecraft.client.Minecraft;
 
+import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
+
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -30,8 +32,7 @@ import io.netty.buffer.ByteBuf;
  * </ul>
  * The payload is the raw bytes of the gzip-compressed NBT (a slice of, when split).
  * <p>
- * Default routing: {@link Side#CLIENT}. Registered in
- * {@link com.hfstudio.diskterminal.network.DiskTerminalNetwork}.
+ * Default routing: {@link Side#CLIENT}. Registered in {@link DiskTerminalNetwork}.
  */
 public class PacketNBTChunk implements IMessage {
 

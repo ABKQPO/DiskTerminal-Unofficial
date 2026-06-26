@@ -8,6 +8,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
+import com.hfstudio.diskterminal.container.handler.SubnetDataHandler;
 import com.hfstudio.diskterminal.container.handler.SubnetDataHandler.SubnetTracker;
 import com.hfstudio.diskterminal.util.ItemStacks;
 import com.hfstudio.diskterminal.util.PosUtil;
@@ -19,6 +20,8 @@ import appeng.api.networking.energy.IEnergyGrid;
 import appeng.api.networking.security.ISecurityGrid;
 import appeng.api.parts.IPart;
 import appeng.api.parts.IPartHost;
+import appeng.api.util.DimensionalCoord;
+import appeng.helpers.ICustomNameObject;
 import appeng.helpers.IInterfaceHost;
 
 /**
@@ -131,7 +134,7 @@ public abstract class AbstractSubnetScanner implements ISubnetScanner {
         IGridNode primaryNode = findPrimaryNode(grid);
         if (primaryNode == null) return grid.hashCode();
 
-        appeng.api.util.DimensionalCoord loc = primaryNode.getGridBlock()
+        DimensionalCoord loc = primaryNode.getGridBlock()
             .getLocation();
         if (loc == null) return grid.hashCode();
 
@@ -150,7 +153,7 @@ public abstract class AbstractSubnetScanner implements ISubnetScanner {
         // Get primary node for subnet info
         IGridNode primaryNode = findPrimaryNode(subnetGrid);
         if (primaryNode != null) {
-            appeng.api.util.DimensionalCoord loc = primaryNode.getGridBlock()
+            DimensionalCoord loc = primaryNode.getGridBlock()
                 .getLocation();
             if (loc != null) {
                 nbt.setLong("pos", PosUtil.toLong(loc.x, loc.y, loc.z));
@@ -170,15 +173,52 @@ public abstract class AbstractSubnetScanner implements ISubnetScanner {
             }
         }
 
+        nbt.setLong("primaryPos", nbt.getLong("pos"));
+        nbt.setInteger("posX", locX(primaryNode));
+        nbt.setInteger("posY", locY(primaryNode));
+        nbt.setInteger("posZ", locZ(primaryNode));
+
+        IInterfaceHost interfaceHost = SubnetDataHandler.findPrimaryInterfaceHost(subnetGrid);
+        if (interfaceHost instanceof ICustomNameObject) {
+            ICustomNameObject nameable = (ICustomNameObject) interfaceHost;
+            if (nameable.hasCustomName()) {
+                String customName = nameable.getCustomName();
+                if (customName != null && !customName.isEmpty()) nbt.setString("customName", customName);
+            }
+        }
+
+        nbt.setBoolean("favorite", SubnetDataHandler.isFavorited(tracker.id));
+
         // Subnet properties
         nbt.setBoolean("hasSecurity", checkHasSecurity(subnetGrid));
-        nbt.setBoolean("isAccessible", checkIsAccessible(subnetGrid, playerId));
+        nbt.setBoolean("accessible", checkIsAccessible(subnetGrid, playerId));
         nbt.setBoolean("hasPower", checkHasPower(subnetGrid));
 
         // Add connection data
         tracker.writeConnectionsToNBT(nbt);
 
         return nbt;
+    }
+
+    private int locX(IGridNode node) {
+        DimensionalCoord loc = getNodeLocation(node);
+        return loc == null ? 0 : loc.x;
+    }
+
+    private int locY(IGridNode node) {
+        DimensionalCoord loc = getNodeLocation(node);
+        return loc == null ? 0 : loc.y;
+    }
+
+    private int locZ(IGridNode node) {
+        DimensionalCoord loc = getNodeLocation(node);
+        return loc == null ? 0 : loc.z;
+    }
+
+    private DimensionalCoord getNodeLocation(IGridNode node) {
+        if (node == null || node.getGridBlock() == null) return null;
+        return node.getGridBlock()
+            .getLocation();
     }
 
     /**

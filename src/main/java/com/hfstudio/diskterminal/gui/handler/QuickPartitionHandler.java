@@ -28,7 +28,7 @@ import com.hfstudio.diskterminal.util.ItemStacks;
  * <p>
  * The 1.12 source pulled the hovered ingredient from NEI's overlays; here we read the hovered
  * inventory slot directly and leave a hook ({@link #getModIngredientUnderMouse}) for the NEI bridge
- * bridge. Gas support is not part of this port.
+ * bridge.
  */
 public class QuickPartitionHandler {
 
@@ -37,8 +37,7 @@ public class QuickPartitionHandler {
         AUTO,
         ITEM,
         FLUID,
-        ESSENTIA,
-        GAS
+        ESSENTIA
     }
 
     /**
@@ -78,10 +77,6 @@ public class QuickPartitionHandler {
         Map<Long, StorageInfo> storageMap) {
         if (type == PartitionType.ESSENTIA && !ThaumicEnergisticsIntegration.isModLoaded()) {
             return QuickPartitionResult.error("disk_terminal.quick_partition.essentia_unavailable");
-        }
-
-        if (type == PartitionType.GAS) {
-            return QuickPartitionResult.error("disk_terminal.quick_partition.gas_unavailable");
         }
 
         HoveredIngredient hoveredIngredient = getHoveredIngredient();

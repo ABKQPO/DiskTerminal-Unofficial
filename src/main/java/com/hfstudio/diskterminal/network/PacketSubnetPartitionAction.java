@@ -4,6 +4,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 
 import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
+import com.hfstudio.diskterminal.util.AEStackUtil;
 
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -32,24 +33,24 @@ public class PacketSubnetPartitionAction implements IMessage {
     private int side;
     private Action action;
     private int partitionSlot;
-    private ItemStack itemStack;
+    private NBTTagCompound stackData;
 
     public PacketSubnetPartitionAction() {
-        this.itemStack = null;
+        this.stackData = null;
     }
 
     /**
      * Actions that don't need a specific partition slot or item (CLEAR_ALL, SET_ALL_FROM_CONTENTS).
      */
     public PacketSubnetPartitionAction(long subnetId, long pos, int side, Action action) {
-        this(subnetId, pos, side, action, -1, null);
+        this(subnetId, pos, side, action, -1, (NBTTagCompound) null);
     }
 
     /**
      * REMOVE_ITEM action on a specific partition slot.
      */
     public PacketSubnetPartitionAction(long subnetId, long pos, int side, Action action, int partitionSlot) {
-        this(subnetId, pos, side, action, partitionSlot, null);
+        this(subnetId, pos, side, action, partitionSlot, (NBTTagCompound) null);
     }
 
     /**
@@ -57,12 +58,17 @@ public class PacketSubnetPartitionAction implements IMessage {
      */
     public PacketSubnetPartitionAction(long subnetId, long pos, int side, Action action, int partitionSlot,
         ItemStack itemStack) {
+        this(subnetId, pos, side, action, partitionSlot, AEStackUtil.writeItemLikePartitionStack(itemStack));
+    }
+
+    public PacketSubnetPartitionAction(long subnetId, long pos, int side, Action action, int partitionSlot,
+        NBTTagCompound stackData) {
         this.subnetId = subnetId;
         this.pos = pos;
         this.side = side;
         this.action = action;
         this.partitionSlot = partitionSlot;
-        this.itemStack = itemStack != null ? itemStack : null;
+        this.stackData = stackData;
     }
 
     /**
@@ -81,10 +87,9 @@ public class PacketSubnetPartitionAction implements IMessage {
         this.partitionSlot = buf.readInt();
 
         if (buf.readBoolean()) {
-            NBTTagCompound nbt = ByteBufUtils.readTag(buf);
-            this.itemStack = ItemStack.loadItemStackFromNBT(nbt);
+            this.stackData = ByteBufUtils.readTag(buf);
         } else {
-            this.itemStack = null;
+            this.stackData = null;
         }
     }
 
@@ -96,11 +101,9 @@ public class PacketSubnetPartitionAction implements IMessage {
         buf.writeByte(action.ordinal());
         buf.writeInt(partitionSlot);
 
-        if (itemStack != null && itemStack.stackSize > 0) {
+        if (stackData != null && !stackData.hasNoTags()) {
             buf.writeBoolean(true);
-            NBTTagCompound nbt = new NBTTagCompound();
-            itemStack.writeToNBT(nbt);
-            ByteBufUtils.writeTag(buf, nbt);
+            ByteBufUtils.writeTag(buf, stackData);
         } else {
             buf.writeBoolean(false);
         }
@@ -120,7 +123,7 @@ public class PacketSubnetPartitionAction implements IMessage {
                         message.side,
                         message.action,
                         message.partitionSlot,
-                        message.itemStack);
+                        message.stackData);
                 }
             });
 

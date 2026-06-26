@@ -422,7 +422,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     }
 
     public void handlePartitionAction(long storageId, int cellSlot, PacketPartitionAction.Action action,
-        int partitionSlot, ItemStack itemStack) {
+        int partitionSlot, NBTTagCompound stackData) {
         if (!DiskTerminalServerConfig.getInstance()
             .isPartitionEditEnabled()) {
             PlayerMessageHelper.error(this.getPlayerInv().player, "disk_terminal.error.partition_edit_disabled");
@@ -434,13 +434,13 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         if (tracker == null) return;
 
         if (CellActionHandler
-            .handlePartitionAction(tracker.storage, tracker.tile, cellSlot, action, partitionSlot, itemStack)) {
+            .handlePartitionAction(tracker.storage, tracker.tile, cellSlot, action, partitionSlot, stackData)) {
             requestFullRefresh();
         }
     }
 
     public void handleStorageBusPartitionAction(long storageBusId, PacketStorageBusPartitionAction.Action action,
-        int partitionSlot, ItemStack itemStack) {
+        int partitionSlot, NBTTagCompound stackData) {
         if (!DiskTerminalServerConfig.getInstance()
             .isPartitionEditEnabled()) {
             PlayerMessageHelper.error(this.getPlayerInv().player, "disk_terminal.error.partition_edit_disabled");
@@ -451,13 +451,13 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         StorageBusTracker tracker = this.storageBusById.get(storageBusId);
         if (tracker == null) return;
 
-        if (StorageBusDataHandler.isDuplicateFilterAdd(tracker, action, partitionSlot, itemStack)) {
+        if (StorageBusDataHandler.isDuplicateFilterAdd(tracker, action, partitionSlot, stackData)) {
             PlayerMessageHelper.error(this.getPlayerInv().player, "disk_terminal.error.duplicate_filter");
 
             return;
         }
 
-        if (StorageBusDataHandler.handlePartitionAction(tracker, action, partitionSlot, itemStack)) {
+        if (StorageBusDataHandler.handlePartitionAction(tracker, action, partitionSlot, stackData)) {
             requestStorageBusRefresh();
         }
     }
@@ -528,7 +528,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
             if (targetTracker != null) {
                 IInventory cellInventory = CellDataHandler.getCellInventory(targetTracker.storage);
                 if (cellInventory != null) {
-                    for (int slot = 0; slot < cellInventory.getSizeInventory(); slot++) {
+                    for (int slot = 0; slot < targetTracker.storage.getCellCount(); slot++) {
                         if (CellActionHandler.upgradeCell(
                             targetTracker.storage,
                             targetTracker.tile,
@@ -556,7 +556,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
                 IInventory cellInventory = CellDataHandler.getCellInventory(tracker.storage);
                 if (cellInventory == null) continue;
 
-                for (int slot = 0; slot < cellInventory.getSizeInventory(); slot++) {
+                for (int slot = 0; slot < tracker.storage.getCellCount(); slot++) {
                     if (CellActionHandler
                         .upgradeCell(tracker.storage, tracker.tile, slot, upgradeStack, player, fromSlot)) {
                         requestFullRefresh();
@@ -720,11 +720,11 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         if (tracker == null) return null;
 
         IInventory cellInventory = CellDataHandler.getCellInventory(tracker.storage);
-        if (cellInventory == null || cellSlot < 0 || cellSlot >= cellInventory.getSizeInventory()) {
+        if (cellInventory == null || cellSlot < 0 || cellSlot >= tracker.storage.getCellCount()) {
             return getStorageDisplayName(tracker);
         }
 
-        ItemStack cellStack = cellInventory.getStackInSlot(cellSlot);
+        ItemStack cellStack = CellDataHandler.getCellStack(cellInventory, tracker.storage, cellSlot);
         if (!ItemStacks.isEmpty(cellStack)) return new ChatComponentText(cellStack.getDisplayName());
 
         return new ChatComponentTranslation("gui.disk_terminal.cell_empty");
@@ -779,7 +779,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
             IInventory cellInventory = CellDataHandler.getCellInventory(tracker.storage);
             if (cellInventory == null) return;
 
-            ItemStack cellStack = cellInventory.getStackInSlot(cellSlot);
+            ItemStack cellStack = CellDataHandler.getCellStack(cellInventory, tracker.storage, cellSlot);
             if (ItemStacks.isEmpty(cellStack) || !(cellStack.getItem() instanceof ICellWorkbenchItem)) return;
 
             ICellWorkbenchItem cellItem = (ICellWorkbenchItem) cellStack.getItem();
@@ -869,7 +869,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         IInventory cellInventory = CellDataHandler.getCellInventory(tracker.storage);
         if (cellInventory == null) return;
 
-        ItemStack cellStack = cellInventory.getStackInSlot(cellSlot);
+        ItemStack cellStack = CellDataHandler.getCellStack(cellInventory, tracker.storage, cellSlot);
         ItemStack heldStack = player.inventory.getItemStack();
 
         if (ItemStacks.isEmpty(cellStack)) {
@@ -975,10 +975,11 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
             IInventory cellInventory = CellDataHandler.getCellInventory(tracker.storage);
             if (cellInventory == null) continue;
 
-            int emptySlot = InventoryHelper.findEmptySlot(cellInventory);
+            int emptySlot = CellDataHandler.findEmptyCellSlot(cellInventory, tracker.storage);
             if (emptySlot < 0) continue;
 
-            ItemStack remainder = InventoryHelper.insert(cellInventory, emptySlot, stack.copy(), false);
+            int inventorySlot = CellDataHandler.toInventorySlot(tracker.storage, emptySlot);
+            ItemStack remainder = InventoryHelper.insert(cellInventory, inventorySlot, stack.copy(), false);
             int remainderCount = remainder == null ? 0 : remainder.stackSize;
             if (remainderCount < stack.stackSize) {
                 slot.putStack(remainder);
@@ -1069,7 +1070,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     }
 
     public void handleTempCellPartitionAction(int tempSlotIndex, PacketTempCellPartitionAction.Action action,
-        int partitionSlot, ItemStack itemStack) {
+        int partitionSlot, NBTTagCompound stackData) {
         if (!DiskTerminalServerConfig.getInstance()
             .isPartitionEditEnabled()) {
             PlayerMessageHelper.error(this.getPlayerInv().player, "disk_terminal.error.partition_edit_disabled");
@@ -1084,7 +1085,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
             return;
         }
 
-        TempCellActionHandler.handlePartitionAction(this, tempSlotIndex, action, partitionSlot, itemStack);
+        TempCellActionHandler.handlePartitionAction(this, tempSlotIndex, action, partitionSlot, stackData);
     }
 
     public void requestSubnetRefresh() {
@@ -1124,7 +1125,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     }
 
     public void handleSubnetPartitionAction(long subnetId, long pos, int side,
-        PacketSubnetPartitionAction.Action action, int partitionSlot, ItemStack itemStack) {
+        PacketSubnetPartitionAction.Action action, int partitionSlot, NBTTagCompound stackData) {
         if (!DiskTerminalServerConfig.getInstance()
             .isPartitionEditEnabled()) {
             PlayerMessageHelper.error(this.getPlayerInv().player, "disk_terminal.error.partition_edit_disabled");
@@ -1139,7 +1140,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         }
 
         if (SubnetDataHandler
-            .handleSubnetPartitionAction(this.subnetById, subnetId, pos, side, action, partitionSlot, itemStack)) {
+            .handleSubnetPartitionAction(this.subnetById, subnetId, pos, side, action, partitionSlot, stackData)) {
             this.needsSubnetRefresh = true;
         }
     }

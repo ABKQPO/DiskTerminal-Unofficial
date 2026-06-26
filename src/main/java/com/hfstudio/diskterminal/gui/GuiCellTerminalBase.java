@@ -11,6 +11,8 @@ import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
@@ -18,6 +20,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import com.gtnewhorizon.gtnhlib.blockpos.BlockPos;
@@ -41,6 +44,7 @@ import com.hfstudio.diskterminal.gui.buttons.GuiSearchModeButton;
 import com.hfstudio.diskterminal.gui.buttons.GuiSlotLimitButton;
 import com.hfstudio.diskterminal.gui.buttons.GuiSubnetVisibilityButton;
 import com.hfstudio.diskterminal.gui.buttons.GuiTerminalStyleButton;
+import com.hfstudio.diskterminal.gui.handler.GhostTarget;
 import com.hfstudio.diskterminal.gui.handler.SlotAccess;
 import com.hfstudio.diskterminal.gui.handler.TabManager;
 import com.hfstudio.diskterminal.gui.handler.TabRenderingHandler;
@@ -54,6 +58,7 @@ import com.hfstudio.diskterminal.gui.rename.InlineRenameManager;
 import com.hfstudio.diskterminal.gui.widget.tab.AbstractTabWidget;
 import com.hfstudio.diskterminal.gui.widget.tab.NetworkToolsTabWidget;
 import com.hfstudio.diskterminal.gui.widget.tab.SubnetOverviewTabWidget;
+import com.hfstudio.diskterminal.integration.NEIIntegration;
 import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
 import com.hfstudio.diskterminal.network.PacketHighlightBlock;
 import com.hfstudio.diskterminal.network.PacketSlotLimitChange;
@@ -152,7 +157,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     protected boolean awaitingNetworkSwitch = false;
 
     // RenderItem instance for rendering items in GUI (1.7.10 doesn't have this in GuiContainer)
-    protected final net.minecraft.client.renderer.entity.RenderItem itemRender = new net.minecraft.client.renderer.entity.RenderItem();
+    protected final RenderItem itemRender = new RenderItem();
 
     public GuiCellTerminalBase(Container container) {
         super(container);
@@ -1169,6 +1174,8 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         // Handle search field keyboard input
         if (this.searchField != null && this.searchField.textboxKeyTyped(typedChar, keyCode)) return;
 
+        if (handleNEIVirtualStackKey(keyCode)) return;
+
         // Delegate key handling to the active tab widget via TabManager
         if (tabManager.handleKey(keyCode)) return;
 
@@ -1179,6 +1186,20 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         }
 
         super.keyTyped(typedChar, keyCode);
+    }
+
+    private boolean handleNEIVirtualStackKey(int keyCode) {
+        if (!NEIIntegration.isModLoaded()) return false;
+        if (keyCode != Keyboard.KEY_R && keyCode != Keyboard.KEY_U) return false;
+
+        ScaledResolution resolution = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
+        int mouseX = Mouse.getX() * resolution.getScaledWidth() / mc.displayWidth;
+        int mouseY = resolution.getScaledHeight() - Mouse.getY() * resolution.getScaledHeight() / mc.displayHeight - 1;
+        ItemStack hoveredStack = getVirtualHoveredItemStack(mouseX, mouseY);
+        if (ItemStacks.isEmpty(hoveredStack)) return false;
+
+        return keyCode == Keyboard.KEY_R ? NEIIntegration.showRecipe(hoveredStack)
+            : NEIIntegration.showUsage(hoveredStack);
     }
 
     /**
@@ -1301,16 +1322,15 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
      * SlotFake slots and returns false for anything else — causing the GUI to close on unhandled drags.
      */
     @Override
-    public boolean handleDragNDrop(net.minecraft.client.gui.inventory.GuiContainer gui, int mouseX, int mouseY,
-        ItemStack draggedStack, int button) {
+    public boolean handleDragNDrop(GuiContainer gui, int mouseX, int mouseY, ItemStack draggedStack, int button) {
         // Check partition popups first (they overlay tabs)
-        List<com.hfstudio.diskterminal.gui.handler.GhostTarget<?>> targets = getPhantomTargets(draggedStack);
+        List<GhostTarget<?>> targets = getPhantomTargets(draggedStack);
 
-        for (com.hfstudio.diskterminal.gui.handler.GhostTarget<?> target : targets) {
-            java.awt.Rectangle area = target.getArea();
+        for (GhostTarget<?> target : targets) {
+            Rectangle area = target.getArea();
             if (area.contains(mouseX, mouseY)) {
                 // GhostTarget<Object> accepts any ingredient type; cast to raw to call accept
-                ((com.hfstudio.diskterminal.gui.handler.GhostTarget) target).accept(draggedStack);
+                ((GhostTarget) target).accept(draggedStack);
                 return true;
             }
         }
@@ -1319,7 +1339,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         return super.handleDragNDrop(gui, mouseX, mouseY, draggedStack, button);
     }
 
-    public List<com.hfstudio.diskterminal.gui.handler.GhostTarget<?>> getPhantomTargets(Object ingredient) {
+    public List<GhostTarget<?>> getPhantomTargets(Object ingredient) {
         if (partitionPopup != null) return partitionPopup.getGhostTargets();
 
         AbstractTabWidget activeTab = tabManager.getActiveTab();

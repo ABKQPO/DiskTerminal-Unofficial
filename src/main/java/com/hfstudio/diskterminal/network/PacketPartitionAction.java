@@ -6,6 +6,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 
 import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
+import com.hfstudio.diskterminal.util.AEStackUtil;
 
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -30,10 +31,10 @@ public class PacketPartitionAction implements IMessage {
     private int cellSlot;
     private Action action;
     private int partitionSlot;
-    private ItemStack itemStack;
+    private NBTTagCompound stackData;
 
     public PacketPartitionAction() {
-        this.itemStack = null;
+        this.stackData = null;
     }
 
     public PacketPartitionAction(long storageId, int cellSlot, Action action) {
@@ -41,7 +42,7 @@ public class PacketPartitionAction implements IMessage {
         this.cellSlot = cellSlot;
         this.action = action;
         this.partitionSlot = -1;
-        this.itemStack = null;
+        this.stackData = null;
     }
 
     public PacketPartitionAction(long storageId, int cellSlot, Action action, int partitionSlot) {
@@ -49,7 +50,7 @@ public class PacketPartitionAction implements IMessage {
         this.cellSlot = cellSlot;
         this.action = action;
         this.partitionSlot = partitionSlot;
-        this.itemStack = null;
+        this.stackData = null;
     }
 
     public PacketPartitionAction(long storageId, int cellSlot, Action action, int partitionSlot, ItemStack itemStack) {
@@ -57,7 +58,7 @@ public class PacketPartitionAction implements IMessage {
         this.cellSlot = cellSlot;
         this.action = action;
         this.partitionSlot = partitionSlot;
-        this.itemStack = itemStack != null ? itemStack : null;
+        this.stackData = AEStackUtil.writeItemLikePartitionStack(itemStack);
     }
 
     public PacketPartitionAction(long storageId, int cellSlot, Action action, ItemStack itemStack) {
@@ -65,7 +66,7 @@ public class PacketPartitionAction implements IMessage {
         this.cellSlot = cellSlot;
         this.action = action;
         this.partitionSlot = -1;
-        this.itemStack = itemStack != null ? itemStack : null;
+        this.stackData = AEStackUtil.writeItemLikePartitionStack(itemStack);
     }
 
     @Override
@@ -75,12 +76,7 @@ public class PacketPartitionAction implements IMessage {
         this.action = Action.values()[buf.readByte()];
         this.partitionSlot = buf.readInt();
 
-        if (buf.readBoolean()) {
-            NBTTagCompound nbt = ByteBufUtils.readTag(buf);
-            this.itemStack = ItemStack.loadItemStackFromNBT(nbt);
-        } else {
-            this.itemStack = null;
-        }
+        this.stackData = buf.readBoolean() ? ByteBufUtils.readTag(buf) : null;
     }
 
     @Override
@@ -90,11 +86,9 @@ public class PacketPartitionAction implements IMessage {
         buf.writeByte(action.ordinal());
         buf.writeInt(partitionSlot);
 
-        if (itemStack != null && itemStack.stackSize > 0) {
+        if (stackData != null && !stackData.hasNoTags()) {
             buf.writeBoolean(true);
-            NBTTagCompound nbt = new NBTTagCompound();
-            itemStack.writeToNBT(nbt);
-            ByteBufUtils.writeTag(buf, nbt);
+            ByteBufUtils.writeTag(buf, stackData);
         } else {
             buf.writeBoolean(false);
         }
@@ -116,7 +110,7 @@ public class PacketPartitionAction implements IMessage {
                         message.cellSlot,
                         message.action,
                         message.partitionSlot,
-                        message.itemStack);
+                        message.stackData);
                 }
             });
 

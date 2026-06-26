@@ -13,13 +13,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 
+import com.gtnewhorizon.gtnhlib.blockpos.BlockPos;
 import com.hfstudio.diskterminal.client.AdvancedSearchParser;
 import com.hfstudio.diskterminal.client.SearchFilterMode;
 import com.hfstudio.diskterminal.client.SlotLimit;
-import com.hfstudio.diskterminal.client.StorageType;
 import com.hfstudio.diskterminal.client.SubnetConnectionEntry;
 import com.hfstudio.diskterminal.client.SubnetConnectionRow;
 import com.hfstudio.diskterminal.client.SubnetInfo;
@@ -66,10 +67,7 @@ import com.hfstudio.diskterminal.util.PosUtil;
  */
 public class SubnetOverviewTabWidget extends AbstractTabWidget {
 
-    private static final com.gtnewhorizon.gtnhlib.blockpos.BlockPos ORIGIN = new com.gtnewhorizon.gtnhlib.blockpos.BlockPos(
-        0,
-        0,
-        0);
+    private static final BlockPos ORIGIN = new BlockPos(0, 0, 0);
 
     private static final int SLOTS_PER_ROW = 9;
     private static final int SLOTS_X_OFFSET = GuiConstants.CELL_INDENT + 4;
@@ -271,7 +269,7 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
                 .toLowerCase(Locale.ROOT);
             if (displayName.contains(searchFilter)) return true;
 
-            String regName = net.minecraft.item.Item.itemRegistry.getNameForObject(stack.getItem());
+            String regName = Item.itemRegistry.getNameForObject(stack.getItem());
             if (regName == null) continue;
             String registryName = regName.toLowerCase(Locale.ROOT);
             if (registryName.contains(searchFilter)) return true;
@@ -606,6 +604,8 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
                 // Content slot: toggle partition for that item
                 List<ItemStack> contents = row.usesSubnetInventory() ? subnet.getInventory() : conn.getContent();
                 if (slotIndex < contents.size() && !ItemStacks.isEmpty(contents.get(slotIndex))) {
+                    NBTTagCompound stackData = row.usesSubnetInventory() ? subnet.getInventoryStackData(slotIndex)
+                        : conn.getContentStackData(slotIndex);
                     guiContext.sendPacket(
                         new PacketSubnetPartitionAction(
                             subnet.getId(),
@@ -613,7 +613,8 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
                             conn.getSide()
                                 .ordinal(),
                             PacketSubnetPartitionAction.Action.TOGGLE_ITEM,
-                            contents.get(slotIndex)));
+                            -1,
+                            stackData));
                 }
             } else {
                 // Partition slot: add/remove item
@@ -680,8 +681,8 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
 
                     @Override
                     public void accept(Object ing) {
-                        // Subnet connections are always item-based storage buses for now
-                        ItemStack stack = GhostIngredientHandler.convertIngredientForStorageBus(ing, StorageType.ITEM);
+                        ItemStack stack = GhostIngredientHandler
+                            .convertIngredientForType(ing, conn.getStackTypeId(), true);
                         if (!ItemStacks.isEmpty(stack)) {
                             guiContext.sendPacket(
                                 new PacketSubnetPartitionAction(

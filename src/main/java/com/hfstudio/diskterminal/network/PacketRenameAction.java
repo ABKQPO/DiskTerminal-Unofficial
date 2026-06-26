@@ -121,9 +121,10 @@ public class PacketRenameAction implements IMessage {
             IChestOrDrive storage = tracker.storage;
             IInventory cellInventory = CellDataHandler.getCellInventory(storage);
             if (cellInventory == null) return;
-            if (cellSlot < 0 || cellSlot >= cellInventory.getSizeInventory()) return;
+            int inventorySlot = CellDataHandler.toInventorySlot(storage, cellSlot);
+            if (!CellActionHandler.isValidInventorySlot(cellInventory, inventorySlot)) return;
 
-            ItemStack cellStack = cellInventory.getStackInSlot(cellSlot);
+            ItemStack cellStack = cellInventory.getStackInSlot(inventorySlot);
             if (ItemStacks.isEmpty(cellStack)) return;
 
             String trimmed = newName.trim();
@@ -133,7 +134,7 @@ public class PacketRenameAction implements IMessage {
                 cellStack.setStackDisplayName(trimmed);
             }
 
-            CellActionHandler.forceCellHandlerRefresh(cellInventory, cellSlot, cellStack);
+            CellActionHandler.forceCellHandlerRefresh(cellInventory, inventorySlot, cellStack);
 
             ((TileEntity) storage).markDirty();
 

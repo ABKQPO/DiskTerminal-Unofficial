@@ -2,6 +2,7 @@ package com.hfstudio.diskterminal.gui.widget.tab;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -117,7 +118,7 @@ public class StorageBusTabWidget extends AbstractTabWidget {
                     KeyBindings.ADD_TO_STORAGE_BUS.getDisplayName()));
             lines.add(I18n.format("gui.disk_terminal.controls.storage_bus_capacity"));
             lines.add("");
-            lines.add(I18n.format("gui.disk_terminal.controls.NEI_drag"));
+            lines.add(I18n.format("gui.disk_terminal.controls.nei_drag"));
             lines.add(I18n.format("gui.disk_terminal.controls.click_to_remove"));
         } else {
             lines.add(I18n.format("gui.disk_terminal.controls.filter_indicator"));
@@ -438,7 +439,7 @@ public class StorageBusTabWidget extends AbstractTabWidget {
 
                 if (!ItemStacks.isEmpty(heldStack)) {
                     // Use the storage-bus NEI conversion rules for held inventory items so
-                    // fluid/gas/essentia clicks get the normalization and user feedback.
+                    // fluid and essentia clicks get normalization and user feedback.
                     ItemStack stackToSend = GhostIngredientHandler
                         .convertIngredientForType(heldStack, bus.getStackTypeId(), true);
                     if (ItemStacks.isEmpty(stackToSend)) return;
@@ -603,7 +604,7 @@ public class StorageBusTabWidget extends AbstractTabWidget {
 
         // Build a slot-indexed array so empty slots are visually present
         ItemStack[] slotStacks = new ItemStack[slotCount];
-        java.util.Arrays.fill(slotStacks, null);
+        Arrays.fill(slotStacks, null);
         for (int i = 0; i < bus.getUpgrades()
             .size(); i++) {
             int slotIdx = bus.getUpgradeSlotIndex(i);

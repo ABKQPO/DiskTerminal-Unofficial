@@ -145,19 +145,16 @@ public class TabRenderingHandler {
             // Draw icon (composite for storage bus tabs)
             // Gray out icons for disabled tabs
             float iconAlpha = isDisabled ? 0.4f : 1.0f;
+            int iconY = isSelected ? actualTabY + 3 : actualTabY + 5;
             if (i == GuiConstants.TAB_STORAGE_BUS_INVENTORY || i == GuiConstants.TAB_STORAGE_BUS_PARTITION) {
-                drawCompositeTabIcon(ctx, tabX + 3, actualTabY + 3, i, iconProvider, isDisabled);
+                drawCompositeTabIcon(ctx, tabX + 3, iconY, i, iconProvider, isDisabled);
             } else {
                 ItemStack icon = iconProvider.getTabIcon(i);
                 if (!ItemStacks.isEmpty(icon)) {
                     GL11.glColor4f(iconAlpha, iconAlpha, iconAlpha, 1.0F);
                     RenderHelper.enableGUIStandardItemLighting();
-                    ctx.itemRender.renderItemAndEffectIntoGUI(
-                        ctx.mc.fontRenderer,
-                        ctx.mc.renderEngine,
-                        icon,
-                        tabX + 3,
-                        actualTabY + 3);
+                    ctx.itemRender
+                        .renderItemAndEffectIntoGUI(ctx.mc.fontRenderer, ctx.mc.renderEngine, icon, tabX + 3, iconY);
                     RenderHelper.disableStandardItemLighting();
                     GL11.glDisable(GL11.GL_LIGHTING);
                 }

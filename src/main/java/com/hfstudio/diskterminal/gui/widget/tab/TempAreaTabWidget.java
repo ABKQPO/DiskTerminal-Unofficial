@@ -107,7 +107,7 @@ public class TempAreaTabWidget extends AbstractTabWidget {
                 "gui.disk_terminal.controls.temp_area.add_key",
                 KeyBindings.ADD_TO_STORAGE_BUS.getDisplayName()));
         lines.add("");
-        lines.add(I18n.format("gui.disk_terminal.controls.NEI_drag"));
+        lines.add(I18n.format("gui.disk_terminal.controls.nei_drag"));
         lines.add(I18n.format("gui.disk_terminal.controls.click_to_remove"));
 
         return lines;

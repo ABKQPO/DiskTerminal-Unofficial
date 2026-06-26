@@ -8,13 +8,14 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants;
 
+import com.hfstudio.diskterminal.container.handler.DeltaSnapshot;
+
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
 /**
  * Client-side helper that applies {@link PayloadMode#FULL} or {@link PayloadMode#DELTA} payloads
- * to a state map keyed by entry ID. Mirrors the producer-side
- * {@link com.hfstudio.diskterminal.container.handler.DeltaSnapshot}.
+ * to a state map keyed by entry ID. Mirrors the producer-side {@link DeltaSnapshot}.
  * <p>
  * For FULL payloads the target map is cleared and repopulated from the {@code listKey} list.
  * For DELTA payloads the {@code added}, {@code updated} and {@code removed} lists are applied

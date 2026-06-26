@@ -322,6 +322,7 @@ gui.disk_terminal.networktools.error.no_items=所选的元件中未找到物品
 
 # Network tools - server messages (sent via chat)
 disk_terminal.networktools.error.no_items=§c所选的元件中未找到物品
+disk_terminal.networktools.error.unknown_tool=§c未知的网络工具
 disk_terminal.networktools.attribute_unique.error.not_enough_cells_by_type=§c对应类型的元件数量不足：%s
 disk_terminal.networktools.attribute_unique.error.type_detail=%s：%d个元件，%d种类型
 disk_terminal.networktools.attribute_unique.error.redistribution_failed=§c重新分配失败 - 无法移动物品。请检查元件兼容性。

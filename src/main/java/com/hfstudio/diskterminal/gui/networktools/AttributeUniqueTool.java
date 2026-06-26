@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import net.minecraft.client.resources.I18n;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
 import com.hfstudio.diskterminal.api.IItemCompactingCell;
@@ -158,13 +159,12 @@ public class AttributeUniqueTool implements INetworkTool {
         // TODO: use ItemStackKey and FluidStackKey from util?
         if (type.isFluid()) {
             // For fluids, use a simpler key based on the representation item
-            return "fluid:" + String.valueOf(net.minecraft.item.Item.itemRegistry.getNameForObject(stack.getItem()))
+            return "fluid:" + String.valueOf(Item.itemRegistry.getNameForObject(stack.getItem()))
                 + "@"
                 + stack.getItemDamage();
         }
 
-        String base = String.valueOf(net.minecraft.item.Item.itemRegistry.getNameForObject(stack.getItem())) + "@"
-            + stack.getItemDamage();
+        String base = String.valueOf(Item.itemRegistry.getNameForObject(stack.getItem())) + "@" + stack.getItemDamage();
         if (stack.hasTagCompound()) base += "#" + stack.getTagCompound()
             .hashCode();
 

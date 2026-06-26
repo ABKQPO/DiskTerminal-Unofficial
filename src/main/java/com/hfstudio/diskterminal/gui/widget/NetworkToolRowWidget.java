@@ -73,7 +73,7 @@ public class NetworkToolRowWidget extends AbstractWidget {
         this.onRunClicked = onRunClicked;
     }
 
-    public void setContextSupplier(java.util.function.Supplier<ToolContext> contextSupplier) {
+    public void setContextSupplier(Supplier<ToolContext> contextSupplier) {
         this.contextSupplier = contextSupplier;
     }
 

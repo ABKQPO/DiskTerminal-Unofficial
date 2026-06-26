@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.item.ItemStack;
 
@@ -98,7 +99,7 @@ public class CellSlotsLine extends SlotsLine {
         // Draw selection background first (below everything else)
         boolean isSelected = selectedSupplier != null && selectedSupplier.get();
         if (isSelected) {
-            net.minecraft.client.gui.Gui.drawRect(
+            Gui.drawRect(
                 GuiConstants.GUI_INDENT,
                 y,
                 GuiConstants.CONTENT_RIGHT_EDGE,

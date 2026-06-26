@@ -13,8 +13,11 @@ import net.minecraftforge.common.util.Constants;
 import com.gtnewhorizon.gtnhlib.blockpos.BlockPos;
 import com.hfstudio.diskterminal.gui.rename.RenameTargetType;
 import com.hfstudio.diskterminal.gui.rename.Renameable;
+import com.hfstudio.diskterminal.util.AEStackUtil;
 import com.hfstudio.diskterminal.util.ItemStacks;
 import com.hfstudio.diskterminal.util.PosUtil;
+
+import appeng.api.storage.data.IAEStack;
 
 /**
  * Client-side data holder for subnet connection information received from server.
@@ -38,11 +41,14 @@ public class SubnetInfo implements Renameable {
         private final ItemStack localIcon;
         private final ItemStack remoteIcon;
         private final boolean usesSubnetInventory;
+        private final String stackTypeId;
 
         private final List<ItemStack> content;
+        private final List<NBTTagCompound> contentStackData;
         private final boolean hasContentKey;
 
         private final List<ItemStack> partition;
+        private final List<NBTTagCompound> partitionStackData;
         private final boolean hasPartitionKey;
         private final int maxPartitionSlots;
 
@@ -53,13 +59,17 @@ public class SubnetInfo implements Renameable {
             this.isOutbound = nbt.getBoolean("outbound");
             this.localIcon = nbt.hasKey("localIcon") ? ItemStacks.load(nbt.getCompoundTag("localIcon")) : null;
             this.remoteIcon = nbt.hasKey("remoteIcon") ? ItemStacks.load(nbt.getCompoundTag("remoteIcon")) : null;
+            this.stackTypeId = nbt.hasKey("stackType") ? nbt.getString("stackType") : "item";
 
             this.hasContentKey = nbt.hasKey("content");
             this.content = new ArrayList<>();
+            this.contentStackData = new ArrayList<>();
             if (hasContentKey) {
                 NBTTagList contentList = nbt.getTagList("content", Constants.NBT.TAG_COMPOUND);
                 for (int i = 0; i < contentList.tagCount(); i++) {
-                    content.add(ItemStacks.load(contentList.getCompoundTagAt(i)));
+                    NBTTagCompound stackNbt = contentList.getCompoundTagAt(i);
+                    content.add(readDisplayStack(stackNbt));
+                    contentStackData.add(copyStackData(stackNbt));
                 }
             }
 
@@ -68,10 +78,13 @@ public class SubnetInfo implements Renameable {
 
             this.hasPartitionKey = nbt.hasKey("filter");
             this.partition = new ArrayList<>();
+            this.partitionStackData = new ArrayList<>();
             if (hasPartitionKey) {
                 NBTTagList filterList = nbt.getTagList("filter", Constants.NBT.TAG_COMPOUND);
                 for (int i = 0; i < filterList.tagCount(); i++) {
-                    partition.add(ItemStacks.load(filterList.getCompoundTagAt(i)));
+                    NBTTagCompound stackNbt = filterList.getCompoundTagAt(i);
+                    partition.add(readDisplayStack(stackNbt));
+                    partitionStackData.add(copyStackData(stackNbt));
                 }
             }
             this.maxPartitionSlots = nbt.hasKey("maxPartitionSlots") ? nbt.getInteger("maxPartitionSlots") : 63;
@@ -107,6 +120,10 @@ public class SubnetInfo implements Renameable {
             return usesSubnetInventory;
         }
 
+        public String getStackTypeId() {
+            return stackTypeId;
+        }
+
         /**
          * Icon of the block on the main network (Storage Bus for outbound, Interface for inbound).
          */
@@ -128,6 +145,10 @@ public class SubnetInfo implements Renameable {
             return content;
         }
 
+        public NBTTagCompound getContentStackData(int index) {
+            return getStackData(contentStackData, index);
+        }
+
         /**
          * Whether the backend sent a "content" key at all.
          */
@@ -140,6 +161,10 @@ public class SubnetInfo implements Renameable {
          */
         public List<ItemStack> getPartition() {
             return partition;
+        }
+
+        public NBTTagCompound getPartitionStackData(int index) {
+            return getStackData(partitionStackData, index);
         }
 
         /**
@@ -181,6 +206,7 @@ public class SubnetInfo implements Renameable {
     private final List<ConnectionPoint> connections = new ArrayList<>();
 
     private final List<ItemStack> inventory = new ArrayList<>();
+    private final List<NBTTagCompound> inventoryStackData = new ArrayList<>();
     private final List<Long> inventoryCounts = new ArrayList<>();
 
     private final boolean isMainNetwork;
@@ -242,9 +268,10 @@ public class SubnetInfo implements Renameable {
             NBTTagList invList = nbt.getTagList("inventory", Constants.NBT.TAG_COMPOUND);
             for (int i = 0; i < invList.tagCount(); i++) {
                 NBTTagCompound stackNbt = invList.getCompoundTagAt(i);
-                ItemStack stack = ItemStacks.load(stackNbt);
+                ItemStack stack = readDisplayStack(stackNbt);
                 long count = stackNbt.hasKey("Cnt") ? stackNbt.getLong("Cnt") : (stack == null ? 0 : stack.stackSize);
                 inventory.add(stack);
+                inventoryStackData.add(copyStackData(stackNbt));
                 inventoryCounts.add(count);
             }
         }
@@ -341,6 +368,10 @@ public class SubnetInfo implements Renameable {
      */
     public List<ItemStack> getInventory() {
         return inventory;
+    }
+
+    public NBTTagCompound getInventoryStackData(int index) {
+        return getStackData(inventoryStackData, index);
     }
 
     /**
@@ -488,6 +519,25 @@ public class SubnetInfo implements Renameable {
         }
 
         return -1;
+    }
+
+    private static ItemStack readDisplayStack(NBTTagCompound stackNbt) {
+        IAEStack<?> aeStack = AEStackUtil.readStackFromNBT(stackNbt);
+        ItemStack stack = AEStackUtil.getDisplayStack(aeStack);
+        if (ItemStacks.isEmpty(stack)) stack = ItemStacks.load(stackNbt);
+
+        return stack;
+    }
+
+    private static NBTTagCompound copyStackData(NBTTagCompound stackNbt) {
+        return stackNbt == null ? null : (NBTTagCompound) stackNbt.copy();
+    }
+
+    private static NBTTagCompound getStackData(List<NBTTagCompound> stackData, int index) {
+        if (index < 0 || index >= stackData.size()) return null;
+
+        NBTTagCompound data = stackData.get(index);
+        return data == null ? null : (NBTTagCompound) data.copy();
     }
 
     @Override

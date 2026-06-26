@@ -322,6 +322,7 @@ gui.disk_terminal.networktools.error.no_items=No items found in the selected cel
 
 # Network tools - server messages (sent via chat)
 disk_terminal.networktools.error.no_items=§cNo items found in the selected cells
+disk_terminal.networktools.error.unknown_tool=§cUnknown network tool
 disk_terminal.networktools.attribute_unique.error.not_enough_cells_by_type=§cNot enough cells of correct type:%s
 disk_terminal.networktools.attribute_unique.error.type_detail=%s: %d cells, %d types
 disk_terminal.networktools.attribute_unique.error.redistribution_failed=§cRedistribution failed - no items could be moved. Check cell compatibility.

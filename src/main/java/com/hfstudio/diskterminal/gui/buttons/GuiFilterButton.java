@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.init.Blocks;
@@ -18,6 +17,7 @@ import com.hfstudio.diskterminal.DiskTerminal;
 import com.hfstudio.diskterminal.client.CellFilter;
 import com.hfstudio.diskterminal.client.CellFilter.State;
 import com.hfstudio.diskterminal.gui.GuiConstants;
+import com.hfstudio.diskterminal.gui.widget.AbstractWidget;
 import com.hfstudio.diskterminal.util.ItemStacks;
 
 import appeng.api.AEApi;
@@ -38,7 +38,6 @@ public class GuiFilterButton extends GuiAtlasButton {
     private static final ItemStack ITEM_CELL_ICON = new ItemStack(Blocks.stone);
     private static final ItemStack FLUID_CELL_ICON = new ItemStack(Items.bucket);
     private static final ItemStack ESSENTIA_CELL_ICON = getEssentiaIcon();
-    private static final ItemStack GAS_CELL_ICON = getGasIcon();
     private static final ItemStack HAS_ITEMS_ICON = new ItemStack(Blocks.chest);
     private static final ItemStack PARTITIONED_ICON = AEApi.instance()
         .definitions()
@@ -103,9 +102,6 @@ public class GuiFilterButton extends GuiAtlasButton {
             case ESSENTIA_CELLS:
                 iconStack = ESSENTIA_CELL_ICON;
                 break;
-            case GAS_CELLS:
-                iconStack = GAS_CELL_ICON;
-                break;
             case HAS_ITEMS:
                 iconStack = HAS_ITEMS_ICON;
                 break;
@@ -135,21 +131,15 @@ public class GuiFilterButton extends GuiAtlasButton {
         return new ItemStack(Items.glass_bottle);
     }
 
-    private static ItemStack getGasIcon() {
-        return new ItemStack(Items.bucket);
-    }
-
     private void renderItemIcon(Minecraft mc, ItemStack stack) {
         RenderItem itemRender = RenderItem.getInstance();
 
         GL11.glPushMatrix();
         GL11.glTranslatef(this.xPosition, this.yPosition, 0);
         GL11.glScalef(0.75F, 0.75F, 1.0F);
-        RenderHelper.enableGUIStandardItemLighting();
 
-        itemRender.renderItemAndEffectIntoGUI(mc.fontRenderer, mc.renderEngine, stack, 2, 2);
+        AbstractWidget.renderItemStack(itemRender, stack, 3, 2);
 
-        RenderHelper.disableStandardItemLighting();
         GL11.glPopMatrix();
 
         // Reset color/blend so later button backgrounds aren't tinted by the item renderer.

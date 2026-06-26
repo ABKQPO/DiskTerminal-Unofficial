@@ -10,7 +10,6 @@ import net.minecraft.nbt.NBTTagCompound;
  * <li>{@link #ITEM} - item stack type (vanilla items)</li>
  * <li>{@link #FLUID} - fluid stack type (Forge fluids)</li>
  * <li>{@link #ESSENTIA} - essentia stack type (Thaumic Energistics)</li>
- * <li>{@link #GAS} - reserved for future gas storage support</li>
  * </ul>
  * <p>
  * Serialized as an integer ordinal in NBT under the key {@code "storageType"}.
@@ -19,8 +18,7 @@ public enum StorageType {
 
     ITEM,
     FLUID,
-    ESSENTIA,
-    GAS;
+    ESSENTIA;
 
     /** NBT key used for serialization. */
     public static final String NBT_KEY = "storageType";
@@ -60,9 +58,5 @@ public enum StorageType {
 
     public boolean isEssentia() {
         return this == ESSENTIA;
-    }
-
-    public boolean isGas() {
-        return this == GAS;
     }
 }

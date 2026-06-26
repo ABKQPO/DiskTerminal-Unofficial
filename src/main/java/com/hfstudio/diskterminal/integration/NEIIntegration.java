@@ -5,6 +5,8 @@ import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.item.ItemStack;
 
 import codechicken.nei.guihook.GuiContainerManager;
+import codechicken.nei.recipe.GuiCraftingRecipe;
+import codechicken.nei.recipe.GuiUsageRecipe;
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.Optional;
 
@@ -36,6 +38,18 @@ public class NEIIntegration {
         return queryNei();
     }
 
+    public static boolean showRecipe(ItemStack stack) {
+        if (!isModLoaded() || stack == null) return false;
+
+        return showRecipeInternal(stack);
+    }
+
+    public static boolean showUsage(ItemStack stack) {
+        if (!isModLoaded() || stack == null) return false;
+
+        return showUsageInternal(stack);
+    }
+
     @Optional.Method(modid = MOD_ID)
     private static ItemStack queryNei() {
         try {
@@ -44,6 +58,24 @@ public class NEIIntegration {
             return GuiContainerManager.getStackMouseOver((GuiContainer) Minecraft.getMinecraft().currentScreen);
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    @Optional.Method(modid = MOD_ID)
+    private static boolean showRecipeInternal(ItemStack stack) {
+        try {
+            return GuiCraftingRecipe.openRecipeGui("item", stack.copy());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Optional.Method(modid = MOD_ID)
+    private static boolean showUsageInternal(ItemStack stack) {
+        try {
+            return GuiUsageRecipe.openRecipeGui("item", stack.copy());
+        } catch (Exception e) {
+            return false;
         }
     }
 }

@@ -7,6 +7,5 @@ public enum ResourceType {
 
     ITEM,
     FLUID,
-    GAS,
     ESSENTIA
 }

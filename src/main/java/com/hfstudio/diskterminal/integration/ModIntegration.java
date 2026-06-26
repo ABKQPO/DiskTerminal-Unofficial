@@ -1,5 +1,6 @@
 package com.hfstudio.diskterminal.integration;
 
+import appeng.api.storage.data.AEStackTypeRegistry;
 import cpw.mods.fml.common.Loader;
 
 /**
@@ -17,6 +18,9 @@ public class ModIntegration {
     public static final String NEI = "NotEnoughItems";
     public static final String BAUBLES = "Baubles";
     public static final String WCT = "ae2wct";
+    public static final String ITEM_STACK_TYPE = "item";
+    public static final String FLUID_STACK_TYPE = "fluid";
+    public static final String ESSENTIA_STACK_TYPE = "essentia";
 
     // Cached status (initialized on first access)
     private static Boolean ae2FluidCraftLoaded;
@@ -91,7 +95,7 @@ public class ModIntegration {
      * This determines whether fluid-related UI elements should be shown.
      */
     public static boolean hasFluidStorage() {
-        return isAE2FluidCraftLoaded();
+        return isStackTypeRegistered(FLUID_STACK_TYPE) && isAE2FluidCraftLoaded();
     }
 
     /**
@@ -99,13 +103,15 @@ public class ModIntegration {
      * This determines whether essentia-related UI elements should be shown.
      */
     public static boolean hasEssentiaStorage() {
-        return isThaumicEnergisticsLoaded();
+        return isStackTypeRegistered(ESSENTIA_STACK_TYPE) && isThaumicEnergisticsLoaded();
     }
 
-    /**
-     * Gas storage is not part of the 1.7.10 port.
-     */
-    public static boolean hasGasStorage() {
-        return false;
+    public static boolean hasItemStorage() {
+        return isStackTypeRegistered(ITEM_STACK_TYPE);
     }
+
+    public static boolean isStackTypeRegistered(String id) {
+        return AEStackTypeRegistry.getType(id) != null;
+    }
+
 }

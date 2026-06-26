@@ -9,6 +9,7 @@ import net.minecraft.tileentity.TileEntity;
 
 import com.hfstudio.diskterminal.client.StorageType;
 import com.hfstudio.diskterminal.util.AEStackUtil;
+import com.hfstudio.diskterminal.util.InventoryHelper;
 import com.hfstudio.diskterminal.util.ItemStacks;
 import com.hfstudio.diskterminal.util.PosUtil;
 
@@ -26,6 +27,7 @@ import appeng.api.storage.data.IAEStackType;
 import appeng.api.storage.data.IItemList;
 import appeng.helpers.IPriorityHost;
 import appeng.tile.AEBaseInvTile;
+import appeng.tile.inventory.IAEStackInventory;
 import appeng.util.IterationCounter;
 
 /**
@@ -145,7 +147,7 @@ public class CellDataHandler {
         }
 
         populateCellStats(cellData, cellInv);
-        populateConfigInventory(cellData, cellInv.getConfigInventory());
+        populateConfigInventory(cellData, cellInv.getConfigAEInventory());
         populateGenericContents(cellData, cellInv, type, slotLimit);
         populateCellUpgrades(cellData, cellInv.getUpgradesInventory());
 
@@ -165,15 +167,19 @@ public class CellDataHandler {
         cellData.setLong("storedItemCount", cellInv.getStoredItemCount());
     }
 
-    private static void populateConfigInventory(NBTTagCompound cellData, IInventory configInv) {
+    private static void populateConfigInventory(NBTTagCompound cellData, IAEStackInventory configInv) {
         if (configInv == null) return;
 
         NBTTagList partitionList = new NBTTagList();
         for (int i = 0; i < configInv.getSizeInventory(); i++) {
-            ItemStack partItem = configInv.getStackInSlot(i);
+            IAEStack<?> partitionStack = configInv.getAEStackInSlot(i);
             NBTTagCompound partNbt = new NBTTagCompound();
             partNbt.setInteger("slot", i);
-            if (!ItemStacks.isEmpty(partItem)) partItem.writeToNBT(partNbt);
+            if (partitionStack != null) {
+                ItemStack displayStack = AEStackUtil.getDisplayStack(partitionStack);
+                if (!ItemStacks.isEmpty(displayStack)) displayStack.writeToNBT(partNbt);
+                AEStackUtil.writeStackToNBT(partNbt, partitionStack);
+            }
             partitionList.appendTag(partNbt);
         }
 
@@ -223,7 +229,7 @@ public class CellDataHandler {
         if (!(cellStack.getItem() instanceof ICellWorkbenchItem)) return false;
 
         ICellWorkbenchItem workbenchItem = (ICellWorkbenchItem) cellStack.getItem();
-        IInventory configInv = workbenchItem.getConfigInventory(cellStack);
+        IAEStackInventory configInv = workbenchItem.getConfigAEInventory(cellStack);
         IInventory upgradesInv = workbenchItem.getUpgradesInventory(cellStack);
 
         if (configInv == null && upgradesInv == null) return false;
@@ -264,11 +270,25 @@ public class CellDataHandler {
         return null;
     }
 
-    private static ItemStack getCellStack(IInventory cellInventory, IChestOrDrive storage, int slot) {
-        // ME Chest stores its single cell in internal slot 1 (slot 0 is the input buffer).
-        if (storage instanceof IMEChest) return cellInventory.getStackInSlot(1);
+    public static int toInventorySlot(IChestOrDrive storage, int logicalSlot) {
+        if (storage instanceof IMEChest) return logicalSlot == 0 ? 1 : -1;
+
+        return logicalSlot;
+    }
+
+    public static ItemStack getCellStack(IInventory cellInventory, IChestOrDrive storage, int logicalSlot) {
+        int slot = toInventorySlot(storage, logicalSlot);
+        if (slot < 0 || slot >= cellInventory.getSizeInventory()) return null;
 
         return cellInventory.getStackInSlot(slot);
+    }
+
+    public static int findEmptyCellSlot(IInventory cellInventory, IChestOrDrive storage) {
+        if (storage instanceof IMEChest) {
+            return ItemStacks.isEmpty(getCellStack(cellInventory, storage, 0)) ? 0 : -1;
+        }
+
+        return InventoryHelper.findEmptySlot(cellInventory);
     }
 
     private static ItemStack getBlockItem(TileEntity te) {

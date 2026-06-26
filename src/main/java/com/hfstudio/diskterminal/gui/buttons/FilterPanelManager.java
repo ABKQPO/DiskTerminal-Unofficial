@@ -103,16 +103,16 @@ public class FilterPanelManager {
         boolean isCellTab = tab <= GuiConstants.TAB_PARTITION;
         boolean isStorageBusTab = tab >= GuiConstants.TAB_TEMP_AREA;
 
-        // Cell type filters - only show if corresponding mod is loaded
+        // Stack type filters are only shown when the backing AE2 stack type is registered.
         if (isCellTab || isStorageBusTab) {
-            filters.add(CellFilter.ITEM_CELLS);
+            if (ModIntegration.hasItemStorage()) {
+                filters.add(CellFilter.ITEM_CELLS);
+            }
 
-            // Only show fluid filter if AE2FluidCraft is loaded
             if (ModIntegration.hasFluidStorage()) {
                 filters.add(CellFilter.FLUID_CELLS);
             }
 
-            // Only show essentia filter if Thaumic Energistics is loaded
             if (ModIntegration.hasEssentiaStorage()) {
                 filters.add(CellFilter.ESSENTIA_CELLS);
             }

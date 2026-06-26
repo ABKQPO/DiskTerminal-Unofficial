@@ -4,6 +4,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.entity.RenderItem;
@@ -146,7 +147,7 @@ public class CellContentTabWidget extends AbstractTabWidget {
             }
 
             lines.add("");
-            lines.add(I18n.format("gui.disk_terminal.controls.NEI_drag"));
+            lines.add(I18n.format("gui.disk_terminal.controls.nei_drag"));
             lines.add(I18n.format("gui.disk_terminal.controls.click_to_remove"));
         } else {
             lines.add(I18n.format("gui.disk_terminal.controls.partition_indicator"));
@@ -201,8 +202,6 @@ public class CellContentTabWidget extends AbstractTabWidget {
             type = QuickPartitionHandler.PartitionType.FLUID;
         } else if (KeyBindings.QUICK_PARTITION_ESSENTIA.isActiveAndMatches(keyCode)) {
             type = QuickPartitionHandler.PartitionType.ESSENTIA;
-        } else if (KeyBindings.QUICK_PARTITION_GAS.isActiveAndMatches(keyCode)) {
-            type = QuickPartitionHandler.PartitionType.GAS;
         }
 
         if (type == null) return false;
@@ -228,7 +227,7 @@ public class CellContentTabWidget extends AbstractTabWidget {
         if (!isPartitionMode) return Collections.emptyList();
 
         List<GhostTarget<?>> targets = new ArrayList<>();
-        for (java.util.Map.Entry<IWidget, Object> entry : getWidgetDataMap().entrySet()) {
+        for (Map.Entry<IWidget, Object> entry : getWidgetDataMap().entrySet()) {
             IWidget widget = entry.getKey();
             Object data = entry.getValue();
             if (!(widget instanceof SlotsLine)) continue;

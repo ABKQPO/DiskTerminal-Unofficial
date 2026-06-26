@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
 import com.hfstudio.diskterminal.api.IItemCompactingCell;
@@ -255,22 +256,18 @@ public class NetworkToolFilterUtils {
         CellFilter.State fluidState = activeFilters.getOrDefault(CellFilter.FLUID_CELLS, CellFilter.State.SHOW_ALL);
         CellFilter.State essentiaState = activeFilters
             .getOrDefault(CellFilter.ESSENTIA_CELLS, CellFilter.State.SHOW_ALL);
-        CellFilter.State gasState = activeFilters.getOrDefault(CellFilter.GAS_CELLS, CellFilter.State.SHOW_ALL);
 
         if (type.isItem() && itemState == CellFilter.State.HIDE) return false;
         if (type.isFluid() && fluidState == CellFilter.State.HIDE) return false;
         if (type.isEssentia() && essentiaState == CellFilter.State.HIDE) return false;
-        if (type.isGas() && gasState == CellFilter.State.HIDE) return false;
 
         boolean hasShowOnly = (itemState == CellFilter.State.SHOW_ONLY) || (fluidState == CellFilter.State.SHOW_ONLY)
-            || (essentiaState == CellFilter.State.SHOW_ONLY)
-            || (gasState == CellFilter.State.SHOW_ONLY);
+            || (essentiaState == CellFilter.State.SHOW_ONLY);
 
         if (hasShowOnly) {
             if (type.isItem() && itemState != CellFilter.State.SHOW_ONLY) return false;
             if (type.isFluid() && fluidState != CellFilter.State.SHOW_ONLY) return false;
             if (type.isEssentia() && essentiaState != CellFilter.State.SHOW_ONLY) return false;
-            if (type.isGas() && gasState != CellFilter.State.SHOW_ONLY) return false;
         }
 
         return true;
@@ -409,7 +406,7 @@ public class NetworkToolFilterUtils {
             if (displayName.contains(searchText)) return true;
 
             // Check registry name (internal ID)
-            String regName = net.minecraft.item.Item.itemRegistry.getNameForObject(stack.getItem());
+            String regName = Item.itemRegistry.getNameForObject(stack.getItem());
             if (regName != null) {
                 String registryName = regName.toLowerCase(Locale.ROOT);
                 if (registryName.contains(searchText)) return true;

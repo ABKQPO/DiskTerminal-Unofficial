@@ -1,6 +1,7 @@
 package com.hfstudio.diskterminal.gui.widget.tab;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -60,8 +61,8 @@ import com.hfstudio.diskterminal.util.ItemStacks;
  * The tab receives the scroll offset and visible row count, and builds widgets
  * accordingly, positioned at CONTENT_START_Y + i * ROW_HEIGHT.
  *
- * @see com.hfstudio.diskterminal.gui.widget.header.AbstractHeader
- * @see com.hfstudio.diskterminal.gui.widget.line.AbstractLine
+ * @see AbstractHeader
+ * @see AbstractLine
  */
 public abstract class AbstractTabWidget extends AbstractWidget {
 
@@ -322,7 +323,7 @@ public abstract class AbstractTabWidget extends AbstractWidget {
 
         // Build a slot-indexed array so empty slots are visually present
         ItemStack[] slotStacks = new ItemStack[slotCount];
-        java.util.Arrays.fill(slotStacks, null);
+        Arrays.fill(slotStacks, null);
         List<ItemStack> upgrades = cell.getUpgrades();
         for (int i = 0; i < upgrades.size(); i++) {
             int slotIdx = cell.getUpgradeSlotIndex(i);

@@ -97,7 +97,7 @@ public abstract class AbstractWidget implements IWidget {
     /**
      * Render an IAEStack at the given position using AE2's native rendering.
      * This is the preferred method for rendering storage contents as it properly handles
-     * all stack types (items, fluids, essentia, gas, etc.) with their custom renderers.
+     * all registered stack types with their custom renderers.
      */
     public static void renderAEStack(IAEStack<?> stack, int renderX, int renderY) {
         if (stack == null) return;

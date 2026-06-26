@@ -1,6 +1,7 @@
 package com.hfstudio.diskterminal.client;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -946,7 +947,7 @@ public class AdvancedSearchParser {
 
     private static List<ItemStack> getSubnetContentItems(SubnetInfo subnet, ConnectionPoint connection,
         boolean usesSubnetInventory) {
-        if (subnet == null || connection == null) return java.util.Collections.emptyList();
+        if (subnet == null || connection == null) return Collections.emptyList();
 
         return usesSubnetInventory ? subnet.getInventory() : connection.getContent();
     }

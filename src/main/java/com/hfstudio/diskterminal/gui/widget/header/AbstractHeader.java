@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.item.ItemStack;
 
 import com.hfstudio.diskterminal.gui.GuiConstants;
+import com.hfstudio.diskterminal.gui.PriorityFieldManager;
 import com.hfstudio.diskterminal.gui.rename.InlineRenameManager;
 import com.hfstudio.diskterminal.gui.rename.Renameable;
 import com.hfstudio.diskterminal.gui.widget.AbstractWidget;
@@ -39,7 +40,7 @@ import com.hfstudio.diskterminal.util.ItemStacks;
  *
  * <h3>Priority field</h3>
  * Subclasses that support priority (e.g., {@link StorageHeader}) register their
- * field with the {@link com.disk_terminal.gui.PriorityFieldManager} singleton
+ * field with the {@link PriorityFieldManager} singleton
  * during draw. The base header does not handle priority fields directly.
  *
  * @see StorageHeader
@@ -183,7 +184,7 @@ public abstract class AbstractHeader extends AbstractWidget {
      * When a header has more upgrade cards than fit in a single row height
      * (e.g. 5 cards = 3 rows × 9px = 27px, but ROW_HEIGHT is only 18px),
      * the overflow cards extend below the header's standard bounds.
-     * Without this override, {@link com.disk_terminal.gui.widget.tab.AbstractTabWidget#handleClick}
+     * Without this override, the tab widget click dispatcher
      * (which iterates in reverse order and checks isHovered first) would skip
      * the header for clicks in the overflow area, making those cards unclickable.
      */

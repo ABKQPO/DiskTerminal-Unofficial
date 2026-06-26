@@ -4,6 +4,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 
 import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
+import com.hfstudio.diskterminal.util.AEStackUtil;
 
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -27,10 +28,10 @@ public class PacketStorageBusPartitionAction implements IMessage {
     private long storageBusId;
     private Action action;
     private int partitionSlot;
-    private ItemStack itemStack;
+    private NBTTagCompound stackData;
 
     public PacketStorageBusPartitionAction() {
-        this.itemStack = null;
+        this.stackData = null;
     }
 
     public PacketStorageBusPartitionAction(long storageBusId, Action action) {
@@ -45,7 +46,7 @@ public class PacketStorageBusPartitionAction implements IMessage {
         this.storageBusId = storageBusId;
         this.action = action;
         this.partitionSlot = partitionSlot;
-        this.itemStack = itemStack != null ? itemStack : null;
+        this.stackData = AEStackUtil.writeItemLikePartitionStack(itemStack);
     }
 
     public PacketStorageBusPartitionAction(long storageBusId, Action action, ItemStack itemStack) {
@@ -58,12 +59,7 @@ public class PacketStorageBusPartitionAction implements IMessage {
         this.action = Action.values()[buf.readByte()];
         this.partitionSlot = buf.readInt();
 
-        if (buf.readBoolean()) {
-            NBTTagCompound nbt = ByteBufUtils.readTag(buf);
-            this.itemStack = ItemStack.loadItemStackFromNBT(nbt);
-        } else {
-            this.itemStack = null;
-        }
+        this.stackData = buf.readBoolean() ? ByteBufUtils.readTag(buf) : null;
     }
 
     @Override
@@ -72,11 +68,9 @@ public class PacketStorageBusPartitionAction implements IMessage {
         buf.writeByte(action.ordinal());
         buf.writeInt(partitionSlot);
 
-        if (itemStack != null && itemStack.stackSize > 0) {
+        if (stackData != null && !stackData.hasNoTags()) {
             buf.writeBoolean(true);
-            NBTTagCompound nbt = new NBTTagCompound();
-            itemStack.writeToNBT(nbt);
-            ByteBufUtils.writeTag(buf, nbt);
+            ByteBufUtils.writeTag(buf, stackData);
         } else {
             buf.writeBoolean(false);
         }
@@ -94,7 +88,7 @@ public class PacketStorageBusPartitionAction implements IMessage {
                         message.storageBusId,
                         message.action,
                         message.partitionSlot,
-                        message.itemStack);
+                        message.stackData);
                 }
             });
 

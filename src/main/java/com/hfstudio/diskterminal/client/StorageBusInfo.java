@@ -140,8 +140,10 @@ public class StorageBusInfo implements Renameable, Prioritizable {
                 NBTTagCompound partNbt = partList.getCompoundTagAt(i);
                 int slot = partNbt.hasKey("slot") ? partNbt.getInteger("slot") : i;
 
-                // Check if item data is present (id key indicates an item)
-                if (partNbt.hasKey("id")) this.partition.set(slot, ItemStacks.load(partNbt));
+                IAEStack<?> aeStack = AEStackUtil.readStackFromNBT(partNbt);
+                ItemStack stack = AEStackUtil.getDisplayStack(aeStack);
+                if (ItemStacks.isEmpty(stack) && partNbt.hasKey("id")) stack = ItemStacks.load(partNbt);
+                if (!ItemStacks.isEmpty(stack)) this.partition.set(slot, stack);
             }
         }
 
@@ -226,10 +228,6 @@ public class StorageBusInfo implements Renameable, Prioritizable {
 
     public boolean isItem() {
         return storageType.isItem();
-    }
-
-    public boolean isGas() {
-        return storageType.isGas();
     }
 
     /**

@@ -22,6 +22,7 @@ import cpw.mods.fml.relauncher.SideOnly;
 public class AEStackUtil {
 
     private static final String LEGACY_ITEM_KEY = "id";
+    private static final String DISPLAY_STACK_KEY = "display";
 
     /**
      * Writes a stack using AE2's generic stack NBT format.
@@ -87,6 +88,50 @@ public class AEStackUtil {
         if (convertedStack != null) return convertedStack;
 
         return "item".equals(type.getId()) ? AEItemStack.create(single) : null;
+    }
+
+    public static NBTTagCompound writeItemLikePartitionStack(ItemStack stack) {
+        if (ItemStacks.isEmpty(stack)) return null;
+
+        NBTTagCompound data = new NBTTagCompound();
+        IAEStack<?> aeStack = convertItemUsingRegisteredTypes(stack);
+        if (aeStack != null) {
+            aeStack.setStackSize(1);
+            writeStackToNBT(data, aeStack);
+        }
+
+        ItemStack displayStack = stack.copy();
+        displayStack.stackSize = 1;
+        NBTTagCompound display = new NBTTagCompound();
+        displayStack.writeToNBT(display);
+        data.setTag(DISPLAY_STACK_KEY, display);
+
+        return data;
+    }
+
+    public static IAEStack<?> readPartitionStack(NBTTagCompound data, IAEStackType<?> targetType) {
+        if (data == null || data.hasNoTags()) return null;
+
+        IAEStack<?> genericStack = readStackFromNBT(data);
+        if (genericStack != null && (targetType == null || genericStack.getStackType() == targetType)) {
+            genericStack.setStackSize(1);
+            return genericStack;
+        }
+
+        ItemStack displayStack = readDisplayStack(data);
+        if (ItemStacks.isEmpty(displayStack)) return null;
+
+        IAEStack<?> convertedStack = targetType != null ? convertItemForType(displayStack, targetType)
+            : convertItemUsingRegisteredTypes(displayStack);
+        if (convertedStack != null) convertedStack.setStackSize(1);
+
+        return convertedStack;
+    }
+
+    public static ItemStack readDisplayStack(NBTTagCompound data) {
+        if (data == null || !data.hasKey(DISPLAY_STACK_KEY)) return null;
+
+        return ItemStack.loadItemStackFromNBT(data.getCompoundTag(DISPLAY_STACK_KEY));
     }
 
     /**

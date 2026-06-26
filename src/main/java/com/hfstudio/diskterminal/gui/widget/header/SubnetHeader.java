@@ -11,6 +11,8 @@ import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.resources.I18n;
 
 import com.hfstudio.diskterminal.gui.GuiConstants;
+import com.hfstudio.diskterminal.gui.rename.InlineRenameManager;
+import com.hfstudio.diskterminal.gui.widget.DoubleClickTracker;
 
 /**
  * Header widget for a subnet entry in the subnet overview tab.
@@ -24,9 +26,9 @@ import com.hfstudio.diskterminal.gui.GuiConstants;
  * <li>Load button (blue button at right edge)</li>
  * </ul>
  *
- * Rename is handled via {@link com.disk_terminal.gui.rename.InlineRenameManager}
+ * Rename is handled via {@link InlineRenameManager}
  * through the base class's {@link #setRenameInfo} mechanism.
- * Double-click highlight uses {@link com.disk_terminal.gui.widget.DoubleClickTracker}.
+ * Double-click highlight uses {@link DoubleClickTracker}.
  *
  * @see AbstractHeader
  */

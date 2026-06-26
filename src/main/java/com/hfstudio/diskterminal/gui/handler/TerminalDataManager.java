@@ -735,13 +735,6 @@ public class TerminalDataManager {
             if (essentiaState == State.HIDE && bus.isEssentia()) return false;
         }
 
-        // Gas type filter
-        State gasState = activeFilters.getOrDefault(CellFilter.GAS_CELLS, State.SHOW_ALL);
-        if (gasState != State.SHOW_ALL) {
-            if (gasState == State.SHOW_ONLY && !bus.isGas()) return false;
-            if (gasState == State.HIDE && bus.isGas()) return false;
-        }
-
         // Has items filter
         State hasItemsState = activeFilters.getOrDefault(CellFilter.HAS_ITEMS, State.SHOW_ALL);
         if (hasItemsState != State.SHOW_ALL) {
@@ -873,13 +866,6 @@ public class TerminalDataManager {
         if (essentiaState != State.SHOW_ALL) {
             if (essentiaState == State.SHOW_ONLY && !cell.isEssentia()) return false;
             if (essentiaState == State.HIDE && cell.isEssentia()) return false;
-        }
-
-        // Gas type filter
-        State gasState = activeFilters.getOrDefault(CellFilter.GAS_CELLS, State.SHOW_ALL);
-        if (gasState != State.SHOW_ALL) {
-            if (gasState == State.SHOW_ONLY && !cell.isGas()) return false;
-            if (gasState == State.HIDE && cell.isGas()) return false;
         }
 
         // Has items filter

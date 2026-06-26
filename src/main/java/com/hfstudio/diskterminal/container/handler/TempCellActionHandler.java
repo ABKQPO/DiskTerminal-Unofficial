@@ -4,6 +4,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.IChatComponent;
@@ -43,7 +44,7 @@ public class TempCellActionHandler {
      * Handle partition action on a temp cell.
      */
     public static void handlePartitionAction(ContainerCellTerminalBase container, int tempSlotIndex,
-        PacketTempCellPartitionAction.Action action, int partitionSlot, ItemStack itemStack) {
+        PacketTempCellPartitionAction.Action action, int partitionSlot, NBTTagCompound stackData) {
         IInventory tempInv = getTempCellInventory(container);
         if (tempInv == null) return;
 
@@ -61,15 +62,8 @@ public class TempCellActionHandler {
         CellActionHandler.ConfigResult config = CellActionHandler.getConfigInventory(cellHandler, cellStack);
         if (config.configInv == null) return;
 
-        CellActionHandler.executePartitionActionDirect(
-            config.configInv,
-            action,
-            partitionSlot,
-            itemStack,
-            cellHandler,
-            cellStack,
-            config.isFluidCell,
-            config.essentiaData);
+        CellActionHandler
+            .executePartitionActionDirect(config, action, partitionSlot, stackData, cellHandler, cellStack);
 
         tempInv.setInventorySlotContents(tempSlotIndex, cellStack);
         markDirty(container);

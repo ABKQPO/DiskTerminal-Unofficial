@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
@@ -151,17 +149,11 @@ public class CardsDisplay extends AbstractWidget {
     private void renderSmallItemStack(ItemStack stack, int renderX, int renderY) {
         if (ItemStacks.isEmpty(stack)) return;
 
-        Minecraft mc = Minecraft.getMinecraft();
-
         GL11.glPushMatrix();
         GL11.glTranslatef(renderX, renderY, 0);
         GL11.glScalef(0.5f, 0.5f, 1.0f);
 
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderHelper.enableGUIStandardItemLighting();
-        itemRender.renderItemAndEffectIntoGUI(mc.fontRenderer, mc.renderEngine, stack, 0, 0);
-        RenderHelper.disableStandardItemLighting();
-        GL11.glDisable(GL11.GL_LIGHTING);
+        AbstractWidget.renderItemStack(itemRender, stack, 0, 0);
 
         GL11.glPopMatrix();
 

@@ -8,6 +8,7 @@ import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.entity.RenderItem;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
 
 import org.lwjgl.opengl.GL11;
@@ -71,7 +72,7 @@ public class PopupCellInventory extends Gui {
 
         // Calculate width based on title or slots, whichever is wider
         Minecraft mc = Minecraft.getMinecraft();
-        String contentsSuffix = net.minecraft.client.resources.I18n.format("gui.disk_terminal.popup.contents_suffix");
+        String contentsSuffix = I18n.format("gui.disk_terminal.popup.contents_suffix");
         String title = cell.getDisplayName() + contentsSuffix;
         int titleWidth = mc.fontRenderer.getStringWidth(title) + PADDING * 2;
         int slotsWidth = SLOTS_PER_ROW * SLOT_SIZE + PADDING * 2;
@@ -116,7 +117,7 @@ public class PopupCellInventory extends Gui {
         drawRect(x + width - 1, y, x + width, y + height, 0xFF555555);
 
         // Draw title
-        String contentsSuffix = net.minecraft.client.resources.I18n.format("gui.disk_terminal.popup.contents_suffix");
+        String contentsSuffix = I18n.format("gui.disk_terminal.popup.contents_suffix");
         String title = cell.getDisplayName() + contentsSuffix;
         fr.drawString(title, x + PADDING, y + 6, 0x404040);
 
@@ -157,7 +158,7 @@ public class PopupCellInventory extends Gui {
             partitionButtonY + BUTTON_HEIGHT,
             0xFF555555);
 
-        String buttonText = net.minecraft.client.resources.I18n.format("gui.disk_terminal.set_all_partition");
+        String buttonText = I18n.format("gui.disk_terminal.set_all_partition");
         int textWidth = fr.getStringWidth(buttonText);
         fr.drawString(
             buttonText,
@@ -213,7 +214,7 @@ public class PopupCellInventory extends Gui {
 
         // Draw empty message if no contents
         if (contents.isEmpty()) {
-            String empty = net.minecraft.client.resources.I18n.format("gui.disk_terminal.cell_empty");
+            String empty = I18n.format("gui.disk_terminal.cell_empty");
             int emptyWidth = fr.getStringWidth(empty);
             fr.drawString(empty, x + (width - emptyWidth) / 2, slotStartY + 4, 0x606060);
         }
@@ -231,7 +232,7 @@ public class PopupCellInventory extends Gui {
     public java.util.List<String> getHoveredTooltip() {
         if (ItemStacks.isEmpty(hoveredStack)) return null;
 
-        return hoveredStack.getTooltip(net.minecraft.client.Minecraft.getMinecraft().thePlayer, false);
+        return hoveredStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
     }
 
     public int getHoveredTooltipX() {

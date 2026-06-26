@@ -104,7 +104,7 @@ public class PopupCellPartition extends Gui {
         drawRect(x + width - 1, y, x + width, y + height, 0xFF555555);
 
         // Draw title
-        String partitionSuffix = net.minecraft.client.resources.I18n.format("gui.disk_terminal.popup.partition_suffix");
+        String partitionSuffix = I18n.format("gui.disk_terminal.popup.partition_suffix");
         String title = cell.getDisplayName() + partitionSuffix;
         fr.drawString(title, x + PADDING, y + 6, 0x404040);
 
@@ -142,7 +142,7 @@ public class PopupCellPartition extends Gui {
         }
 
         // Draw hint at bottom
-        String hint = net.minecraft.client.resources.I18n.format("gui.disk_terminal.hint.partition");
+        String hint = I18n.format("gui.disk_terminal.hint.partition");
         int hintWidth = fr.getStringWidth(hint);
         fr.drawString(hint, x + (width - hintWidth) / 2, y + height - FOOTER_HEIGHT + 2, 0x606060);
 
@@ -162,7 +162,7 @@ public class PopupCellPartition extends Gui {
     public java.util.List<String> getHoveredTooltip() {
         if (ItemStacks.isEmpty(hoveredStack)) return null;
 
-        return hoveredStack.getTooltip(net.minecraft.client.Minecraft.getMinecraft().thePlayer, false);
+        return hoveredStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
     }
 
     public int getHoveredTooltipX() {
@@ -220,10 +220,6 @@ public class PopupCellPartition extends Gui {
 
     /**
      * Handle NEI ghost ingredient drop.
-     * FIXME: The green slots do not appear when dragging from NEI into the popup.
-     * FIXME: The green slots are not cleared when the popup is closed.
-     * FIXME: The green line is not rendered when dragging from bookmarks.
-     * FIXME: The item is rendered behind the popup when dragging from bookmarks.
      */
     public boolean handleGhostDrop(int slotIndex, Object ingredient) {
         if (slotIndex < 0 || slotIndex >= MAX_PARTITION_SLOTS) return false;
@@ -251,67 +247,6 @@ public class PopupCellPartition extends Gui {
 
         return true;
     }
-
-    // OLD EXPLICIT TYPE HANDLING - Uncomment this and remove convertIngredientForCell
-    // if you need to revert to the previous behavior due to issues with unknown ingredient types.
-    /*
-     * public boolean handleGhostDrop(int slotIndex, Object ingredient) {
-     * if (slotIndex < 0 || slotIndex >= MAX_PARTITION_SLOTS) return false;
-     * ItemStack stack;
-     * if (ingredient instanceof ItemStack) {
-     * ItemStack itemStack = (ItemStack) ingredient;
-     * if (cell.isFluid()) {
-     * FluidStack contained = FluidUtil.getFluidContained(itemStack);
-     * if (contained == null) {
-     * Minecraft.getMinecraft().player.sendMessage(new TextComponentTranslation("disk_terminal.error.fluid_cell_item"));
-     * return false;
-     * }
-     * IStorageChannel<IAEFluidStack> fluidChannel =
-     * AEApi.instance().storage().getStorageChannel(IFluidStorageChannel.class);
-     * IAEFluidStack aeFluidStack = fluidChannel.createStack(contained);
-     * if (aeFluidStack == null) return false;
-     * stack = aeFluidStack.asItemStackRepresentation();
-     * } else {
-     * stack = itemStack;
-     * }
-     * } else if (ingredient instanceof FluidStack) {
-     * if (!cell.isFluid()) {
-     * Minecraft.getMinecraft().player.sendMessage(new TextComponentTranslation("disk_terminal.error.item_cell_fluid"));
-     * return false;
-     * }
-     * FluidStack fluidStack = (FluidStack) ingredient;
-     * IStorageChannel<IAEFluidStack> fluidChannel =
-     * AEApi.instance().storage().getStorageChannel(IFluidStorageChannel.class);
-     * IAEFluidStack aeFluidStack = fluidChannel.createStack(fluidStack);
-     * if (aeFluidStack == null) return false;
-     * stack = aeFluidStack.asItemStackRepresentation();
-     * } else if (ingredient instanceof EnchantmentData) {
-     * if (cell.isFluid()) {
-     * Minecraft.getMinecraft().player.sendMessage(new TextComponentTranslation("disk_terminal.error.fluid_cell_item"));
-     * return false;
-     * }
-     * EnchantmentData enchantData = (EnchantmentData) ingredient;
-     * stack = ItemEnchantedBook.getEnchantedItemStack(enchantData);
-     * } else {
-     * return false;
-     * }
-     * if (ItemStacks.isEmpty(stack)) return false;
-     * int targetSlot = slotIndex;
-     * if (!ItemStacks.isEmpty(editablePartition.get(slotIndex))) {
-     * targetSlot = findEmptySlot();
-     * if (targetSlot == -1) return false;
-     * }
-     * editablePartition.set(targetSlot, stack.copy());
-     * DiskTerminalNetwork.INSTANCE.sendToServer(new PacketPartitionAction(
-     * cell.getParentStorageId(),
-     * cell.getSlot(),
-     * PacketPartitionAction.Action.ADD_ITEM,
-     * targetSlot,
-     * stack
-     * ));
-     * return true;
-     * }
-     */
 
     private int findEmptySlot() {
         for (int i = 0; i < editablePartition.size(); i++) {
