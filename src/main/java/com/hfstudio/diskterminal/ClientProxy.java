@@ -21,6 +21,7 @@ public class ClientProxy extends CommonProxy {
     @Override
     public void preInit(FMLPreInitializationEvent event) {
         super.preInit(event);
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
     @Override
@@ -35,7 +36,6 @@ public class ClientProxy extends CommonProxy {
             .register(new KeyInputHandler());
         MinecraftForge.EVENT_BUS.register(new BlockHighlightRenderer());
         MinecraftForge.EVENT_BUS.register(new UpgradeTooltipHandler());
-        MinecraftForge.EVENT_BUS.register(this);
     }
 
     @Override
@@ -51,7 +51,6 @@ public class ClientProxy extends CommonProxy {
     @SubscribeEvent
     public void onTextureStitch(TextureStitchEvent.Pre event) {
         if (event.map.getTextureType() != 0) return;
-
         PartCellTerminal.registerPartIcons(event.map);
     }
 }

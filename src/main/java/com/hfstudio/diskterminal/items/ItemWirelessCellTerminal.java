@@ -52,6 +52,10 @@ public class ItemWirelessCellTerminal extends AEBasePoweredItem implements IWire
 
     public ItemWirelessCellTerminal() {
         super(AEConfig.instance.wirelessTerminalBattery, absent());
+        AEApi.instance()
+            .registries()
+            .wireless()
+            .registerWirelessHandler(this);
         this.setFeature(EnumSet.of(AEFeature.WirelessAccessTerminal, AEFeature.PoweredTools));
         this.setUnlocalizedName("wireless_cell_terminal");
         this.setTextureName(Tags.MODID + ":wireless_cell_terminal");

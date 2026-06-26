@@ -13,7 +13,6 @@ import net.minecraft.util.IIcon;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.common.util.ForgeDirection;
 
-import com.hfstudio.diskterminal.ItemRegistry;
 import com.hfstudio.diskterminal.Tags;
 import com.hfstudio.diskterminal.gui.GuiHandler;
 import com.hfstudio.diskterminal.util.ItemStacks;
@@ -36,15 +35,14 @@ import cpw.mods.fml.relauncher.SideOnly;
  */
 public class PartCellTerminal extends AbstractPartDisplay implements IAEAppEngInventory, IPrimaryGuiIconProvider {
 
-    private static final CableBusTextures FRONT_BRIGHT_ICON = CableBusTextures.PartTerminal_Bright;
-    private static final CableBusTextures FRONT_DARK_ICON = CableBusTextures.PartTerminal_Dark;
-    private static final CableBusTextures FRONT_COLORED_ICON = CableBusTextures.PartTerminal_Colored;
-
     @SideOnly(Side.CLIENT)
-    private static IIcon partBackgroundIcon;
-
+    private static IIcon partBoardIcon;
     @SideOnly(Side.CLIENT)
-    private static IIcon partOverlayIcon;
+    private static IIcon partBrightIcon;
+    @SideOnly(Side.CLIENT)
+    private static IIcon partColoredIcon;
+    @SideOnly(Side.CLIENT)
+    private static IIcon partDarkIcon;
 
     /** Maximum slots for temporary cell storage (can hold up to 16 cells). */
     private static final int MAX_TEMP_CELLS = 16;
@@ -57,128 +55,31 @@ public class PartCellTerminal extends AbstractPartDisplay implements IAEAppEngIn
 
     @Override
     public CableBusTextures getFrontBright() {
-        return FRONT_BRIGHT_ICON;
+        return null;
     }
 
     @Override
     public CableBusTextures getFrontColored() {
-        return FRONT_COLORED_ICON;
+        return null;
     }
 
     @Override
     public CableBusTextures getFrontDark() {
-        return FRONT_DARK_ICON;
-    }
-
-    @SideOnly(Side.CLIENT)
-    @Override
-    public void renderInventory(IPartRenderHelper rh, RenderBlocks renderer) {
-        rh.setBounds(2, 2, 14, 14, 14, 16);
-
-        IIcon sideTexture = CableBusTextures.PartMonitorSides.getIcon();
-        IIcon backTexture = CableBusTextures.PartMonitorBack.getIcon();
-
-        rh.setTexture(sideTexture, sideTexture, backTexture, getPartBackgroundIcon(), sideTexture, sideTexture);
-        rh.renderInventoryBox(renderer);
-
-        IIcon background = getPartBackgroundIcon();
-        IIcon overlay = getPartOverlayIcon();
-        if (background != null) {
-            rh.setInvColor(this.getColor().whiteVariant);
-            rh.renderInventoryFace(background, ForgeDirection.SOUTH, renderer);
-        }
-
-        if (overlay != null) {
-            rh.setInvColor(this.getColor().blackVariant);
-            rh.renderInventoryFace(overlay, ForgeDirection.SOUTH, renderer);
-        }
-
-        rh.setBounds(4, 4, 13, 12, 12, 14);
-        rh.renderInventoryBox(renderer);
-    }
-
-    @SideOnly(Side.CLIENT)
-    @Override
-    public void renderStatic(int x, int y, int z, IPartRenderHelper rh, RenderBlocks renderer) {
-        this.setRenderCache(rh.useSimplifiedRendering(x, y, z, this, this.getRenderCache()));
-
-        IIcon sideTexture = CableBusTextures.PartMonitorSides.getIcon();
-        IIcon backTexture = CableBusTextures.PartMonitorBack.getIcon();
-
-        rh.setTexture(sideTexture, sideTexture, backTexture, getPartBackgroundIcon(), sideTexture, sideTexture);
-        rh.setBounds(2, 2, 14, 14, 14, 16);
-        rh.renderBlock(x, y, z, renderer);
-
-        Tessellator tessellator = Tessellator.instance;
-        if (this.getLightLevel() > 0) {
-            int light = 13;
-            tessellator.setBrightness(light << 20 | light << 4);
-        }
-
-        renderer.uvRotateBottom = renderer.uvRotateEast = renderer.uvRotateNorth = renderer.uvRotateSouth = renderer.uvRotateTop = renderer.uvRotateWest = this
-            .getSpin();
-
-        IIcon background = getPartBackgroundIcon();
-        IIcon overlay = getPartOverlayIcon();
-        if (background != null) {
-            tessellator.setColorOpaque_I(this.getColor().whiteVariant);
-            rh.renderFace(x, y, z, background, ForgeDirection.SOUTH, renderer);
-        }
-
-        if (overlay != null) {
-            tessellator.setColorOpaque_I(this.getColor().blackVariant);
-            rh.renderFace(x, y, z, overlay, ForgeDirection.SOUTH, renderer);
-        }
-
-        renderer.uvRotateBottom = renderer.uvRotateEast = renderer.uvRotateNorth = renderer.uvRotateSouth = renderer.uvRotateTop = renderer.uvRotateWest = 0;
-
-        IIcon sideStatusTexture = CableBusTextures.PartMonitorSidesStatus.getIcon();
-
-        rh.setTexture(
-            sideStatusTexture,
-            sideStatusTexture,
-            backTexture,
-            getPartBackgroundIcon(),
-            sideStatusTexture,
-            sideStatusTexture);
-
-        rh.setBounds(4, 4, 13, 12, 12, 14);
-        rh.renderBlock(x, y, z, renderer);
-
-        boolean hasChannel = (this.getClientFlags() & (PartPanel.POWERED_FLAG | PartPanel.CHANNEL_FLAG))
-            == (PartPanel.POWERED_FLAG | PartPanel.CHANNEL_FLAG);
-        boolean hasPower = (this.getClientFlags() & PartPanel.POWERED_FLAG) == PartPanel.POWERED_FLAG;
-
-        if (hasChannel) {
-            int light = 14;
-            tessellator.setBrightness(light << 20 | light << 4);
-            tessellator.setColorOpaque_I(this.getColor().blackVariant);
-        } else if (hasPower) {
-            int light = 9;
-            tessellator.setBrightness(light << 20 | light << 4);
-            tessellator.setColorOpaque_I(this.getColor().whiteVariant);
-        } else {
-            tessellator.setBrightness(0);
-            tessellator.setColorOpaque_I(0x000000);
-        }
-
-        IIcon sideStatusLightTexture = CableBusTextures.PartMonitorSidesStatusLights.getIcon();
-
-        rh.renderFace(x, y, z, sideStatusLightTexture, ForgeDirection.EAST, renderer);
-        rh.renderFace(x, y, z, sideStatusLightTexture, ForgeDirection.WEST, renderer);
-        rh.renderFace(x, y, z, sideStatusLightTexture, ForgeDirection.UP, renderer);
-        rh.renderFace(x, y, z, sideStatusLightTexture, ForgeDirection.DOWN, renderer);
+        return null;
     }
 
     @Override
     public ItemStack getPrimaryGuiIcon() {
-        return new ItemStack(ItemRegistry.CELL_TERMINAL);
+        return this.getItemStack()
+            .copy();
     }
 
     @SideOnly(Side.CLIENT)
     public static void registerPartIcons(TextureMap textureMap) {
-        partBackgroundIcon = textureMap.registerIcon(Tags.MODID + ":parts/cell_terminal_background");
-        partOverlayIcon = textureMap.registerIcon(Tags.MODID + ":parts/cell_terminal_overlay");
+        partBoardIcon = textureMap.registerIcon(Tags.MODID + ":parts/cell_terminal_broad");
+        partBrightIcon = textureMap.registerIcon(Tags.MODID + ":parts/cell_terminal_bright");
+        partColoredIcon = textureMap.registerIcon(Tags.MODID + ":parts/cell_terminal_colored");
+        partDarkIcon = textureMap.registerIcon(Tags.MODID + ":parts/cell_terminal_dark");
     }
 
     @Override
@@ -250,13 +151,125 @@ public class PartCellTerminal extends AbstractPartDisplay implements IAEAppEngIn
         }
     }
 
+    @Override
     @SideOnly(Side.CLIENT)
-    private IIcon getPartBackgroundIcon() {
-        return partBackgroundIcon != null ? partBackgroundIcon : getFrontBright().getIcon();
+    public void renderInventory(final IPartRenderHelper rh, final RenderBlocks renderer) {
+        rh.setBounds(2, 2, 14, 14, 14, 16);
+
+        final IIcon sideTexture = CableBusTextures.PartMonitorSides.getIcon();
+        final IIcon backTexture = CableBusTextures.PartMonitorBack.getIcon();
+
+        rh.setTexture(sideTexture, sideTexture, backTexture, getFrontBoardIcon(), sideTexture, sideTexture);
+        rh.renderInventoryBox(renderer);
+
+        rh.setInvColor(this.getColor().whiteVariant);
+        rh.renderInventoryFace(this.getFrontBrightIcon(), ForgeDirection.SOUTH, renderer);
+
+        rh.setInvColor(this.getColor().mediumVariant);
+        rh.renderInventoryFace(this.getFrontDarkIcon(), ForgeDirection.SOUTH, renderer);
+
+        rh.setInvColor(this.getColor().blackVariant);
+        rh.renderInventoryFace(this.getFrontColoredIcon(), ForgeDirection.SOUTH, renderer);
+
+        rh.setBounds(4, 4, 13, 12, 12, 14);
+        rh.renderInventoryBox(renderer);
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public void renderStatic(final int x, final int y, final int z, final IPartRenderHelper rh,
+        final RenderBlocks renderer) {
+        this.setRenderCache(rh.useSimplifiedRendering(x, y, z, this, this.getRenderCache()));
+
+        final IIcon sideTexture = CableBusTextures.PartMonitorSides.getIcon();
+        final IIcon backTexture = CableBusTextures.PartMonitorBack.getIcon();
+
+        rh.setTexture(sideTexture, sideTexture, backTexture, getFrontBoardIcon(), sideTexture, sideTexture);
+
+        rh.setBounds(2, 2, 14, 14, 14, 16);
+        rh.renderBlock(x, y, z, renderer);
+
+        final Tessellator tess = Tessellator.instance;
+        if (this.getLightLevel() > 0) {
+            final int l = 13;
+            tess.setBrightness(l << 20 | l << 4);
+        }
+
+        renderer.uvRotateBottom = renderer.uvRotateEast = renderer.uvRotateNorth = renderer.uvRotateSouth = renderer.uvRotateTop = renderer.uvRotateWest = this
+            .getSpin();
+
+        tess.setColorOpaque_I(this.getColor().whiteVariant);
+        rh.renderFace(x, y, z, this.getFrontBrightIcon(), ForgeDirection.SOUTH, renderer);
+
+        tess.setColorOpaque_I(this.getColor().mediumVariant);
+        rh.renderFace(x, y, z, this.getFrontDarkIcon(), ForgeDirection.SOUTH, renderer);
+
+        tess.setColorOpaque_I(this.getColor().blackVariant);
+        rh.renderFace(x, y, z, this.getFrontColoredIcon(), ForgeDirection.SOUTH, renderer);
+
+        renderer.uvRotateBottom = renderer.uvRotateEast = renderer.uvRotateNorth = renderer.uvRotateSouth = renderer.uvRotateTop = renderer.uvRotateWest = 0;
+
+        final IIcon sideStatusTexture = CableBusTextures.PartMonitorSidesStatus.getIcon();
+
+        rh.setTexture(
+            sideStatusTexture,
+            sideStatusTexture,
+            backTexture,
+            getFrontBoardIcon(),
+            sideStatusTexture,
+            sideStatusTexture);
+
+        rh.setBounds(4, 4, 13, 12, 12, 14);
+        rh.renderBlock(x, y, z, renderer);
+
+        final boolean hasChan = (this.getClientFlags() & (PartPanel.POWERED_FLAG | PartPanel.CHANNEL_FLAG))
+            == (PartPanel.POWERED_FLAG | PartPanel.CHANNEL_FLAG);
+        final boolean hasPower = (this.getClientFlags() & PartPanel.POWERED_FLAG) == PartPanel.POWERED_FLAG;
+
+        if (hasChan) {
+            final int l = 14;
+            tess.setBrightness(l << 20 | l << 4);
+            tess.setColorOpaque_I(this.getColor().blackVariant);
+        } else if (hasPower) {
+            final int l = 9;
+            tess.setBrightness(l << 20 | l << 4);
+            tess.setColorOpaque_I(this.getColor().whiteVariant);
+        } else {
+            tess.setBrightness(0);
+            tess.setColorOpaque_I(0x000000);
+        }
+
+        final IIcon sideStatusLightTexture = CableBusTextures.PartMonitorSidesStatusLights.getIcon();
+
+        rh.renderFace(x, y, z, sideStatusLightTexture, ForgeDirection.EAST, renderer);
+        rh.renderFace(x, y, z, sideStatusLightTexture, ForgeDirection.WEST, renderer);
+        rh.renderFace(x, y, z, sideStatusLightTexture, ForgeDirection.UP, renderer);
+        rh.renderFace(x, y, z, sideStatusLightTexture, ForgeDirection.DOWN, renderer);
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public IIcon getBreakingTexture() {
+        return partBoardIcon;
     }
 
     @SideOnly(Side.CLIENT)
-    private IIcon getPartOverlayIcon() {
-        return partOverlayIcon != null ? partOverlayIcon : getFrontColored().getIcon();
+    private IIcon getFrontBoardIcon() {
+        return partBoardIcon;
+    }
+
+    @SideOnly(Side.CLIENT)
+    private IIcon getFrontBrightIcon() {
+        return partBrightIcon;
+    }
+
+    @SideOnly(Side.CLIENT)
+    private IIcon getFrontColoredIcon() {
+        return partColoredIcon;
+    }
+
+    @SideOnly(Side.CLIENT)
+    private IIcon getFrontDarkIcon() {
+        return partDarkIcon;
     }
 }

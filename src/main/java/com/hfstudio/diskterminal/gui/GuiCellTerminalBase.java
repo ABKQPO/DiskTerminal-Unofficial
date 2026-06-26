@@ -895,8 +895,9 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             GL11.glPopMatrix();
         }
 
-        int relMouseX = mouseX - offsetX;
-        int relMouseY = mouseY - offsetY;
+        boolean popupObscuresMouse = isPopupObscuringPoint(mouseX, mouseY);
+        int relMouseX = popupObscuresMouse ? Integer.MIN_VALUE : mouseX - offsetX;
+        int relMouseY = popupObscuresMouse ? Integer.MIN_VALUE : mouseY - offsetY;
         final int currentScroll = this.getScrollBar()
             .getCurrentScroll();
 
@@ -1218,7 +1219,9 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         if (ghostDropConsumedClick) return;
 
         // Delegate content area clicks to the active tab widget
-        if (hadPopupAtStart || hasBlockingPopup() || !isInVirtualContentArea(mouseX, mouseY)) return;
+        if (hadPopupAtStart || hasBlockingPopup()
+            || isPopupObscuringPoint(mouseX, mouseY)
+            || !isInVirtualContentArea(mouseX, mouseY)) return;
 
         int relMouseX = mouseX - guiLeft;
         int relMouseY = mouseY - guiTop;

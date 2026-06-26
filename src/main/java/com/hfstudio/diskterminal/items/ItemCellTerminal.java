@@ -28,6 +28,15 @@ public class ItemCellTerminal extends Item implements IPartItem {
         this.setTextureName(Tags.MODID + ":cell_terminal");
         this.setCreativeTab(DiskTerminalCreativeTab.INSTANCE);
         this.setMaxStackSize(64);
+        AEApi.instance()
+            .partHelper()
+            .setItemBusRenderer(this);
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public int getSpriteNumber() {
+        return 0;
     }
 
     @Override
