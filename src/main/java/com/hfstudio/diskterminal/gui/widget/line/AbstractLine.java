@@ -42,6 +42,7 @@ public abstract class AbstractLine extends AbstractWidget {
 
     /** Width of the horizontal tree branch */
     protected static final int TREE_BRANCH_WIDTH = 10;
+    protected static final int TREE_BRANCH_WITH_BUTTON_WIDTH = 18;
 
     // Tree line state (set by parent tab before drawing)
     protected boolean drawTreeLine = true;
@@ -137,8 +138,8 @@ public abstract class AbstractLine extends AbstractWidget {
             Gui.drawRect(TREE_LINE_X, lineAboveCutY, TREE_LINE_X + 1, verticalEndY, GuiConstants.COLOR_TREE_LINE);
         }
 
-        // Horizontal branch
-        Gui.drawRect(TREE_LINE_X, branchY, TREE_LINE_X + TREE_BRANCH_WIDTH, branchY + 1, GuiConstants.COLOR_TREE_LINE);
+        int branchWidth = treeButton != null ? TREE_BRANCH_WITH_BUTTON_WIDTH : TREE_BRANCH_WIDTH;
+        Gui.drawRect(TREE_LINE_X, branchY, TREE_LINE_X + branchWidth, branchY + 1, GuiConstants.COLOR_TREE_LINE);
 
         // Draw tree junction button if present (covers part of tree line)
         if (treeButton != null) {

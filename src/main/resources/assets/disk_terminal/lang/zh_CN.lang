@@ -1,8 +1,13 @@
 # Items
+itemGroup.disk_terminal=DiskTerminal-Unofficial
 item.disk_terminal.cell_terminal.name=元件终端
 item.disk_terminal.wireless_cell_terminal.name=无线元件终端
 item.disk_terminal.cell_terminal.tooltip=§b满足你的所有分区需求！
 item.disk_terminal.wireless_cell_terminal.temp_cells=§7临时元件：§f%d
+item.disk_terminal.wireless_cell_terminal.linked=§a已绑定
+item.disk_terminal.wireless_cell_terminal.unlinked=§c未绑定
+item.disk_terminal.wireless_cell_terminal.nolink=§c未绑定
+item.disk_terminal.wireless_cell_terminal.no_link=§c未绑定
 
 # GUI
 gui.disk_terminal.cell_terminal.title=元件终端

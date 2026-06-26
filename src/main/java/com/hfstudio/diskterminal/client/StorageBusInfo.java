@@ -309,6 +309,9 @@ public class StorageBusInfo implements Renameable, Prioritizable {
             baseName = customName;
 
             // Fall back to connected inventory name
+        } else if (!ItemStacks.isEmpty(connectedIcon)) {
+            baseName = connectedIcon.getDisplayName();
+
         } else if (connectedName != null && !connectedName.isEmpty()) {
             baseName = connectedName;
 
@@ -471,4 +474,5 @@ public class StorageBusInfo implements Renameable, Prioritizable {
 
         return "item";
     }
+
 }

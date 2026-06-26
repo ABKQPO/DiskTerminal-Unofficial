@@ -11,6 +11,7 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
 
 import com.hfstudio.diskterminal.gui.GuiConstants;
+import com.hfstudio.diskterminal.gui.widget.AbstractWidget;
 import com.hfstudio.diskterminal.util.ItemStacks;
 
 /**
@@ -37,7 +38,7 @@ public class TempAreaHeader extends AbstractHeader {
 
     // Send button layout
     public static final int SEND_BUTTON_X = 150;
-    private static final int SEND_BUTTON_Y_OFFSET = 2;
+    private static final int SEND_BUTTON_Y_OFFSET = 3;
     private static final int SEND_BUTTON_WIDTH = 28;
     private static final int SEND_BUTTON_HEIGHT = 12;
 
@@ -45,9 +46,8 @@ public class TempAreaHeader extends AbstractHeader {
     private static final int COLOR_SEND_BUTTON = 0xFF5599CC;
     private static final int COLOR_SEND_BUTTON_HOVER = 0xFF77BBEE;
 
-    // Name width limit (before send button area, leaves 4px gap)
-    // HEADER_NAME_X = GUI_INDENT + 20 = 42, so max name ends at 42 + 104 = 146
-    private static final int MAX_NAME_WIDTH = SEND_BUTTON_X - GuiConstants.HEADER_NAME_X - 4;
+    // Name width limit leaves room for the right-side content edge.
+    private static final int MAX_NAME_WIDTH = GuiConstants.CONTENT_RIGHT_EDGE - GuiConstants.HEADER_NAME_X - 4;
 
     private static final int SIZE = GuiConstants.MINI_SLOT_SIZE;
 
@@ -102,8 +102,7 @@ public class TempAreaHeader extends AbstractHeader {
         boolean hasCell = hasCellSupplier != null && hasCellSupplier.get();
         if (hasCell) drawSendButton(mouseX, mouseY);
 
-        // Return hover right bound (the entire row before send button)
-        return hasCell ? SEND_BUTTON_X : GuiConstants.CONTENT_RIGHT_EDGE;
+        return GuiConstants.CONTENT_RIGHT_EDGE;
     }
 
     /**
@@ -112,7 +111,7 @@ public class TempAreaHeader extends AbstractHeader {
      */
     @Override
     protected void drawIcon() {
-        int slotX = GuiConstants.GUI_INDENT;
+        int slotX = GuiConstants.GUI_INDENT + TARGET_RENDER_X_OFFSET;
 
         // Draw slot background
         drawSlotBackground(slotX, y);
@@ -183,7 +182,7 @@ public class TempAreaHeader extends AbstractHeader {
      * Check if the cell slot is hovered and draw highlight.
      */
     private void checkCellSlotHover(int mouseX, int mouseY) {
-        int slotX = GuiConstants.GUI_INDENT;
+        int slotX = GuiConstants.GUI_INDENT + TARGET_RENDER_X_OFFSET;
         if (mouseX >= slotX && mouseX < slotX + SIZE && mouseY >= y && mouseY < y + SIZE) {
             cellSlotHovered = true;
             drawSlotHoverHighlight(slotX, y);
@@ -263,10 +262,9 @@ public class TempAreaHeader extends AbstractHeader {
             btnY + SEND_BUTTON_HEIGHT,
             GuiConstants.COLOR_BUTTON_SHADOW);
 
-        // Button text (centered)
-        String sendText = I18n.format("gui.disk_terminal.temp_area.send");
-        int textX = btnX + (SEND_BUTTON_WIDTH - fontRenderer.getStringWidth(sendText)) / 2;
-        fontRenderer.drawString(sendText, textX, btnY + 2, 0x000000);
+        String text = I18n.format("gui.disk_terminal.temp_area.send");
+        AbstractWidget
+            .drawCenteredString(fontRenderer, text, btnX, btnY, SEND_BUTTON_WIDTH, SEND_BUTTON_HEIGHT, 0x000000);
     }
 
     @Override
@@ -316,7 +314,6 @@ public class TempAreaHeader extends AbstractHeader {
     }
 
     private void drawSlotBackground(int slotX, int slotY) {
-        // Mini slot: left half of slot (y uv 0-15)
         int texX = GuiConstants.MINI_SLOT_X;
         int texY = GuiConstants.MINI_SLOT_Y;
         GuiConstants.drawAtlasSprite(slotX, slotY, texX, texY, SIZE, SIZE);

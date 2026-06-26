@@ -10,8 +10,6 @@ import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.item.ItemStack;
 
-import org.lwjgl.opengl.GL11;
-
 import com.hfstudio.diskterminal.gui.ComparisonUtils;
 import com.hfstudio.diskterminal.gui.GuiConstants;
 import com.hfstudio.diskterminal.gui.widget.AbstractWidget;
@@ -350,7 +348,7 @@ public class SlotsLine extends AbstractLine {
     }
 
     protected void drawPartitionSlotBackground(int slotX, int slotY) {
-        // Partition variant uses the right half of the texture (x uv 16-31)
+        // Partition variant uses the orange slot directly after the normal slot.
         int texX = GuiConstants.MINI_SLOT_X + SIZE;
         int texY = GuiConstants.MINI_SLOT_Y;
         GuiConstants.drawAtlasSprite(slotX, slotY, texX, texY, SIZE, SIZE);
@@ -361,33 +359,18 @@ public class SlotsLine extends AbstractLine {
     }
 
     protected void renderItemStack(ItemStack stack, int renderX, int renderY) {
-        AbstractWidget.renderItemStack(itemRender, stack, renderX, renderY);
+        AbstractWidget.renderItemStack(itemRender, stack, renderX + 1, renderY + 1);
     }
 
     protected void drawItemCount(long count, int slotX, int slotY) {
         String countStr = formatItemCount(count);
         if (countStr.isEmpty()) return;
 
-        int countWidth = fontRenderer.getStringWidth(countStr);
-        int textX = slotX + SIZE - 1;
-        int textY = slotY + SIZE - 5;
-
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glPushMatrix();
-        GL11.glScalef(0.5f, 0.5f, 0.5f);
-        fontRenderer.drawStringWithShadow(countStr, textX * 2 - countWidth, textY * 2, 0xFFFFFF);
-        GL11.glPopMatrix();
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        AbstractWidget.drawItemOverlayText(fontRenderer, countStr, slotX, slotY, SIZE, 0xFFFFFF);
     }
 
     protected void drawPartitionIndicator(int slotX, int slotY) {
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glPushMatrix();
-        GL11.glScalef(0.5f, 0.5f, 0.5f);
-        fontRenderer
-            .drawStringWithShadow("P", (slotX + 1) * 2, (slotY + 1) * 2, GuiConstants.COLOR_PARTITION_INDICATOR);
-        GL11.glPopMatrix();
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        AbstractWidget.drawPartitionIndicator(fontRenderer, slotX, slotY, GuiConstants.COLOR_PARTITION_INDICATOR);
     }
 
     private String formatItemCount(long count) {

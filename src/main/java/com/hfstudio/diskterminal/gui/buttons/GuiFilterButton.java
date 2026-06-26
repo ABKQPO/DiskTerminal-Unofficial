@@ -135,10 +135,10 @@ public class GuiFilterButton extends GuiAtlasButton {
         RenderItem itemRender = RenderItem.getInstance();
 
         GL11.glPushMatrix();
-        GL11.glTranslatef(this.xPosition, this.yPosition, 0);
+        GL11.glTranslatef(this.xPosition + 2.0F, this.yPosition + 2.0F, 0);
         GL11.glScalef(0.75F, 0.75F, 1.0F);
 
-        AbstractWidget.renderItemStack(itemRender, stack, 3, 2);
+        AbstractWidget.renderItemStack(itemRender, stack, 0, 0);
 
         GL11.glPopMatrix();
 

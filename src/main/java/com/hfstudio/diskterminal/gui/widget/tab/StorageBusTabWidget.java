@@ -68,15 +68,15 @@ import appeng.api.AEApi;
  * CLEAR_PARTITION (removes partition entry). Supports NEI ghost drops.</li>
  * </ul>
  *
- * Storage bus tabs use 9 slots per row at a narrower X offset (no inline cell slot).
+ * Storage bus tabs use the shared storage bus row width at a narrower X offset (no inline cell slot).
  */
 public class StorageBusTabWidget extends AbstractTabWidget {
 
-    /** Slots per row for storage buses: 9 */
+    /** Slots per row for storage buses. */
     private static final int SLOTS_PER_ROW = GuiConstants.STORAGE_BUS_SLOTS_PER_ROW;
 
     /** X offset for content/partition slots */
-    private static final int SLOTS_X_OFFSET = GuiConstants.CELL_INDENT + 4;
+    private static final int SLOTS_X_OFFSET = GuiConstants.CELL_INDENT + 5;
 
     private final SlotsLine.SlotMode slotMode;
     private final ButtonType treeButtonType;
@@ -373,7 +373,7 @@ public class StorageBusTabWidget extends AbstractTabWidget {
             }
         });
         line.setTreeButton(treeBtn);
-        line.setTreeButtonXOffset(-3); // 2px to the right vs cells for tighter storage bus layout
+        line.setTreeButtonXOffset(-4);
 
         line.setGuiOffsets(guiLeft, guiTop);
 

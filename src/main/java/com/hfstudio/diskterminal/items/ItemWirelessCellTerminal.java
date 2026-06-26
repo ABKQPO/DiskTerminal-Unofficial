@@ -1,5 +1,7 @@
 package com.hfstudio.diskterminal.items;
 
+import static com.google.common.base.Optional.absent;
+
 import java.util.List;
 
 import net.minecraft.client.resources.I18n;
@@ -8,10 +10,10 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 
+import com.hfstudio.diskterminal.DiskTerminalCreativeTab;
 import com.hfstudio.diskterminal.Tags;
 import com.hfstudio.diskterminal.gui.GuiHandler;
 import com.hfstudio.diskterminal.util.ItemStacks;
@@ -25,7 +27,6 @@ import appeng.api.features.ILocatable;
 import appeng.api.features.IWirelessTermHandler;
 import appeng.api.util.IConfigManager;
 import appeng.core.AEConfig;
-import appeng.core.CreativeTab;
 import appeng.core.localization.PlayerMessages;
 import appeng.items.tools.powered.powersink.AEBasePoweredItem;
 import appeng.util.ConfigManager;
@@ -48,10 +49,10 @@ public class ItemWirelessCellTerminal extends AEBasePoweredItem implements IWire
     public static final int MAX_TEMP_CELLS = 16;
 
     public ItemWirelessCellTerminal() {
-        super(AEConfig.instance.wirelessTerminalBattery, com.google.common.base.Optional.absent());
-        this.setUnlocalizedName(Tags.MODID + ".wireless_cell_terminal");
+        super(AEConfig.instance.wirelessTerminalBattery, absent());
+        this.setUnlocalizedName("wireless_cell_terminal");
         this.setTextureName(Tags.MODID + ":wireless_cell_terminal");
-        this.setCreativeTab(CreativeTab.instance);
+        this.setCreativeTab(DiskTerminalCreativeTab.INSTANCE);
         this.setMaxStackSize(1);
     }
 
@@ -110,9 +111,9 @@ public class ItemWirelessCellTerminal extends AEBasePoweredItem implements IWire
 
         String encKey = getEncryptionKey(stack);
         if (encKey == null || encKey.isEmpty()) {
-            lines.add(EnumChatFormatting.RED + I18n.format("item.disk_terminal.wireless_cell_terminal.unlinked"));
+            lines.add(I18n.format("item.disk_terminal.wireless_cell_terminal.unlinked"));
         } else {
-            lines.add(EnumChatFormatting.GREEN + I18n.format("item.disk_terminal.wireless_cell_terminal.linked"));
+            lines.add(I18n.format("item.disk_terminal.wireless_cell_terminal.linked"));
         }
     }
 

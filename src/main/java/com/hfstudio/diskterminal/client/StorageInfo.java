@@ -66,8 +66,12 @@ public class StorageInfo implements Renameable, Prioritizable {
     }
 
     public String getName() {
+        if ((name == null || name.isEmpty() || isUnlocalizedName(name)) && !ItemStacks.isEmpty(blockItem)) {
+            return blockItem.getDisplayName();
+        }
+
         // Translate lang keys (names starting with "tile." or "item.")
-        if (name.startsWith("tile.") || name.startsWith("item.")) {
+        if (isUnlocalizedName(name)) {
             return I18n.format(name);
         }
 
@@ -168,5 +172,9 @@ public class StorageInfo implements Renameable, Prioritizable {
     @Override
     public long getRenameId() {
         return id;
+    }
+
+    private static boolean isUnlocalizedName(String value) {
+        return value != null && (value.startsWith("tile.") || value.startsWith("item."));
     }
 }

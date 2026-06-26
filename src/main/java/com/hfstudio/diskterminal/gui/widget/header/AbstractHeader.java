@@ -51,6 +51,7 @@ public abstract class AbstractHeader extends AbstractWidget {
 
     /** X position of the tree connector line (same as AbstractLine.TREE_LINE_X) */
     protected static final int TREE_LINE_X = GuiConstants.GUI_INDENT + 7;
+    protected static final int TARGET_RENDER_X_OFFSET = -1;
 
     protected final FontRenderer fontRenderer;
     protected final RenderItem itemRender;
@@ -275,7 +276,7 @@ public abstract class AbstractHeader extends AbstractWidget {
      */
     protected void drawIcon() {
         ItemStack icon = iconSupplier != null ? iconSupplier.get() : null;
-        if (!ItemStacks.isEmpty(icon)) renderItemStack(icon, GuiConstants.GUI_INDENT, y);
+        if (!ItemStacks.isEmpty(icon)) renderItemStack(icon, GuiConstants.GUI_INDENT + TARGET_RENDER_X_OFFSET, y);
     }
 
     /**
@@ -363,7 +364,7 @@ public abstract class AbstractHeader extends AbstractWidget {
         if (!visible || !isHovered(mouseX, mouseY)) return null;
 
         // Check if hovering the icon
-        int iconX = GuiConstants.GUI_INDENT;
+        int iconX = GuiConstants.GUI_INDENT + TARGET_RENDER_X_OFFSET;
         if (mouseX >= iconX && mouseX < iconX + GuiConstants.MINI_SLOT_SIZE
             && mouseY >= y
             && mouseY < y + GuiConstants.MINI_SLOT_SIZE) {
@@ -383,6 +384,6 @@ public abstract class AbstractHeader extends AbstractWidget {
     }
 
     protected void renderItemStack(ItemStack stack, int renderX, int renderY) {
-        AbstractWidget.renderItemStack(itemRender, stack, renderX, renderY);
+        AbstractWidget.renderItemStack(itemRender, stack, renderX + 1, renderY + 1);
     }
 }

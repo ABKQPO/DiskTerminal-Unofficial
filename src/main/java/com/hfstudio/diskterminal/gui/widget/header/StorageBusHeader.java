@@ -138,7 +138,7 @@ public class StorageBusHeader extends StorageHeader {
         }
 
         // Position at current header Y (since header Y can change per frame)
-        ioModeButton.setPosition(GuiConstants.BUTTON_IO_MODE_X, y);
+        ioModeButton.setPosition(GuiConstants.BUTTON_IO_MODE_X, y + 2);
         ioModeButton.draw(mouseX, mouseY);
     }
 

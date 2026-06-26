@@ -71,7 +71,7 @@ public class PriorityFieldManager {
         }
 
         int fieldX = guiLeft + GuiConstants.CONTENT_RIGHT_EDGE - FIELD_WIDTH - RIGHT_MARGIN;
-        int fieldY = guiTop + y + 1;
+        int fieldY = guiTop + y + 3;
         field.updatePosition(fieldX, fieldY);
     }
 

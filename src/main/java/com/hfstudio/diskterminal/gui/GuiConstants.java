@@ -178,8 +178,8 @@ public class GuiConstants {
     /** Size of a standard slot (16x16 item + 2px border) */
     public static final int SLOT_SIZE = 18;
 
-    /** Size of a mini slot for cell contents (16x16) */
-    public static final int MINI_SLOT_SIZE = 16;
+    /** Size of a mini slot for cell contents (16x16 item + 2px border) */
+    public static final int MINI_SLOT_SIZE = SLOT_SIZE;
 
     /** Size of the run button for Network Tools */
     public static final int NETWORK_TOOL_RUN_BUTTON_SIZE = 16;
@@ -260,16 +260,16 @@ public class GuiConstants {
     public static final int FAVORITE_STAR_Y = TERMINAL_STYLE_BUTTON_Y;
 
     /** Mini slot background: Texture X position */
-    public static final int MINI_SLOT_X = NETWORK_TOOL_RUN_BUTTON_X + NETWORK_TOOL_RUN_BUTTON_SIZE;
+    public static final int MINI_SLOT_X = 0;
 
     /** Mini slot background: Texture Y position */
-    public static final int MINI_SLOT_Y = NETWORK_TOOL_RUN_BUTTON_Y + 2 * NETWORK_TOOL_RUN_BUTTON_SIZE;
+    public static final int MINI_SLOT_Y = 108;
 
     /** Slot background: Texture X position */
     public static final int SLOT_BACKGROUND_X = 0;
 
     /** Slot background: Texture Y position */
-    public static final int SLOT_BACKGROUND_Y = MINI_SLOT_Y + MINI_SLOT_SIZE;
+    public static final int SLOT_BACKGROUND_Y = MINI_SLOT_Y;
 
     // SLOT CONFIGURATION
 
@@ -277,7 +277,7 @@ public class GuiConstants {
     public static final int CELL_SLOTS_PER_ROW = 8;
 
     /** Number of content slots per row for storage buses */
-    public static final int STORAGE_BUS_SLOTS_PER_ROW = 9;
+    public static final int STORAGE_BUS_SLOTS_PER_ROW = 8;
 
     /** Maximum partition slots for storage buses */
     public static final int MAX_STORAGE_BUS_PARTITION_SLOTS = 63;
@@ -412,6 +412,10 @@ public class GuiConstants {
     public static final int COLOR_USAGE_LOW = 0xFF33FF33;
     public static final int COLOR_USAGE_MEDIUM = 0xFFFFAA00;
     public static final int COLOR_USAGE_HIGH = 0xFFFF3333;
+    public static final int COLOR_USAGE_AE_GREEN = 0xFF00FF00;
+    public static final int COLOR_USAGE_AE_BLUE = 0xFF00AAFF;
+    public static final int COLOR_USAGE_AE_ORANGE = 0xFFFBA900;
+    public static final int COLOR_USAGE_AE_RED = 0xFFFB0000;
 
     // TIMING
 

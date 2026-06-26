@@ -64,16 +64,16 @@ import appeng.api.AEApi;
  * [next TempCellInfo...]
  * </pre>
  *
- * The temp area uses 9 slots per row (same as storage bus tabs) at a narrower
+ * The temp area uses the shared storage bus row width at a narrower
  * X offset since there is no inline cell slot in the content rows.
  */
 public class TempAreaTabWidget extends AbstractTabWidget {
 
-    /** Slots per row for temp area: 9 (matches storage bus layout) */
+    /** Slots per row for temp area. */
     private static final int SLOTS_PER_ROW = GuiConstants.STORAGE_BUS_SLOTS_PER_ROW;
 
     /** X offset for content/partition slots (no inline cell slot) */
-    private static final int SLOTS_X_OFFSET = GuiConstants.CELL_INDENT + 4;
+    private static final int SLOTS_X_OFFSET = GuiConstants.CELL_INDENT + 5;
 
     public TempAreaTabWidget(FontRenderer fontRenderer, RenderItem itemRender) {
         super(fontRenderer, itemRender);
@@ -347,7 +347,7 @@ public class TempAreaTabWidget extends AbstractTabWidget {
         // Name click (rename): header handles right-click directly via InlineRenameManager
         // yOffset = 4 so field background (editingY + 1) aligns with name at y + 5
         if (cellInfo != null) {
-            header.setRenameInfo(cellInfo, GuiConstants.HEADER_NAME_X - 2, 4, TempAreaHeader.SEND_BUTTON_X - 4);
+            header.setRenameInfo(cellInfo, GuiConstants.HEADER_NAME_X - 2, 4, GuiConstants.CONTENT_RIGHT_EDGE - 4);
         }
 
         // Header selection for quick-add
@@ -423,6 +423,7 @@ public class TempAreaTabWidget extends AbstractTabWidget {
             }
         });
         line.setTreeButton(treeBtn);
+        line.setTreeButtonXOffset(-4);
 
         line.setGuiOffsets(guiLeft, guiTop);
 
@@ -497,12 +498,16 @@ public class TempAreaTabWidget extends AbstractTabWidget {
                 boolean slotOccupied = slotIndex < partition.size() && !ItemStacks.isEmpty(partition.get(slotIndex));
 
                 if (!ItemStacks.isEmpty(heldStack)) {
+                    ItemStack stackToSend = GhostIngredientHandler
+                        .convertIngredientForType(heldStack, cell.getStackTypeId(), false);
+                    if (ItemStacks.isEmpty(stackToSend)) return;
+
                     guiContext.sendPacket(
                         new PacketTempCellPartitionAction(
                             tempSlotIndex,
                             PacketTempCellPartitionAction.Action.ADD_ITEM,
                             slotIndex,
-                            heldStack));
+                            stackToSend));
                 } else if (slotOccupied) {
                     guiContext.sendPacket(
                         new PacketTempCellPartitionAction(

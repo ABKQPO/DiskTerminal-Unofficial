@@ -30,6 +30,7 @@ import com.hfstudio.diskterminal.client.StorageInfo;
 import com.hfstudio.diskterminal.client.TabStateManager;
 import com.hfstudio.diskterminal.client.TempCellInfo;
 import com.hfstudio.diskterminal.config.DiskTerminalClientConfig;
+import com.hfstudio.diskterminal.gui.GuiConstants;
 import com.hfstudio.diskterminal.network.chunked.DeltaApplier;
 import com.hfstudio.diskterminal.network.chunked.PayloadMode;
 import com.hfstudio.diskterminal.util.ItemStacks;
@@ -50,8 +51,8 @@ public class TerminalDataManager {
         TEMP_CELLS
     }
 
-    private static final int SLOTS_PER_ROW = 8;
-    private static final int SLOTS_PER_ROW_BUS = 9;
+    private static final int SLOTS_PER_ROW = GuiConstants.CELL_SLOTS_PER_ROW;
+    private static final int SLOTS_PER_ROW_BUS = GuiConstants.STORAGE_BUS_SLOTS_PER_ROW;
     private static final int MAX_PARTITION_SLOTS = 63;
 
     private final Map<Long, StorageInfo> storageMap = new LinkedHashMap<>();
@@ -241,7 +242,7 @@ public class TerminalDataManager {
                 TempCellInfo tempCell = new TempCellInfo(tempSlot, cellStack, cellInfo);
                 this.tempAreaLines.add(tempCell);
 
-                // Add content rows for inventory view (use 9 slots per row to match storage bus)
+                // Add content rows for inventory view using the shared storage bus row width.
                 // Always show at least 1 row, even if cell is empty
                 int contentCount = cellInfo.getContents()
                     .size();
@@ -250,7 +251,7 @@ public class TerminalDataManager {
                     this.tempAreaLines.add(new CellContentRow(cellInfo, row * SLOTS_PER_ROW_BUS, row == 0, false));
                 }
 
-                // Add partition rows (use 9 slots per row to match storage bus)
+                // Add partition rows using the shared storage bus row width.
                 // Always show at least 1 row, even if no partition is set
                 int highestPartitionSlot = getHighestNonEmptyPartitionSlot(cellInfo, SLOTS_PER_ROW_BUS);
                 int partitionRows = Math.max(1, (highestPartitionSlot + SLOTS_PER_ROW_BUS) / SLOTS_PER_ROW_BUS);

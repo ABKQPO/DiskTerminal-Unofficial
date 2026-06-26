@@ -28,7 +28,7 @@ import appeng.util.ReadableNumberConverter;
  */
 public class PopupCellInventory extends Gui {
 
-    private static final int SLOTS_PER_ROW = GuiConstants.POPUP_SLOTS_PER_ROW;
+    private static final int SLOTS_PER_ROW = 7;
     private static final int MAX_ROWS = GuiConstants.POPUP_MAX_ROWS;
     private static final int SLOT_SIZE = GuiConstants.SLOT_SIZE;
     private static final int PADDING = GuiConstants.PADDING;
@@ -102,6 +102,7 @@ public class PopupCellInventory extends Gui {
 
         // Reset GL state to known good state before drawing
         GL11.glDisable(GL11.GL_LIGHTING);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glEnable(GL11.GL_ALPHA_TEST);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
@@ -229,7 +230,7 @@ public class PopupCellInventory extends Gui {
      * Get tooltip for the hovered item. The parent GUI draws it (it has protected
      * drawHoveringText access); returns null when nothing is hovered.
      */
-    public java.util.List<String> getHoveredTooltip() {
+    public List<String> getHoveredTooltip() {
         if (ItemStacks.isEmpty(hoveredStack)) return null;
 
         return hoveredStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
@@ -357,28 +358,10 @@ public class PopupCellInventory extends Gui {
         String countStr = formatItemCount(count);
         if (countStr.isEmpty()) return;
 
-        int countWidth = fr.getStringWidth(countStr);
-
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glPushMatrix();
-        GL11.glScalef(0.5f, 0.5f, 0.5f);
-        // Right-align: for 18x18 slot, text right edge at slotX+17, bottom at slotY+13
-        fr.drawStringWithShadow(
-            countStr,
-            (slotX + SLOT_SIZE - 1) * 2 - countWidth,
-            (slotY + SLOT_SIZE - 5) * 2,
-            0xFFFFFF);
-        GL11.glPopMatrix();
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        AbstractWidget.drawItemOverlayText(fr, countStr, slotX, slotY, SLOT_SIZE, 0xFFFFFF);
     }
 
     private void drawPartitionIndicator(int slotX, int slotY, FontRenderer fr) {
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glPushMatrix();
-        GL11.glScalef(0.5f, 0.5f, 0.5f);
-        fr.drawStringWithShadow("P", (slotX + 2) * 2, (slotY + 2) * 2, GuiConstants.COLOR_PARTITION_INDICATOR);
-        GL11.glPopMatrix();
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        AbstractWidget.drawPartitionIndicator(fr, slotX, slotY, GuiConstants.COLOR_PARTITION_INDICATOR);
     }
 }

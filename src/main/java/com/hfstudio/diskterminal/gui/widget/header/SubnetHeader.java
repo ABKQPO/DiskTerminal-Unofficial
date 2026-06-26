@@ -146,11 +146,12 @@ public class SubnetHeader extends AbstractHeader {
         if (!isMain) drawLocation();
 
         // Draw Load button
+        int loadButtonY = y + (GuiConstants.ROW_HEIGHT - 10) / 2;
         boolean isLoadHover = mouseX >= loadButtonX && mouseX < loadButtonX + loadButtonWidth
-            && mouseY >= y
-            && mouseY < y + 10;
+            && mouseY >= loadButtonY
+            && mouseY < loadButtonY + 10;
         loadButtonHovered = isLoadHover;
-        drawLoadButton(loadButtonX, y, loadText, isLoadHover, canLoad);
+        drawLoadButton(loadButtonX, loadButtonY, loadText, isLoadHover, canLoad);
 
         // Return hover right bound (up to Load button area)
         return loadButtonX;
@@ -233,7 +234,7 @@ public class SubnetHeader extends AbstractHeader {
 
         // Text
         int textX = x + LOAD_BUTTON_MARGIN / 2;
-        int textY = btnY + 1;
+        int textY = btnY + (buttonHeight - fontRenderer.FONT_HEIGHT) / 2;
         int textColor = isEnabled ? 0xFFFFFFFF : 0xFFC0C0C0;
         fontRenderer.drawString(text, textX, textY, textColor);
     }

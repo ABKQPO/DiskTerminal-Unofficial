@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.entity.RenderItem;
@@ -42,6 +43,7 @@ public class TerminalLine extends AbstractLine {
     public static final int HOVER_EJECT = 3;
 
     private static final int SIZE = GuiConstants.TAB1_BUTTON_SIZE;
+    private static final int TARGET_RENDER_X_OFFSET = -1;
 
     // Texture column indices for each button type
     private static final int TAB1_COL_EJECT = 0;
@@ -83,6 +85,9 @@ public class TerminalLine extends AbstractLine {
     /** Supplier for byte usage percentage (0.0 - 1.0) */
     private Supplier<Float> byteUsageSupplier;
 
+    /** Supplier for AE2-style cell status. */
+    private Supplier<Integer> cellStatusSupplier;
+
     /** Cards display widget */
     private CardsDisplay cardsDisplay;
 
@@ -101,6 +106,7 @@ public class TerminalLine extends AbstractLine {
     // Hover tracking (computed during draw)
     private int hoveredButton = HOVER_NONE;
     private boolean nameHovered = false;
+    private boolean usageBarHovered = false;
 
     /** Target ID for double-click tracking (stored in DoubleClickTracker for persistence across rebuilds) */
     private long doubleClickTargetId = -1;
@@ -130,6 +136,10 @@ public class TerminalLine extends AbstractLine {
 
     public void setByteUsageSupplier(Supplier<Float> supplier) {
         this.byteUsageSupplier = supplier;
+    }
+
+    public void setCellStatusSupplier(Supplier<Integer> supplier) {
+        this.cellStatusSupplier = supplier;
     }
 
     public void setCardsDisplay(CardsDisplay cards) {
@@ -175,6 +185,7 @@ public class TerminalLine extends AbstractLine {
 
         hoveredButton = HOVER_NONE;
         nameHovered = false;
+        usageBarHovered = false;
 
         // Draw tree lines
         drawTreeLines(mouseX, mouseY);
@@ -185,13 +196,13 @@ public class TerminalLine extends AbstractLine {
         // Draw cell icon
         ItemStack cellItem = cellItemSupplier != null ? cellItemSupplier.get() : null;
         if (!ItemStacks.isEmpty(cellItem))
-            AbstractWidget.renderItemStack(itemRender, cellItem, GuiConstants.CELL_INDENT, y);
+            AbstractWidget.renderItemStack(itemRender, cellItem, GuiConstants.CELL_INDENT + TARGET_RENDER_X_OFFSET, y);
 
         // Draw cell name
         drawCellName(mouseX, mouseY);
 
         // Draw usage bar
-        drawUsageBar();
+        drawUsageBar(mouseX, mouseY);
 
         // Draw action buttons
         drawActionButtons(mouseX, mouseY);
@@ -257,6 +268,11 @@ public class TerminalLine extends AbstractLine {
             return cardsDisplay.getTooltip(mouseX, mouseY);
         }
 
+        if (usageBarHovered) {
+            ItemStack cellItem = cellItemSupplier != null ? cellItemSupplier.get() : null;
+            if (!ItemStacks.isEmpty(cellItem)) return cellItem.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+        }
+
         return Collections.emptyList();
     }
 
@@ -265,7 +281,7 @@ public class TerminalLine extends AbstractLine {
         if (!visible || !isHovered(mouseX, mouseY)) return null;
 
         // Check if hovering the cell icon
-        int cellX = GuiConstants.CELL_INDENT;
+        int cellX = GuiConstants.CELL_INDENT + TARGET_RENDER_X_OFFSET;
         if (mouseX >= cellX && mouseX < cellX + GuiConstants.MINI_SLOT_SIZE
             && mouseY >= y
             && mouseY < y + GuiConstants.MINI_SLOT_SIZE) {
@@ -298,11 +314,14 @@ public class TerminalLine extends AbstractLine {
         }
     }
 
-    private void drawUsageBar() {
+    private void drawUsageBar(int mouseX, int mouseY) {
         float usage = byteUsageSupplier != null ? byteUsageSupplier.get() : 0f;
 
         int barX = GuiConstants.CELL_INDENT + GuiConstants.CELL_NAME_X_OFFSET;
         int barY = y + 10;
+
+        usageBarHovered = AbstractWidget
+            .isPointIn(mouseX, mouseY, barX, barY, GuiConstants.USAGE_BAR_WIDTH, GuiConstants.USAGE_BAR_HEIGHT);
 
         // Background
         Gui.drawRect(
@@ -315,7 +334,7 @@ public class TerminalLine extends AbstractLine {
         // Fill
         int filledWidth = (int) (GuiConstants.USAGE_BAR_WIDTH * usage);
         if (filledWidth > 0) {
-            int fillColor = getUsageColor(usage);
+            int fillColor = getUsageColor();
             Gui.drawRect(barX, barY, barX + filledWidth, barY + GuiConstants.USAGE_BAR_HEIGHT, fillColor);
         }
     }
@@ -352,10 +371,17 @@ public class TerminalLine extends AbstractLine {
         GuiConstants.drawAtlasSprite(drawX + 1, drawY, texX, texY, SIZE, SIZE);
     }
 
-    private int getUsageColor(float percent) {
-        if (percent > 0.9f) return GuiConstants.COLOR_USAGE_HIGH;
-        if (percent > 0.75f) return GuiConstants.COLOR_USAGE_MEDIUM;
-
-        return GuiConstants.COLOR_USAGE_LOW;
+    private int getUsageColor() {
+        int status = cellStatusSupplier != null ? cellStatusSupplier.get() : 1;
+        switch (status) {
+            case 2:
+                return GuiConstants.COLOR_USAGE_AE_BLUE;
+            case 3:
+                return GuiConstants.COLOR_USAGE_AE_ORANGE;
+            case 4:
+                return GuiConstants.COLOR_USAGE_AE_RED;
+            default:
+                return GuiConstants.COLOR_USAGE_AE_GREEN;
+        }
     }
 }

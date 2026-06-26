@@ -94,6 +94,30 @@ public abstract class AbstractWidget implements IWidget {
         return ellipsis;
     }
 
+    public static boolean isPointIn(int mouseX, int mouseY, int x, int y, int width, int height) {
+        return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+    }
+
+    public static void drawCenteredString(FontRenderer fontRenderer, String text, int x, int y, int width, int height,
+        int color) {
+        int textX = x + (width - fontRenderer.getStringWidth(text)) / 2;
+        int textY = y + (height - fontRenderer.FONT_HEIGHT + 1) / 2;
+        fontRenderer.drawString(text, textX, textY, color);
+    }
+
+    public static void drawItemOverlayText(FontRenderer fontRenderer, String text, int slotX, int slotY, int slotSize,
+        int color) {
+        if (text == null || text.isEmpty()) return;
+
+        int textX = slotX + slotSize - 1 - fontRenderer.getStringWidth(text);
+        int textY = slotY + slotSize - fontRenderer.FONT_HEIGHT;
+        fontRenderer.drawStringWithShadow(text, textX, textY, color);
+    }
+
+    public static void drawPartitionIndicator(FontRenderer fontRenderer, int slotX, int slotY, int color) {
+        fontRenderer.drawStringWithShadow("P", slotX + 1, slotY + 1, color);
+    }
+
     /**
      * Render an IAEStack at the given position using AE2's native rendering.
      * This is the preferred method for rendering storage contents as it properly handles

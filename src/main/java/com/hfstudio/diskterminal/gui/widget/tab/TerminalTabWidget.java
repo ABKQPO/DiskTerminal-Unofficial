@@ -151,6 +151,7 @@ public class TerminalTabWidget extends AbstractTabWidget {
         line.setCellNameSupplier(cell::getDisplayName);
         line.setHasCustomNameSupplier(cell::hasCustomName);
         line.setByteUsageSupplier(cell::getByteUsagePercent);
+        line.setCellStatusSupplier(cell::getStatus);
 
         // Set target ID for double-click tracking (parent storage + slot = unique cell ID)
         line.setDoubleClickTargetId(DoubleClickTracker.cellTargetId(cell.getParentStorageId(), cell.getSlot()));

@@ -69,7 +69,7 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
 
     private static final BlockPos ORIGIN = new BlockPos(0, 0, 0);
 
-    private static final int SLOTS_PER_ROW = 9;
+    private static final int SLOTS_PER_ROW = GuiConstants.STORAGE_BUS_SLOTS_PER_ROW;
     private static final int SLOTS_X_OFFSET = GuiConstants.CELL_INDENT + 4;
 
     // Subnet data
@@ -623,6 +623,10 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
                 boolean slotOccupied = slotIndex < partition.size() && !ItemStacks.isEmpty(partition.get(slotIndex));
 
                 if (!ItemStacks.isEmpty(heldStack)) {
+                    ItemStack stackToSend = GhostIngredientHandler
+                        .convertIngredientForType(heldStack, conn.getStackTypeId(), true);
+                    if (ItemStacks.isEmpty(stackToSend)) return;
+
                     guiContext.sendPacket(
                         new PacketSubnetPartitionAction(
                             subnet.getId(),
@@ -631,7 +635,7 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
                                 .ordinal(),
                             PacketSubnetPartitionAction.Action.ADD_ITEM,
                             slotIndex,
-                            heldStack));
+                            stackToSend));
                 } else if (slotOccupied) {
                     guiContext.sendPacket(
                         new PacketSubnetPartitionAction(

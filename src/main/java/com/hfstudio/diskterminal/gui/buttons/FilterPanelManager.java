@@ -25,7 +25,6 @@ import com.hfstudio.diskterminal.network.PacketSlotLimitChange;
  * - Buttons start below the terminal style button
  * - Stack vertically in a single column by default
  * - If not enough space, stack in 2 columns
- * - If still not enough space, arrange horizontally
  * - If still not enough space, push upwards from controls help widget
  */
 public class FilterPanelManager {
@@ -146,15 +145,7 @@ public class FilterPanelManager {
         // Available space calculation
         int panelX = guiLeft - BUTTON_SIZE - 2; // Same X as terminal style button
         int availableTop = styleButtonBottom + TOP_MARGIN;
-        int availableBottom;
-
-        if (controlsHelpBounds != null && controlsHelpBounds.height > 0) {
-            // Controls help widget exists - don't overlap it
-            availableBottom = controlsHelpBounds.y - BOTTOM_MARGIN;
-        } else {
-            // No controls help - use bottom of GUI area
-            availableBottom = guiTop + ySize - BOTTOM_MARGIN;
-        }
+        int availableBottom = guiTop + ySize - BOTTOM_MARGIN;
 
         int availableHeight = availableBottom - availableTop;
 
@@ -167,7 +158,6 @@ public class FilterPanelManager {
 
         int columns;
         int rows;
-        boolean horizontal;
         boolean pushUp;
         int requiredHeight;
     }
@@ -180,7 +170,6 @@ public class FilterPanelManager {
         if (singleColHeight <= availableHeight) {
             result.columns = 1;
             result.rows = buttonCount;
-            result.horizontal = false;
             result.pushUp = false;
             result.requiredHeight = singleColHeight;
 
@@ -193,30 +182,15 @@ public class FilterPanelManager {
         if (twoColHeight <= availableHeight) {
             result.columns = 2;
             result.rows = twoColRows;
-            result.horizontal = false;
             result.pushUp = false;
             result.requiredHeight = twoColHeight;
 
             return result;
         }
 
-        // Strategy 3: Horizontal row (check if we have enough width)
-        int horizontalWidth = buttonCount * BUTTON_WITH_SPACING - BUTTON_SPACING;
-        int availableWidth = guiLeft - 4; // Space to the left of GUI
-        if (horizontalWidth <= availableWidth && BUTTON_SIZE <= availableHeight) {
-            result.columns = buttonCount;
-            result.rows = 1;
-            result.horizontal = true;
-            result.pushUp = false;
-            result.requiredHeight = BUTTON_SIZE;
-
-            return result;
-        }
-
-        // Strategy 4: Push upward (use two columns, start from bottom)
+        // Strategy 3: Push upward (use two columns, start from bottom)
         result.columns = 2;
         result.rows = twoColRows;
-        result.horizontal = false;
         result.pushUp = true;
         result.requiredHeight = twoColHeight;
 
@@ -228,10 +202,6 @@ public class FilterPanelManager {
         int startY;
         int startX;
 
-        // Count total buttons for horizontal layout
-        int totalButtonCount = filterButtons.size();
-        if (slotLimitButton != null) totalButtonCount++;
-
         if (layout.pushUp) {
             // Start from bottom, going up
             startY = availableBottom - layout.requiredHeight;
@@ -241,11 +211,6 @@ public class FilterPanelManager {
             if (layout.columns == 2) {
                 startX = panelX - BUTTON_WITH_SPACING;
             }
-        } else if (layout.horizontal) {
-            // Horizontal layout - center or right-align
-            int totalWidth = totalButtonCount * BUTTON_WITH_SPACING - BUTTON_SPACING;
-            startX = guiLeft - totalWidth - 2;
-            startY = availableTop;
         } else {
             // Normal vertical layout
             startX = panelX;
@@ -303,28 +268,18 @@ public class FilterPanelManager {
         int styleButtonTop, int styleButtonBottom) {
         int col, row;
 
-        if (layout.horizontal) {
-            col = index;
-            row = 0;
-        } else {
-            col = index % layout.columns;
-            row = index / layout.columns;
-        }
+        col = index % layout.columns;
+        row = index / layout.columns;
 
         int buttonX, buttonY;
 
-        if (layout.horizontal) {
-            buttonX = startX + col * BUTTON_WITH_SPACING;
-            buttonY = startY;
+        // For vertical layout with 2 columns, right column is col 0
+        if (layout.columns == 2) {
+            buttonX = startX + (1 - col) * BUTTON_WITH_SPACING;
         } else {
-            // For vertical layout with 2 columns, right column is col 0
-            if (layout.columns == 2) {
-                buttonX = startX + (1 - col) * BUTTON_WITH_SPACING;
-            } else {
-                buttonX = startX;
-            }
-            buttonY = startY + row * BUTTON_WITH_SPACING;
+            buttonX = startX;
         }
+        buttonY = startY + row * BUTTON_WITH_SPACING;
 
         // Check if button overlaps with style button forbidden zone
         // If so, shift it above the style button

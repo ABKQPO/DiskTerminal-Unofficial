@@ -9,9 +9,11 @@ import java.util.Map;
 import java.util.Set;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.inventory.Container;
@@ -22,6 +24,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
 
 import com.gtnewhorizon.gtnhlib.blockpos.BlockPos;
 import com.hfstudio.diskterminal.client.CellContentRow;
@@ -583,6 +586,122 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     }
 
     @Override
+    public void drawHoveringText(List<String> textLines, int x, int y) {
+        drawHoveringText(textLines, x, y, fontRendererObj);
+    }
+
+    @Override
+    public void drawHoveringText(List<String> textLines, int x, int y, FontRenderer font) {
+        if (textLines == null || textLines.isEmpty()) return;
+
+        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
+        RenderHelper.disableStandardItemLighting();
+        GL11.glDisable(GL11.GL_LIGHTING);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+
+        int tooltipWidth = 0;
+        for (String line : textLines) {
+            tooltipWidth = Math.max(tooltipWidth, font.getStringWidth(line));
+        }
+
+        int tooltipX = x + 12;
+        int tooltipY = y - 12;
+        int tooltipHeight = 8;
+        if (textLines.size() > 1) tooltipHeight += 2 + (textLines.size() - 1) * 10;
+
+        if (tooltipX + tooltipWidth + 4 > this.width) tooltipX = x - 16 - tooltipWidth;
+        if (tooltipX < 4) tooltipX = 4;
+        if (tooltipX + tooltipWidth + 4 > this.width) tooltipX = Math.max(4, this.width - tooltipWidth - 4);
+
+        if (tooltipY + tooltipHeight + 6 > this.height) tooltipY = this.height - tooltipHeight - 6;
+        if (tooltipY < 4) tooltipY = 4;
+
+        this.zLevel = 300.0F;
+        itemRender.zLevel = 300.0F;
+
+        int backgroundColor = -267386864;
+        this.drawGradientRect(
+            tooltipX - 3,
+            tooltipY - 4,
+            tooltipX + tooltipWidth + 3,
+            tooltipY - 3,
+            backgroundColor,
+            backgroundColor);
+        this.drawGradientRect(
+            tooltipX - 3,
+            tooltipY + tooltipHeight + 3,
+            tooltipX + tooltipWidth + 3,
+            tooltipY + tooltipHeight + 4,
+            backgroundColor,
+            backgroundColor);
+        this.drawGradientRect(
+            tooltipX - 3,
+            tooltipY - 3,
+            tooltipX + tooltipWidth + 3,
+            tooltipY + tooltipHeight + 3,
+            backgroundColor,
+            backgroundColor);
+        this.drawGradientRect(
+            tooltipX - 4,
+            tooltipY - 3,
+            tooltipX - 3,
+            tooltipY + tooltipHeight + 3,
+            backgroundColor,
+            backgroundColor);
+        this.drawGradientRect(
+            tooltipX + tooltipWidth + 3,
+            tooltipY - 3,
+            tooltipX + tooltipWidth + 4,
+            tooltipY + tooltipHeight + 3,
+            backgroundColor,
+            backgroundColor);
+
+        int borderColor = 1347420415;
+        int borderColorEnd = (borderColor & 16711422) >> 1 | borderColor & -16777216;
+        this.drawGradientRect(
+            tooltipX - 3,
+            tooltipY - 2,
+            tooltipX - 2,
+            tooltipY + tooltipHeight + 2,
+            borderColor,
+            borderColorEnd);
+        this.drawGradientRect(
+            tooltipX + tooltipWidth + 2,
+            tooltipY - 2,
+            tooltipX + tooltipWidth + 3,
+            tooltipY + tooltipHeight + 2,
+            borderColor,
+            borderColorEnd);
+        this.drawGradientRect(
+            tooltipX - 3,
+            tooltipY - 3,
+            tooltipX + tooltipWidth + 3,
+            tooltipY - 2,
+            borderColor,
+            borderColor);
+        this.drawGradientRect(
+            tooltipX - 3,
+            tooltipY + tooltipHeight + 2,
+            tooltipX + tooltipWidth + 3,
+            tooltipY + tooltipHeight + 3,
+            borderColorEnd,
+            borderColorEnd);
+
+        for (int i = 0; i < textLines.size(); i++) {
+            font.drawStringWithShadow(textLines.get(i), tooltipX, tooltipY, -1);
+            if (i == 0) tooltipY += 2;
+            tooltipY += 10;
+        }
+
+        this.zLevel = 0.0F;
+        itemRender.zLevel = 0.0F;
+        GL11.glEnable(GL11.GL_LIGHTING);
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        RenderHelper.enableStandardItemLighting();
+        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+    }
+
+    @Override
     public Slot getSlotUnderMouse() {
         return SlotAccess.slotUnderMouse(this);
     }
@@ -805,10 +924,11 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         int panelHeight = contentHeight + (CONTROLS_HELP_PADDING * 2);
 
         // Calculate panel width and position (same logic as in drawControlsHelpWidget)
-        int panelWidth = this.guiLeft - CONTROLS_HELP_RIGHT_MARGIN - CONTROLS_HELP_LEFT_MARGIN;
+        int panelWidth = Math.min(118, this.guiLeft - CONTROLS_HELP_RIGHT_MARGIN - CONTROLS_HELP_LEFT_MARGIN - 18);
         if (panelWidth < 60) panelWidth = 60;
 
-        int panelLeft = -this.guiLeft + CONTROLS_HELP_LEFT_MARGIN;
+        int panelRight = -CONTROLS_HELP_RIGHT_MARGIN - 18;
+        int panelLeft = panelRight - panelWidth;
 
         // Position relative to screen bottom
         // Leave margin for NEI bookmarks button at screen bottom
@@ -825,6 +945,8 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     public List<Rectangle> getNEIExclusionArea() {
         List<Rectangle> areas = new ArrayList<>();
         Rectangle controlsHelp = getControlsHelpBounds();
+
+        areas.add(new Rectangle(this.guiLeft, this.guiTop, this.xSize, this.ySize));
 
         if (controlsHelp.width > 0) areas.add(controlsHelp);
 
@@ -847,7 +969,36 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             areas.add(new Rectangle(this.guiLeft + this.xSize + 1, this.guiTop + this.ySize - 90, 68, 68));
         }
 
+        if (inventoryPopup != null) {
+            areas.add(
+                new Rectangle(
+                    inventoryPopup.getX() - 1,
+                    inventoryPopup.getY() - 1,
+                    inventoryPopup.getWidth() + 2,
+                    inventoryPopup.getHeight() + 2));
+        }
+
+        if (partitionPopup != null) {
+            areas.add(
+                new Rectangle(
+                    partitionPopup.getX() - 1,
+                    partitionPopup.getY() - 1,
+                    partitionPopup.getWidth() + 2,
+                    partitionPopup.getHeight() + 2));
+        }
+
         return areas;
+    }
+
+    @Override
+    public boolean hideItemPanelSlot(GuiContainer gui, int x, int y, int w, int h) {
+        Rectangle checkedArea = new Rectangle(x, y, w, h);
+        for (Rectangle area : getNEIExclusionArea()) {
+            if (area.width <= 0 || area.height <= 0) continue;
+            if (area.intersects(checkedArea) || area.contains(x, y)) return true;
+        }
+
+        return false;
     }
 
     @Override
@@ -972,9 +1123,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         if (partitionPopup != null) {
             if (partitionPopup.handleClick(mouseX, mouseY, mouseButton)) return;
 
-            // Click outside popup closes it
-            partitionPopup = null;
-
+            // Keep partition editing open so NEI ghost drags and held-item marking can target it.
             return;
         }
 

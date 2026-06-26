@@ -29,13 +29,13 @@ import com.hfstudio.diskterminal.util.ItemStacks;
  */
 public class PopupCellPartition extends Gui {
 
-    private static final int SLOTS_PER_ROW = GuiConstants.POPUP_SLOTS_PER_ROW;
-    private static final int MAX_ROWS = GuiConstants.POPUP_MAX_ROWS;
+    private static final int SLOTS_PER_ROW = 7;
+    private static final int MAX_PARTITION_SLOTS = 63;
+    private static final int MAX_ROWS = (MAX_PARTITION_SLOTS + SLOTS_PER_ROW - 1) / SLOTS_PER_ROW;
     private static final int SLOT_SIZE = GuiConstants.SLOT_SIZE;
     private static final int PADDING = GuiConstants.PADDING;
     private static final int HEADER_HEIGHT = GuiConstants.POPUP_HEADER_HEIGHT;
     private static final int FOOTER_HEIGHT = GuiConstants.POPUP_FOOTER_HEIGHT;
-    private static final int MAX_PARTITION_SLOTS = SLOTS_PER_ROW * MAX_ROWS;
 
     private final GuiScreen parent;
     private final CellInfo cell;
@@ -90,6 +90,7 @@ public class PopupCellPartition extends Gui {
 
         // Reset GL state to known good state before drawing
         GL11.glDisable(GL11.GL_LIGHTING);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
@@ -159,7 +160,7 @@ public class PopupCellPartition extends Gui {
      * @return the tooltip lines and screen position, or null if nothing is hovered
      */
     @SuppressWarnings("unchecked")
-    public java.util.List<String> getHoveredTooltip() {
+    public List<String> getHoveredTooltip() {
         if (ItemStacks.isEmpty(hoveredStack)) return null;
 
         return hoveredStack.getTooltip(Minecraft.getMinecraft().thePlayer, false);
@@ -176,7 +177,7 @@ public class PopupCellPartition extends Gui {
     public boolean handleClick(int mouseX, int mouseY, int mouseButton) {
         if (!isInsidePopup(mouseX, mouseY)) return false;
 
-        // Check slot click to remove
+        // Check slot click to replace or remove.
         int slotStartY = y + HEADER_HEIGHT;
         int relX = mouseX - x - slotOffsetX;
         int relY = mouseY - slotStartY;
@@ -187,8 +188,25 @@ public class PopupCellPartition extends Gui {
             int slotIndex = slotRow * SLOTS_PER_ROW + slotCol;
 
             if (slotIndex < MAX_PARTITION_SLOTS && slotIndex < editablePartition.size()) {
+                ItemStack heldStack = Minecraft.getMinecraft().thePlayer.inventory.getItemStack();
+                ItemStack replacement = convertIngredientForCell(heldStack);
+
+                if (!ItemStacks.isEmpty(replacement)) {
+                    editablePartition.set(slotIndex, replacement.copy());
+
+                    DiskTerminalNetwork.INSTANCE.sendToServer(
+                        new PacketPartitionAction(
+                            cell.getParentStorageId(),
+                            cell.getSlot(),
+                            PacketPartitionAction.Action.ADD_ITEM,
+                            slotIndex,
+                            replacement));
+
+                    return true;
+                }
+
                 ItemStack removed = editablePartition.get(slotIndex);
-                if (!ItemStacks.isEmpty(removed)) {
+                if (ItemStacks.isEmpty(heldStack) && !ItemStacks.isEmpty(removed)) {
                     editablePartition.set(slotIndex, null);
 
                     DiskTerminalNetwork.INSTANCE.sendToServer(
@@ -228,32 +246,17 @@ public class PopupCellPartition extends Gui {
 
         if (ItemStacks.isEmpty(stack)) return false;
 
-        // Find first empty slot if dropping on occupied slot
-        int targetSlot = slotIndex;
-        if (!ItemStacks.isEmpty(editablePartition.get(slotIndex))) {
-            targetSlot = findEmptySlot();
-            if (targetSlot == -1) return false;
-        }
-
-        editablePartition.set(targetSlot, stack.copy());
+        editablePartition.set(slotIndex, stack.copy());
 
         DiskTerminalNetwork.INSTANCE.sendToServer(
             new PacketPartitionAction(
                 cell.getParentStorageId(),
                 cell.getSlot(),
                 PacketPartitionAction.Action.ADD_ITEM,
-                targetSlot,
+                slotIndex,
                 stack));
 
         return true;
-    }
-
-    private int findEmptySlot() {
-        for (int i = 0; i < editablePartition.size(); i++) {
-            if (ItemStacks.isEmpty(editablePartition.get(i))) return i;
-        }
-
-        return -1;
     }
 
     public boolean isInsidePopup(int mouseX, int mouseY) {

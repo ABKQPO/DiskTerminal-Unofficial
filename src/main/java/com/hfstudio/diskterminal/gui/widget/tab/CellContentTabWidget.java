@@ -475,6 +475,7 @@ public class CellContentTabWidget extends AbstractTabWidget {
             }
         });
         line.setTreeButton(treeBtn);
+        line.setTreeButtonXOffset(-4);
 
         // GUI offsets for NEI targets
         line.setGuiOffsets(guiLeft, guiTop);
@@ -532,7 +533,9 @@ public class CellContentTabWidget extends AbstractTabWidget {
                 boolean slotOccupied = slotIndex < partition.size() && !ItemStacks.isEmpty(partition.get(slotIndex));
 
                 if (!ItemStacks.isEmpty(heldStack)) {
-                    ItemStack stackToSend = heldStack;
+                    ItemStack stackToSend = GhostIngredientHandler
+                        .convertIngredientForType(heldStack, cell.getStackTypeId(), false);
+                    if (ItemStacks.isEmpty(stackToSend)) return;
 
                     guiContext.sendPacket(
                         new PacketPartitionAction(

@@ -14,9 +14,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
 
 import com.hfstudio.diskterminal.config.DiskTerminalServerConfig;
 import com.hfstudio.diskterminal.gui.GuiConstants;
+import com.hfstudio.diskterminal.gui.widget.AbstractWidget;
 import com.hfstudio.diskterminal.util.ItemStacks;
 
 /**
@@ -138,8 +140,6 @@ public class TabRenderingHandler {
             // Gray-out overlay for disabled tabs (the vanilla sprite has no disabled variant).
             if (isDisabled) {
                 Gui.drawRect(tabX, actualTabY, tabX + ctx.tabWidth, actualTabY + ctx.tabHeight, 0x99303030);
-            } else if (isHovered && !isSelected) {
-                Gui.drawRect(tabX, actualTabY, tabX + ctx.tabWidth, actualTabY + ctx.tabHeight, 0x33FFFFFF);
             }
 
             // Draw icon (composite for storage bus tabs)
@@ -152,10 +152,7 @@ public class TabRenderingHandler {
                 ItemStack icon = iconProvider.getTabIcon(i);
                 if (!ItemStacks.isEmpty(icon)) {
                     GL11.glColor4f(iconAlpha, iconAlpha, iconAlpha, 1.0F);
-                    RenderHelper.enableGUIStandardItemLighting();
-                    ctx.itemRender
-                        .renderItemAndEffectIntoGUI(ctx.mc.fontRenderer, ctx.mc.renderEngine, icon, tabX + 3, iconY);
-                    RenderHelper.disableStandardItemLighting();
+                    AbstractWidget.renderItemStack(ctx.itemRender, icon, tabX + 3, iconY);
                     GL11.glDisable(GL11.GL_LIGHTING);
                 }
             }
@@ -186,12 +183,16 @@ public class TabRenderingHandler {
         ItemStack storageBusIcon = iconProvider.getStorageBusIcon();
 
         float colorMod = isDisabled ? 0.4f : 1.0f;
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
         GL11.glColor4f(colorMod, colorMod, colorMod, 1.0F);
 
         int scaleFactor = new ScaledResolution(ctx.mc, ctx.mc.displayWidth, ctx.mc.displayHeight).getScaleFactor();
         int offset = 4;
 
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        GL11.glEnable(GL11.GL_LIGHTING);
+        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
         RenderHelper.enableGUIStandardItemLighting();
 
         // Top-left icon
@@ -240,6 +241,7 @@ public class TabRenderingHandler {
 
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
         GL11.glDisable(GL11.GL_LIGHTING);
+        GL11.glPopAttrib();
 
         // Draw diagonal separator line
         float lineColor = isDisabled ? 0.15f : 0.3f;
@@ -341,8 +343,7 @@ public class TabRenderingHandler {
             return new ControlsHelpResult(new ArrayList<>(), ctx.currentTab);
         }
 
-        // Calculate panel width
-        int panelWidth = ctx.guiLeft - CONTROLS_HELP_RIGHT_MARGIN - CONTROLS_HELP_LEFT_MARGIN;
+        int panelWidth = Math.min(118, ctx.guiLeft - CONTROLS_HELP_RIGHT_MARGIN - CONTROLS_HELP_LEFT_MARGIN - 18);
         if (panelWidth < 60) panelWidth = 60;
 
         int textWidth = panelWidth - (CONTROLS_HELP_PADDING * 2);
@@ -358,8 +359,8 @@ public class TabRenderingHandler {
         }
 
         // Calculate positions
-        int panelRight = -CONTROLS_HELP_RIGHT_MARGIN;
-        int panelLeft = -ctx.guiLeft + CONTROLS_HELP_LEFT_MARGIN;
+        int panelRight = -CONTROLS_HELP_RIGHT_MARGIN - 18;
+        int panelLeft = panelRight - panelWidth;
         int contentHeight = wrappedLines.size() * CONTROLS_HELP_LINE_HEIGHT;
         int panelHeight = contentHeight + (CONTROLS_HELP_PADDING * 2);
 
@@ -375,8 +376,8 @@ public class TabRenderingHandler {
         // Border
         Gui.drawRect(panelLeft, panelTop, panelRight, panelTop + 1, 0xFF606060);
         Gui.drawRect(panelLeft, panelTop, panelLeft + 1, panelBottom, 0xFF606060);
-        Gui.drawRect(panelLeft, panelBottom - 1, panelRight, panelBottom, 0xFF303030);
-        Gui.drawRect(panelRight - 1, panelTop, panelRight, panelBottom, 0xFF303030);
+        Gui.drawRect(panelLeft, panelBottom - 1, panelRight, panelBottom, 0xFF606060);
+        Gui.drawRect(panelRight - 1, panelTop, panelRight, panelBottom, 0xFF606060);
 
         // Draw text
         int textX = panelLeft + CONTROLS_HELP_PADDING;

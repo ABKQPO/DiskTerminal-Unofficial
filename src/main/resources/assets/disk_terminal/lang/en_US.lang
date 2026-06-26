@@ -1,8 +1,13 @@
 # Items
+itemGroup.disk_terminal=DiskTerminal-Unofficial
 item.disk_terminal.cell_terminal.name=Cell Terminal
 item.disk_terminal.wireless_cell_terminal.name=Wireless Cell Terminal
 item.disk_terminal.cell_terminal.tooltip=§bFor all your partitioning needs!
 item.disk_terminal.wireless_cell_terminal.temp_cells=§7Temporary Cells: §f%d
+item.disk_terminal.wireless_cell_terminal.linked=§aLinked
+item.disk_terminal.wireless_cell_terminal.unlinked=§cNot linked
+item.disk_terminal.wireless_cell_terminal.nolink=§cNot linked
+item.disk_terminal.wireless_cell_terminal.no_link=§cNot linked
 
 # GUI
 gui.disk_terminal.cell_terminal.title=Cell Terminal

@@ -1,17 +1,20 @@
 package com.hfstudio.diskterminal;
 
+import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.common.MinecraftForge;
 
 import com.hfstudio.diskterminal.client.BlockHighlightRenderer;
 import com.hfstudio.diskterminal.client.KeyBindings;
 import com.hfstudio.diskterminal.client.KeyInputHandler;
 import com.hfstudio.diskterminal.client.UpgradeTooltipHandler;
+import com.hfstudio.diskterminal.part.PartCellTerminal;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLLoadCompleteEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
 public class ClientProxy extends CommonProxy {
 
@@ -32,6 +35,7 @@ public class ClientProxy extends CommonProxy {
             .register(new KeyInputHandler());
         MinecraftForge.EVENT_BUS.register(new BlockHighlightRenderer());
         MinecraftForge.EVENT_BUS.register(new UpgradeTooltipHandler());
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
     @Override
@@ -42,5 +46,12 @@ public class ClientProxy extends CommonProxy {
     @Override
     public void completeInit(FMLLoadCompleteEvent event) {
         super.completeInit(event);
+    }
+
+    @SubscribeEvent
+    public void onTextureStitch(TextureStitchEvent.Pre event) {
+        if (event.map.getTextureType() != 0) return;
+
+        PartCellTerminal.registerPartIcons(event.map);
     }
 }
