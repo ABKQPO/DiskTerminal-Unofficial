@@ -48,7 +48,6 @@ import com.hfstudio.diskterminal.gui.buttons.GuiSlotLimitButton;
 import com.hfstudio.diskterminal.gui.buttons.GuiSubnetVisibilityButton;
 import com.hfstudio.diskterminal.gui.buttons.GuiTerminalStyleButton;
 import com.hfstudio.diskterminal.gui.handler.GhostTarget;
-import com.hfstudio.diskterminal.gui.handler.SlotAccess;
 import com.hfstudio.diskterminal.gui.handler.TabManager;
 import com.hfstudio.diskterminal.gui.handler.TabRenderingHandler;
 import com.hfstudio.diskterminal.gui.handler.TerminalDataManager;
@@ -695,7 +694,19 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
     @Override
     public Slot getSlotUnderMouse() {
-        return SlotAccess.slotUnderMouse(this);
+        int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
+        int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
+
+        for (Object slotObject : this.inventorySlots.inventorySlots) {
+            Slot slot = (Slot) slotObject;
+            if (slot.func_111238_b() && isMouseOverContainerSlot(slot, mouseX, mouseY)) return slot;
+        }
+
+        return null;
+    }
+
+    private boolean isMouseOverContainerSlot(Slot slot, int mouseX, int mouseY) {
+        return this.func_146978_c(slot.xDisplayPosition, slot.yDisplayPosition, 16, 16, mouseX, mouseY);
     }
 
     private void drawPopupTooltipTail(int mouseX, int mouseY, float partialTicks) {

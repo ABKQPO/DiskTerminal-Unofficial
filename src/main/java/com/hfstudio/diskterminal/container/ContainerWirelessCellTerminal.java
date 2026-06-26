@@ -5,6 +5,7 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 
+import com.hfstudio.diskterminal.integration.BaublesIntegration;
 import com.hfstudio.diskterminal.items.ItemWirelessCellTerminal;
 import com.hfstudio.diskterminal.util.ItemStacks;
 
@@ -13,16 +14,12 @@ import appeng.api.config.PowerMultiplier;
 import appeng.core.AEConfig;
 import appeng.core.localization.PlayerMessages;
 import appeng.helpers.WirelessTerminalGuiObject;
-import baubles.api.BaublesApi;
-import cpw.mods.fml.common.Loader;
 
 /**
  * Container for the Wireless Cell Terminal GUI. Works over a wireless connection, draining power
  * and enforcing range like AE2's wireless terminal.
  */
 public class ContainerWirelessCellTerminal extends ContainerCellTerminalBase {
-
-    private static final String BAUBLES_MODID = "Baubles|Expanded";
 
     private final WirelessTerminalGuiObject wirelessTerminalGuiObject;
     private final int slot;
@@ -51,9 +48,7 @@ public class ContainerWirelessCellTerminal extends ContainerCellTerminalBase {
             if (!ItemStacks.isEmpty(inMain) && inMain.getItem() instanceof ItemWirelessCellTerminal) return false;
         }
 
-        if (!Loader.isModLoaded(BAUBLES_MODID)) return false;
-
-        IInventory baubles = BaublesApi.getBaubles(ip.player);
+        IInventory baubles = BaublesIntegration.getInventory(ip.player);
         if (baubles == null) return false;
 
         ItemStack inBauble = baubles.getStackInSlot(slot);
@@ -72,10 +67,7 @@ public class ContainerWirelessCellTerminal extends ContainerCellTerminalBase {
 
     private ItemStack getTerminalStack() {
         if (isBauble) {
-            if (!Loader.isModLoaded(BAUBLES_MODID)) return null;
-            IInventory baubles = BaublesApi.getBaubles(getPlayerInv().player);
-
-            return baubles == null ? null : baubles.getStackInSlot(slot);
+            return BaublesIntegration.getStackInSlot(getPlayerInv().player, slot);
         }
 
         return getPlayerInv().getStackInSlot(slot);

@@ -6,15 +6,13 @@ import net.minecraft.item.ItemStack;
 
 import com.hfstudio.diskterminal.ItemRegistry;
 import com.hfstudio.diskterminal.gui.GuiHandler;
+import com.hfstudio.diskterminal.integration.BaublesIntegration;
 import com.hfstudio.diskterminal.util.ItemStacks;
 
 import appeng.api.AEApi;
 import appeng.api.features.ILocatable;
 import appeng.api.features.IWirelessTermHandler;
 import appeng.core.localization.PlayerMessages;
-import baubles.api.BaublesApi;
-import cpw.mods.fml.common.Loader;
-import cpw.mods.fml.common.Optional;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -25,8 +23,6 @@ import io.netty.buffer.ByteBuf;
  * Searches the player's main inventory and (if present) Baubles slots for a linked terminal.
  */
 public class PacketOpenWirelessTerminal implements IMessage {
-
-    private static final String BAUBLES_MODID = "Baubles|Expanded";
 
     public PacketOpenWirelessTerminal() {}
 
@@ -56,7 +52,7 @@ public class PacketOpenWirelessTerminal implements IMessage {
                 }
             }
 
-            if (Loader.isModLoaded(BAUBLES_MODID)) tryOpenFromBaubles(player);
+            if (BaublesIntegration.isModLoaded()) tryOpenFromBaubles(player);
         }
 
         private boolean tryOpenWirelessCellTerminal(ItemStack is, EntityPlayerMP player, int slot, boolean isBauble) {
@@ -96,9 +92,8 @@ public class PacketOpenWirelessTerminal implements IMessage {
             return true;
         }
 
-        @Optional.Method(modid = BAUBLES_MODID)
         private boolean tryOpenFromBaubles(EntityPlayerMP player) {
-            IInventory baubles = BaublesApi.getBaubles(player);
+            IInventory baubles = BaublesIntegration.getInventory(player);
             if (baubles == null) return false;
 
             for (int i = 0; i < baubles.getSizeInventory(); i++) {

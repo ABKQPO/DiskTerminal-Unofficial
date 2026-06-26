@@ -6,41 +6,38 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 
+import com.glodblock.github.common.parts.PartFluidStorageBus;
 import com.hfstudio.diskterminal.client.StorageType;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler.StorageBusTracker;
+import com.hfstudio.diskterminal.integration.Mods;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
-import appeng.parts.misc.PartStorageBus;
 
-/**
- * Scanner for AE2 item storage buses.
- */
-public class AE2StorageBusScanner extends AbstractStorageBusScanner {
+public class AE2FluidCraftStorageBusScanner extends AbstractStorageBusScanner {
 
-    public static final AE2StorageBusScanner INSTANCE = new AE2StorageBusScanner();
+    public static final AE2FluidCraftStorageBusScanner INSTANCE = new AE2FluidCraftStorageBusScanner();
 
-    private AE2StorageBusScanner() {}
+    private AE2FluidCraftStorageBusScanner() {}
 
     @Override
     public String getId() {
-        return "appliedenergistics2";
+        return "ae2fc";
     }
 
     @Override
     public boolean isAvailable() {
-        return true;
+        return Mods.AE2FluidCraft.isModLoaded();
     }
 
     @Override
     public void scanStorageBuses(IGrid grid, NBTTagList out, Map<Long, StorageBusTracker> trackerMap) {
         if (grid == null) return;
 
-        // Item storage buses (exact PartStorageBus class registration)
-        for (IGridNode gn : grid.getMachines(PartStorageBus.class)) {
+        for (IGridNode gn : grid.getMachines(PartFluidStorageBus.class)) {
             if (!gn.isActive()) continue;
-            PartStorageBus bus = (PartStorageBus) gn.getMachine();
+            PartFluidStorageBus bus = (PartFluidStorageBus) gn.getMachine();
             TileEntity hostTile = bus.getHost()
                 .getTile();
             if (hostTile == null) continue;
@@ -49,8 +46,8 @@ public class AE2StorageBusScanner extends AbstractStorageBusScanner {
                 hostTile,
                 bus.getSide()
                     .ordinal(),
-                StorageType.ITEM.ordinal());
-            NBTTagCompound nbt = StorageBusDataHandler.createItemStorageBusData(bus, busId);
+                StorageType.FLUID.ordinal());
+            NBTTagCompound nbt = StorageBusDataHandler.createFluidStorageBusData(bus, busId);
             applyCapabilities(nbt);
             applySlotParameters(nbt);
             out.appendTag(nbt);
@@ -62,7 +59,7 @@ public class AE2StorageBusScanner extends AbstractStorageBusScanner {
                     hostTile,
                     bus.getSide()
                         .ordinal(),
-                    StorageType.ITEM));
+                    StorageType.FLUID));
         }
     }
 }

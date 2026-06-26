@@ -7,26 +7,20 @@ import net.minecraft.item.ItemStack;
 import codechicken.nei.guihook.GuiContainerManager;
 import codechicken.nei.recipe.GuiCraftingRecipe;
 import codechicken.nei.recipe.GuiUsageRecipe;
-import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.Optional;
 
 /**
  * Soft integration with NotEnoughItems. Provides the item stack currently hovered in the NEI
- * item-list overlay, used by quick-partition and ghost-drag. All access is guarded by
- * {@link Optional.Method}; when NEI is absent the methods return null.
+ * item-list overlay, used by quick-partition and ghost-drag.
  */
 public class NEIIntegration {
 
     public static final String MOD_ID = "NotEnoughItems";
 
-    private static Boolean loaded = null;
-
     private NEIIntegration() {}
 
     public static boolean isModLoaded() {
-        if (loaded == null) loaded = Loader.isModLoaded(MOD_ID);
-
-        return loaded;
+        return Mods.NotEnoughItems.isModLoaded();
     }
 
     /**
@@ -35,7 +29,7 @@ public class NEIIntegration {
     public static ItemStack getStackUnderMouse() {
         if (!isModLoaded()) return null;
 
-        return queryNei();
+        return getStackUnderMouseInternal();
     }
 
     public static boolean showRecipe(ItemStack stack) {
@@ -51,7 +45,7 @@ public class NEIIntegration {
     }
 
     @Optional.Method(modid = MOD_ID)
-    private static ItemStack queryNei() {
+    private static ItemStack getStackUnderMouseInternal() {
         try {
             if (!(Minecraft.getMinecraft().currentScreen instanceof GuiContainer)) return null;
 

@@ -50,7 +50,7 @@ public class GuiSlotLimitButton extends GuiAtlasButton {
 
     @Override
     protected int getBackgroundTexY() {
-        return GuiConstants.TERMINAL_STYLE_BUTTON_Y + (this.field_146123_n ? SIZE : 0);
+        return GuiConstants.TERMINAL_STYLE_BUTTON_Y + (this.func_146115_a() ? SIZE : 0);
     }
 
     @Override

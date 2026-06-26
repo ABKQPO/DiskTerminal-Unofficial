@@ -81,6 +81,6 @@ public abstract class GuiAtlasButton extends GuiButton {
      * Whether the mouse was over this button at the last draw (mirrors 1.12 GuiButton#isMouseOver).
      */
     public boolean isMouseOver() {
-        return this.field_146123_n;
+        return this.func_146115_a();
     }
 }

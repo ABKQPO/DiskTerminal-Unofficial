@@ -18,10 +18,10 @@ import com.hfstudio.diskterminal.client.CellFilter;
 import com.hfstudio.diskterminal.client.CellFilter.State;
 import com.hfstudio.diskterminal.gui.GuiConstants;
 import com.hfstudio.diskterminal.gui.widget.AbstractWidget;
+import com.hfstudio.diskterminal.integration.Mods;
 import com.hfstudio.diskterminal.util.ItemStacks;
 
 import appeng.api.AEApi;
-import cpw.mods.fml.common.Loader;
 
 /**
  * A toggle button for cell/storage bus filters.
@@ -81,7 +81,7 @@ public class GuiFilterButton extends GuiAtlasButton {
 
     @Override
     protected int getBackgroundTexY() {
-        return GuiConstants.TERMINAL_STYLE_BUTTON_Y + (this.field_146123_n ? SIZE : 0);
+        return GuiConstants.TERMINAL_STYLE_BUTTON_Y + (this.func_146115_a() ? SIZE : 0);
     }
 
     @Override
@@ -99,17 +99,12 @@ public class GuiFilterButton extends GuiAtlasButton {
     }
 
     private static ItemStack getEssentiaIcon() {
-        // Try to get Thaumcraft Jar, fall back to glass bottle if not available
-        if (!Loader.isModLoaded("thaumcraft")) return new ItemStack(Items.glass_bottle);
+        if (!Mods.Thaumcraft.isModLoaded()) return new ItemStack(Items.glass_bottle);
 
-        try {
-            Class<?> thaumcraftItems = Class.forName("thaumcraft.api.items.ItemsTC");
-            Object jarItem = thaumcraftItems.getField("phial")
-                .get(null);
-            if (jarItem instanceof Item) return new ItemStack((Item) jarItem);
-        } catch (Exception e) {
-            DiskTerminal.LOG.warn("Failed to get Thaumcraft jar item for essentia cell filter icon", e);
-        }
+        Item phial = (Item) Item.itemRegistry.getObject("Thaumcraft:ItemEssence");
+        if (phial != null) return new ItemStack(phial, 1, 0);
+
+        DiskTerminal.LOG.warn("Failed to get Thaumcraft phial item for essentia cell filter icon");
 
         return new ItemStack(Items.glass_bottle);
     }

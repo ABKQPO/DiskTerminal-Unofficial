@@ -59,8 +59,8 @@ public class TempCellActionHandler {
             .getHandler(cellStack);
         if (cellHandler == null) return;
 
-        CellActionHandler.ConfigResult config = CellActionHandler.getConfigInventory(cellHandler, cellStack);
-        if (config.configInv == null) return;
+        CellActionHandler.ConfigResult config = CellActionHandler.getCellConfig(cellHandler, cellStack);
+        if (config.configAEInv == null) return;
 
         CellActionHandler
             .executePartitionActionDirect(config, action, partitionSlot, stackData, cellHandler, cellStack);

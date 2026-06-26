@@ -2,6 +2,7 @@ package com.hfstudio.diskterminal;
 
 import com.hfstudio.diskterminal.config.DiskTerminalServerConfig;
 import com.hfstudio.diskterminal.gui.GuiHandler;
+import com.hfstudio.diskterminal.integration.AE2FluidCraftIntegration;
 import com.hfstudio.diskterminal.integration.storage.AE2StorageScanner;
 import com.hfstudio.diskterminal.integration.storage.StorageScannerRegistry;
 import com.hfstudio.diskterminal.integration.storagebus.AE2StorageBusScanner;
@@ -31,6 +32,7 @@ public class CommonProxy {
         // Register scanners for storage devices, storage buses, and subnets
         StorageScannerRegistry.register(AE2StorageScanner.INSTANCE);
         StorageBusScannerRegistry.register(AE2StorageBusScanner.INSTANCE);
+        AE2FluidCraftIntegration.registerStorageBusScanner();
         SubnetScannerRegistry.register(AE2SubnetScanner.INSTANCE);
 
         RecipeRegistry.init();

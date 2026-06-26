@@ -25,7 +25,7 @@ public class GuiSearchHelpButton extends GuiAtlasButton {
 
     @Override
     protected int getBackgroundTexY() {
-        return GuiConstants.SEARCH_HELP_TOOLTIP_BUTTON_Y + (this.field_146123_n ? SIZE : 0);
+        return GuiConstants.SEARCH_HELP_TOOLTIP_BUTTON_Y + (this.func_146115_a() ? SIZE : 0);
     }
 
     /**

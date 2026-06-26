@@ -6,7 +6,6 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
@@ -15,6 +14,7 @@ import net.minecraftforge.fluids.FluidStack;
 import com.hfstudio.diskterminal.client.CellContentRow;
 import com.hfstudio.diskterminal.client.CellInfo;
 import com.hfstudio.diskterminal.client.StorageInfo;
+import com.hfstudio.diskterminal.gui.GuiCellTerminalBase;
 import com.hfstudio.diskterminal.integration.NEIIntegration;
 import com.hfstudio.diskterminal.integration.ThaumicEnergisticsIntegration;
 import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
@@ -148,8 +148,8 @@ public class QuickPartitionHandler {
     public static HoveredIngredient getHoveredIngredient() {
         Minecraft mc = Minecraft.getMinecraft();
 
-        if (mc.currentScreen instanceof GuiContainer) {
-            Slot hoveredSlot = SlotAccess.slotUnderMouse((GuiContainer) mc.currentScreen);
+        if (mc.currentScreen instanceof GuiCellTerminalBase gui) {
+            Slot hoveredSlot = gui.getSlotUnderMouse();
 
             if (hoveredSlot != null && hoveredSlot.getHasStack()) {
                 ItemStack stack = hoveredSlot.getStack()

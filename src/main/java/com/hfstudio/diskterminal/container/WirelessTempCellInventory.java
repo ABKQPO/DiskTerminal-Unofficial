@@ -4,12 +4,11 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 
+import com.hfstudio.diskterminal.integration.BaublesIntegration;
 import com.hfstudio.diskterminal.items.ItemWirelessCellTerminal;
 import com.hfstudio.diskterminal.util.ItemStacks;
 
 import appeng.api.storage.ICellWorkbenchItem;
-import baubles.api.BaublesApi;
-import cpw.mods.fml.common.Loader;
 
 /**
  * {@link IInventory} view over a wireless terminal's temp cell storage, persisted in the terminal
@@ -17,8 +16,6 @@ import cpw.mods.fml.common.Loader;
  * Baubles-Expanded is present.
  */
 public class WirelessTempCellInventory implements IInventory {
-
-    private static final String BAUBLES_MODID = "Baubles|Expanded";
 
     private final EntityPlayer player;
     private final int terminalSlot;
@@ -32,10 +29,7 @@ public class WirelessTempCellInventory implements IInventory {
 
     private ItemStack getTerminalStack() {
         if (isBauble) {
-            if (!Loader.isModLoaded(BAUBLES_MODID)) return null;
-            IInventory baubles = BaublesApi.getBaubles(player);
-
-            return baubles == null ? null : baubles.getStackInSlot(terminalSlot);
+            return BaublesIntegration.getStackInSlot(player, terminalSlot);
         }
 
         return player.inventory.getStackInSlot(terminalSlot);

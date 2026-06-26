@@ -34,9 +34,8 @@ import appeng.util.IterationCounter;
 /**
  * Handles cell-related actions: partition modifications, ejection, pickup, insertion, upgrades.
  * <p>
- * Cell config/upgrade inventories are {@link IInventory} in 1.7.10; capability-style operations use
- * {@link InventoryHelper}. Partition data uses AE2's generic stack inventory so every registered stack type is
- * preserved.
+ * Cell upgrade inventories are {@link IInventory} in 1.7.10; capability-style operations use {@link InventoryHelper}.
+ * Partition data uses AE2's generic stack inventory so every registered stack type is preserved.
  */
 public class CellActionHandler {
 
@@ -60,8 +59,8 @@ public class CellActionHandler {
             .getHandler(cellStack);
         if (cellHandler == null) return false;
 
-        ConfigResult config = getConfigInventory(cellHandler, cellStack);
-        if (config.configInv == null && config.configAEInv == null) return false;
+        ConfigResult config = getCellConfig(cellHandler, cellStack);
+        if (config.configAEInv == null) return false;
 
         executePartitionAction(config, action, partitionSlot, stackData, cellHandler, cellStack);
 
@@ -236,12 +235,11 @@ public class CellActionHandler {
         return false;
     }
 
-    public static ConfigResult getConfigInventory(ICellHandler cellHandler, ItemStack cellStack) {
+    public static ConfigResult getCellConfig(ICellHandler cellHandler, ItemStack cellStack) {
         ConfigResult result = new ConfigResult();
 
         if (cellStack.getItem() instanceof ICellWorkbenchItem workbenchItem) {
             result.configAEInv = workbenchItem.getConfigAEInventory(cellStack);
-            result.configInv = workbenchItem.getConfigInventory(cellStack);
             result.stackType = workbenchItem.getStackType();
             if (result.configAEInv != null) return result;
         }
@@ -254,7 +252,6 @@ public class CellActionHandler {
             if (cellInv == null) continue;
 
             result.configAEInv = cellInv.getConfigAEInventory();
-            result.configInv = cellInv.getConfigInventory();
             result.stackType = type;
 
             return result;
@@ -347,7 +344,7 @@ public class CellActionHandler {
         if (action == PacketPartitionAction.Action.ADD_ITEM && !ItemStacks.isEmpty(displayStack)) {
             partitionItem = displayStack;
         } else if (action == PacketPartitionAction.Action.TOGGLE_ITEM && !ItemStacks.isEmpty(displayStack)) {
-            if (findItemInConfig(config.configInv, displayStack) < 0) partitionItem = displayStack;
+            if (findStackInConfig(config, resolvePartitionStack(config, stackData)) < 0) partitionItem = displayStack;
         } else if (action == PacketPartitionAction.Action.SET_ALL_FROM_CONTENTS) {
             for (int i = 0; i < getConfigSize(config); i++) {
                 ItemStack slot = getConfigDisplayStack(config, i);
@@ -423,19 +420,14 @@ public class CellActionHandler {
     }
 
     private static int getConfigSize(ConfigResult config) {
-        if (config.configAEInv != null) return config.configAEInv.getSizeInventory();
-        return config.configInv != null ? config.configInv.getSizeInventory() : 0;
+        return config.configAEInv != null ? config.configAEInv.getSizeInventory() : 0;
     }
 
     private static void setConfigSlot(ConfigResult config, int slot, IAEStack<?> stack) {
-        if (config.configAEInv != null) {
-            config.configAEInv.putAEStackInSlot(slot, stack);
-            config.configAEInv.markDirty();
-            return;
-        }
+        if (config.configAEInv == null) return;
 
-        ItemStack displayStack = AEStackUtil.getDisplayStack(stack);
-        InventoryHelper.setSlot(config.configInv, slot, displayStack);
+        config.configAEInv.putAEStackInSlot(slot, stack);
+        config.configAEInv.markDirty();
     }
 
     private static void clearConfig(ConfigResult config) {
@@ -447,41 +439,33 @@ public class CellActionHandler {
     private static int findStackInConfig(ConfigResult config, IAEStack<?> stack) {
         if (stack == null) return -1;
 
-        if (config.configAEInv != null) {
-            for (int i = 0; i < config.configAEInv.getSizeInventory(); i++) {
-                IAEStack<?> slotStack = config.configAEInv.getAEStackInSlot(i);
-                if (slotStack != null && slotStack.isSameType(stack)) return i;
-            }
+        if (config.configAEInv == null) return -1;
 
-            return -1;
+        for (int i = 0; i < config.configAEInv.getSizeInventory(); i++) {
+            IAEStack<?> slotStack = config.configAEInv.getAEStackInSlot(i);
+            if (slotStack != null && slotStack.isSameType(stack)) return i;
         }
 
-        return findItemInConfig(config.configInv, AEStackUtil.getDisplayStack(stack));
+        return -1;
     }
 
     private static int findEmptyConfigSlot(ConfigResult config) {
-        if (config.configAEInv != null) {
-            for (int i = 0; i < config.configAEInv.getSizeInventory(); i++) {
-                if (config.configAEInv.getAEStackInSlot(i) == null) return i;
-            }
+        if (config.configAEInv == null) return -1;
 
-            return -1;
+        for (int i = 0; i < config.configAEInv.getSizeInventory(); i++) {
+            if (config.configAEInv.getAEStackInSlot(i) == null) return i;
         }
 
-        return InventoryHelper.findEmptySlot(config.configInv);
+        return -1;
     }
 
     private static ItemStack getConfigDisplayStack(ConfigResult config, int slot) {
-        if (config.configAEInv != null) {
-            return AEStackUtil.getDisplayStack(config.configAEInv.getAEStackInSlot(slot));
-        }
-
-        return config.configInv != null ? config.configInv.getStackInSlot(slot) : null;
+        return config.configAEInv != null ? AEStackUtil.getDisplayStack(config.configAEInv.getAEStackInSlot(slot))
+            : null;
     }
 
     public static class ConfigResult {
 
-        public IInventory configInv;
         public IAEStackInventory configAEInv;
         public IAEStackType<?> stackType;
     }

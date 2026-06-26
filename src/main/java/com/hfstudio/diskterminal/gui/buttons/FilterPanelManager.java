@@ -13,7 +13,7 @@ import com.hfstudio.diskterminal.client.CellFilter.State;
 import com.hfstudio.diskterminal.client.SlotLimit;
 import com.hfstudio.diskterminal.config.DiskTerminalClientConfig;
 import com.hfstudio.diskterminal.gui.GuiConstants;
-import com.hfstudio.diskterminal.integration.ModIntegration;
+import com.hfstudio.diskterminal.integration.Mods;
 import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
 import com.hfstudio.diskterminal.network.PacketSlotLimitChange;
 
@@ -104,15 +104,15 @@ public class FilterPanelManager {
 
         // Stack type filters are only shown when the backing AE2 stack type is registered.
         if (isCellTab || isStorageBusTab) {
-            if (ModIntegration.hasItemStorage()) {
+            if (Mods.hasItemStorage()) {
                 filters.add(CellFilter.ITEM_CELLS);
             }
 
-            if (ModIntegration.hasFluidStorage()) {
+            if (Mods.hasFluidStorage()) {
                 filters.add(CellFilter.FLUID_CELLS);
             }
 
-            if (ModIntegration.hasEssentiaStorage()) {
+            if (Mods.hasEssentiaStorage()) {
                 filters.add(CellFilter.ESSENTIA_CELLS);
             }
         }

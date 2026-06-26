@@ -12,6 +12,7 @@ import net.minecraftforge.common.util.ForgeDirection;
 import com.hfstudio.diskterminal.DiskTerminal;
 import com.hfstudio.diskterminal.container.ContainerCellTerminal;
 import com.hfstudio.diskterminal.container.ContainerWirelessCellTerminal;
+import com.hfstudio.diskterminal.integration.BaublesIntegration;
 import com.hfstudio.diskterminal.part.PartCellTerminal;
 
 import appeng.api.AEApi;
@@ -20,8 +21,6 @@ import appeng.api.parts.IPart;
 import appeng.api.parts.IPartHost;
 import appeng.container.ContainerOpenContext;
 import appeng.helpers.WirelessTerminalGuiObject;
-import baubles.api.BaublesApi;
-import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.network.IGuiHandler;
 
 /**
@@ -34,8 +33,6 @@ public class GuiHandler implements IGuiHandler {
 
     public static final int GUI_CELL_TERMINAL = 0;
     public static final int GUI_WIRELESS_CELL_TERMINAL = 1;
-
-    private static final String BAUBLES_MODID = "Baubles|Expanded";
 
     public static void openCellTerminalGui(EntityPlayer player, TileEntity te, ForgeDirection side) {
         int guiId = (GUI_CELL_TERMINAL << 4) | side.ordinal();
@@ -133,9 +130,7 @@ public class GuiHandler implements IGuiHandler {
             return null;
         }
 
-        if (!Loader.isModLoaded(BAUBLES_MODID)) return null;
-
-        IInventory baubles = BaublesApi.getBaubles(player);
+        IInventory baubles = BaublesIntegration.getInventory(player);
         if (baubles == null) return null;
 
         return baubles.getStackInSlot(slot);
