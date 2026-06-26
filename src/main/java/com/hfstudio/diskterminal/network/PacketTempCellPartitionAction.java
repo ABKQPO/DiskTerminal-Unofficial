@@ -107,9 +107,8 @@ public class PacketTempCellPartitionAction implements IMessage {
 
             NetUtil.run(player, () -> {
                 Container container = player.openContainer;
-                if (!(container instanceof ContainerCellTerminalBase)) return;
+                if (!(container instanceof ContainerCellTerminalBase cellContainer)) return;
 
-                ContainerCellTerminalBase cellContainer = (ContainerCellTerminalBase) container;
                 cellContainer.handleTempCellPartitionAction(
                     message.tempSlotIndex,
                     message.action,

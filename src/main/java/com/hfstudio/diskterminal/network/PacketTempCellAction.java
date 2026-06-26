@@ -88,9 +88,8 @@ public class PacketTempCellAction implements IMessage {
 
             NetUtil.run(player, () -> {
                 Container container = player.openContainer;
-                if (!(container instanceof ContainerCellTerminalBase)) return;
+                if (!(container instanceof ContainerCellTerminalBase cellContainer)) return;
 
-                ContainerCellTerminalBase cellContainer = (ContainerCellTerminalBase) container;
                 cellContainer.handleTempCellAction(
                     message.action,
                     message.tempSlotIndex,

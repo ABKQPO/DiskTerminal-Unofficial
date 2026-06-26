@@ -74,21 +74,12 @@ public class GuiSlotLimitButton extends GuiAtlasButton {
         String limitText = "";
 
         if (currentLimit != null) {
-            switch (currentLimit) {
-                case LIMIT_8:
-                    limitText = I18n.format("gui.disk_terminal.slot_limit.8");
-                    break;
-                case LIMIT_32:
-                    limitText = I18n.format("gui.disk_terminal.slot_limit.32");
-                    break;
-                case LIMIT_64:
-                    limitText = I18n.format("gui.disk_terminal.slot_limit.64");
-                    break;
-                case UNLIMITED:
-                default:
-                    limitText = I18n.format("gui.disk_terminal.slot_limit.unlimited");
-                    break;
-            }
+            limitText = switch (currentLimit) {
+                case LIMIT_8 -> I18n.format("gui.disk_terminal.slot_limit.8");
+                case LIMIT_32 -> I18n.format("gui.disk_terminal.slot_limit.32");
+                case LIMIT_64 -> I18n.format("gui.disk_terminal.slot_limit.64");
+                default -> I18n.format("gui.disk_terminal.slot_limit.unlimited");
+            };
         }
 
         List<String> tooltip = new ArrayList<>();

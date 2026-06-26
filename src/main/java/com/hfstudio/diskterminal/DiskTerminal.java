@@ -21,7 +21,6 @@ import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
     modid = MODID,
     version = Tags.VERSION,
     name = MODNAME,
-    guiFactory = "com.hfstudio.diskterminal.config.DiskTerminalGuiFactory",
     dependencies = "required-after:appliedenergistics2;"
         + "after:ae2fc;after:thaumicenergistics;after:ae2wct;after:NotEnoughItems;after:gregtech;",
     acceptableRemoteVersions = "*",

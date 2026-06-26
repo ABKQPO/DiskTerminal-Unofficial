@@ -33,19 +33,16 @@ public class CellsIntegration {
 
     private CellsIntegration() {}
 
-    @Nonnull
+    @Nullable
     public static ItemStack normalizeStack(ItemStack stack) {
-        ItemStack normalized = FilterHostUtil.normalizeFilter(stack);
-
-        return normalized == null ? null : normalized;
+        return FilterHostUtil.normalizeFilter(stack);
     }
 
     @Nullable
     public static TileEntity getHostTile(@Nullable Object host) {
         if (host instanceof TileEntity) return (TileEntity) host;
 
-        if (host instanceof AEBasePart) {
-            AEBasePart part = (AEBasePart) host;
+        if (host instanceof AEBasePart part) {
 
             return part.getHost() != null ? part.getHost()
                 .getTile() : null;

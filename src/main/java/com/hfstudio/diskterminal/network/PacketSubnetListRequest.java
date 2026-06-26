@@ -30,9 +30,7 @@ public class PacketSubnetListRequest implements IMessage {
         @Override
         public IMessage onMessage(PacketSubnetListRequest message, MessageContext ctx) {
             NetUtil.run(ctx.getServerHandler().playerEntity, () -> {
-                if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase) {
-                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx
-                        .getServerHandler().playerEntity.openContainer;
+                if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase container) {
                     // The overview widget may have been recreated client-side (for example by NEI
                     // reinitializing the GUI), so force a full subnet snapshot instead of a delta.
                     container.requestSubnetRefresh(true);

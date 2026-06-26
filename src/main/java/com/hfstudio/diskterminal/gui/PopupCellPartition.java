@@ -168,7 +168,6 @@ public class PopupCellPartition extends Gui {
      *
      * @return the tooltip lines and screen position, or null if nothing is hovered
      */
-    @SuppressWarnings("unchecked")
     public List<String> getHoveredTooltip() {
         if (ItemStacks.isEmpty(hoveredStack)) return null;
 
@@ -297,8 +296,8 @@ public class PopupCellPartition extends Gui {
     private void moveTo(int newX, int newY) {
         int maxX = Math.max(0, screenWidth - width);
         int maxY = Math.max(0, screenHeight - height);
-        x = Math.max(0, Math.min(maxX, newX));
-        y = Math.max(0, Math.min(maxY, newY));
+        x = Math.clamp(newX, 0, maxX);
+        y = Math.clamp(newY, 0, maxY);
     }
 
     /**
@@ -316,7 +315,7 @@ public class PopupCellPartition extends Gui {
 
             Rectangle area = new Rectangle(slotX, slotY, SLOT_SIZE - 1, SLOT_SIZE - 1);
 
-            targets.add(new GhostTarget<Object>() {
+            targets.add(new GhostTarget<>() {
 
                 @Override
                 public Rectangle getArea() {

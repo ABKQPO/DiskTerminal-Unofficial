@@ -290,9 +290,8 @@ public class TempCellActionHandler {
         ItemStack cellStack = tempInv.getStackInSlot(tempSlotIndex);
         if (ItemStacks.isEmpty(cellStack)) return false;
 
-        if (!(cellStack.getItem() instanceof ICellWorkbenchItem)) return false;
+        if (!(cellStack.getItem() instanceof ICellWorkbenchItem cellItem)) return false;
 
-        ICellWorkbenchItem cellItem = (ICellWorkbenchItem) cellStack.getItem();
         if (!cellItem.isEditable(cellStack)) return false;
 
         IInventory upgradesInv = cellItem.getUpgradesInventory(cellStack);

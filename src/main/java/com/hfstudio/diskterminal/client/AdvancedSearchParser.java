@@ -486,29 +486,20 @@ public class AdvancedSearchParser {
     }
 
     private static SearchMatcher createMatcher(String identifier, String operator, String value, List<String> errors) {
-        switch (identifier) {
-            case "$name":
-                return createFilterModeMatcher(operator, value);
-            case "$content":
-                return createContentMatcher(operator, value);
-            case "$part":
-                return createPartitionMatcher(operator, value);
-            case "$dir":
-                return createDirectionMatcher(operator, value);
-            case "$priority":
-                return createPriorityMatcher(operator, value);
-            case "$partition":
-                return createPartitionCountMatcher(operator, value);
-            case "$items":
-                return createItemsMatcher(operator, value);
-            case "$container":
-                return createContainerMatcher(operator, value, false);
-            case "$renamed":
-                return createContainerMatcher(operator, value, true);
-            default:
+        return switch (identifier) {
+            case "$name" -> createFilterModeMatcher(operator, value);
+            case "$content" -> createContentMatcher(operator, value);
+            case "$part" -> createPartitionMatcher(operator, value);
+            case "$dir" -> createDirectionMatcher(operator, value);
+            case "$priority" -> createPriorityMatcher(operator, value);
+            case "$partition" -> createPartitionCountMatcher(operator, value);
+            case "$items" -> createItemsMatcher(operator, value);
+            case "$container" -> createContainerMatcher(operator, value, false);
+            case "$renamed" -> createContainerMatcher(operator, value, true);
+            default ->
                 // Already reported as error, return false matcher
-                return alwaysFalse();
-        }
+                alwaysFalse();
+        };
     }
 
     /**
@@ -531,15 +522,11 @@ public class AdvancedSearchParser {
                 boolean matchesInventory = matchesItemList(cell.getContents(), searchValue, operator);
                 boolean matchesPartition = matchesItemList(cell.getPartition(), searchValue, operator);
 
-                switch (mode) {
-                    case INVENTORY:
-                        return matchesInventory;
-                    case PARTITION:
-                        return matchesPartition;
-                    case MIXED:
-                    default:
-                        return matchesInventory || matchesPartition;
-                }
+                return switch (mode) {
+                    case INVENTORY -> matchesInventory;
+                    case PARTITION -> matchesPartition;
+                    default -> matchesInventory || matchesPartition;
+                };
             }
 
             @Override
@@ -547,15 +534,11 @@ public class AdvancedSearchParser {
                 boolean matchesInventory = matchesItemList(bus.getContents(), searchValue, operator);
                 boolean matchesPartition = matchesItemList(bus.getPartition(), searchValue, operator);
 
-                switch (mode) {
-                    case INVENTORY:
-                        return matchesInventory;
-                    case PARTITION:
-                        return matchesPartition;
-                    case MIXED:
-                    default:
-                        return matchesInventory || matchesPartition;
-                }
+                return switch (mode) {
+                    case INVENTORY -> matchesInventory;
+                    case PARTITION -> matchesPartition;
+                    default -> matchesInventory || matchesPartition;
+                };
             }
 
             @Override
@@ -569,15 +552,11 @@ public class AdvancedSearchParser {
                     operator);
                 boolean matchesPartition = matchesItemList(connection.getPartition(), searchValue, operator);
 
-                switch (mode) {
-                    case INVENTORY:
-                        return matchesInventory;
-                    case PARTITION:
-                        return matchesPartition;
-                    case MIXED:
-                    default:
-                        return matchesInventory || matchesPartition;
-                }
+                return switch (mode) {
+                    case INVENTORY -> matchesInventory;
+                    case PARTITION -> matchesPartition;
+                    default -> matchesInventory || matchesPartition;
+                };
             }
         };
     }
@@ -599,15 +578,11 @@ public class AdvancedSearchParser {
                 boolean matchesInventory = matchesItemList(cell.getContents(), searchText, "~");
                 boolean matchesPartition = matchesItemList(cell.getPartition(), searchText, "~");
 
-                switch (mode) {
-                    case INVENTORY:
-                        return matchesInventory;
-                    case PARTITION:
-                        return matchesPartition;
-                    case MIXED:
-                    default:
-                        return matchesInventory || matchesPartition;
-                }
+                return switch (mode) {
+                    case INVENTORY -> matchesInventory;
+                    case PARTITION -> matchesPartition;
+                    default -> matchesInventory || matchesPartition;
+                };
             }
 
             @Override
@@ -615,15 +590,11 @@ public class AdvancedSearchParser {
                 boolean matchesInventory = matchesItemList(bus.getContents(), searchText, "~");
                 boolean matchesPartition = matchesItemList(bus.getPartition(), searchText, "~");
 
-                switch (mode) {
-                    case INVENTORY:
-                        return matchesInventory;
-                    case PARTITION:
-                        return matchesPartition;
-                    case MIXED:
-                    default:
-                        return matchesInventory || matchesPartition;
-                }
+                return switch (mode) {
+                    case INVENTORY -> matchesInventory;
+                    case PARTITION -> matchesPartition;
+                    default -> matchesInventory || matchesPartition;
+                };
             }
 
             @Override
@@ -637,15 +608,11 @@ public class AdvancedSearchParser {
                     "~");
                 boolean matchesPartition = matchesItemList(connection.getPartition(), searchText, "~");
 
-                switch (mode) {
-                    case INVENTORY:
-                        return matchesInventory;
-                    case PARTITION:
-                        return matchesPartition;
-                    case MIXED:
-                    default:
-                        return matchesInventory || matchesPartition;
-                }
+                return switch (mode) {
+                    case INVENTORY -> matchesInventory;
+                    case PARTITION -> matchesPartition;
+                    default -> matchesInventory || matchesPartition;
+                };
             }
         };
     }
@@ -771,7 +738,7 @@ public class AdvancedSearchParser {
                     if (!onlyRenamed || storage.hasCustomName()) {
                         String storageName = storage.getName()
                             .toLowerCase(Locale.ROOT);
-                        if (compareString(storageName, operator, searchValue)) return true;
+                        return compareString(storageName, operator, searchValue);
                     }
                 }
 
@@ -1068,24 +1035,24 @@ public class AdvancedSearchParser {
     private static boolean compareSingleString(String actual, String operator, String expected) {
         boolean hasWild = hasWildcards(expected);
 
-        switch (operator) {
-            case "=":
-                if (hasWild) return actual.matches(globToRegex(expected));
+        return switch (operator) {
+            case "=" -> {
+                if (hasWild) yield actual.matches(globToRegex(expected));
 
-                return actual.equals(expected);
+                yield actual.equals(expected);
+            }
+            case "!=" -> {
+                if (hasWild) yield !actual.matches(globToRegex(expected));
 
-            case "!=":
-                if (hasWild) return !actual.matches(globToRegex(expected));
-
-                return !actual.equals(expected);
-
-            case "~":
-            default:
+                yield !actual.equals(expected);
+            }
+            default -> {
                 // For contains with wildcards, allow partial match
-                if (hasWild) return actual.matches(".*" + globToRegex(expected) + ".*");
+                if (hasWild) yield actual.matches(".*" + globToRegex(expected) + ".*");
 
-                return actual.contains(expected);
-        }
+                yield actual.contains(expected);
+            }
+        };
     }
 
     /**
@@ -1116,22 +1083,15 @@ public class AdvancedSearchParser {
      * Compare a single integer value against a single expected value.
      */
     private static boolean compareSingleInt(int actual, String operator, int expected) {
-        switch (operator) {
-            case "=":
-                return actual == expected;
-            case "!=":
-                return actual != expected;
-            case "<":
-                return actual < expected;
-            case ">":
-                return actual > expected;
-            case "<=":
-                return actual <= expected;
-            case ">=":
-                return actual >= expected;
-            default:
-                return actual == expected;
-        }
+        return switch (operator) {
+            case "=" -> actual == expected;
+            case "!=" -> actual != expected;
+            case "<" -> actual < expected;
+            case ">" -> actual > expected;
+            case "<=" -> actual <= expected;
+            case ">=" -> actual >= expected;
+            default -> actual == expected;
+        };
     }
 
     /**

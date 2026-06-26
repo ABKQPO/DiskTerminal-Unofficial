@@ -77,9 +77,8 @@ public class TerminalTabWidget extends AbstractTabWidget {
 
         // After drawing, scan visible TerminalLine widgets for hovered buttons
         for (IWidget widget : visibleRows) {
-            if (!(widget instanceof TerminalLine)) continue;
+            if (!(widget instanceof TerminalLine line)) continue;
 
-            TerminalLine line = (TerminalLine) widget;
             int hoveredBtn = line.getHoveredButton();
             if (hoveredBtn != TerminalLine.HOVER_NONE) {
                 Object data = widgetDataMap.get(widget);

@@ -129,7 +129,7 @@ public class NetworkToolActionHandler {
             }
         }
 
-        if (shortage.length() > 0) {
+        if (!shortage.isEmpty()) {
             PlayerMessageHelper.error(
                 player,
                 "disk_terminal.networktools.attribute_unique.error.not_enough_cells_by_type",
@@ -434,9 +434,8 @@ public class NetworkToolActionHandler {
 
     private static boolean matchesBusFilters(StorageBusTracker tracker,
         Map<CellFilter, CellFilter.State> activeFilters) {
-        if (!(tracker.storageBus instanceof PartStorageBus)) return false;
+        if (!(tracker.storageBus instanceof PartStorageBus bus)) return false;
 
-        PartStorageBus bus = (PartStorageBus) tracker.storageBus;
         StorageType storageType = storageTypeFrom(bus.getStackType());
 
         if (!matchesStorageType(storageType, activeFilters)) return false;

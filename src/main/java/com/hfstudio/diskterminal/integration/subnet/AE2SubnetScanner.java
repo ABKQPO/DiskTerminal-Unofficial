@@ -187,13 +187,11 @@ public class AE2SubnetScanner extends AbstractSubnetScanner {
      * Check if a tile has a Storage Bus on the given side that belongs to a different grid.
      */
     private IGrid checkForRemoteStorageBus(TileEntity tile, ForgeDirection side, IGrid mainGrid) {
-        if (!(tile instanceof IPartHost)) return null;
+        if (!(tile instanceof IPartHost host)) return null;
 
-        IPartHost host = (IPartHost) tile;
         IPart part = host.getPart(side);
-        if (!(part instanceof PartStorageBus)) return null;
+        if (!(part instanceof PartStorageBus bus)) return null;
 
-        PartStorageBus bus = (PartStorageBus) part;
         IGridNode busNode = bus.getGridNode();
         if (busNode == null || busNode.getGrid() == null) return null;
 
@@ -288,8 +286,7 @@ public class AE2SubnetScanner extends AbstractSubnetScanner {
         nbt.setBoolean("outbound", outbound);
         nbt.setBoolean("usesSubnetInventory", !outbound);
 
-        if (part instanceof PartStorageBus) {
-            PartStorageBus bus = (PartStorageBus) part;
+        if (part instanceof PartStorageBus bus) {
             ForgeDirection side = bus.getSide();
             nbt.setInteger("side", side == null ? 0 : side.ordinal());
             writeStackType(nbt, bus);
@@ -325,8 +322,7 @@ public class AE2SubnetScanner extends AbstractSubnetScanner {
             return nbt;
         }
 
-        if (part instanceof PartInterface) {
-            PartInterface iface = (PartInterface) part;
+        if (part instanceof PartInterface iface) {
             ForgeDirection side = connectionSide == null ? iface.getSide() : connectionSide;
             nbt.setInteger("side", side == null ? 0 : side.ordinal());
             writeInboundStackType(nbt, hostTile, side);

@@ -226,9 +226,8 @@ public class CellDataHandler {
     }
 
     private static boolean populateWorkbenchOnlyData(NBTTagCompound cellData, ItemStack cellStack) {
-        if (!(cellStack.getItem() instanceof ICellWorkbenchItem)) return false;
+        if (!(cellStack.getItem() instanceof ICellWorkbenchItem workbenchItem)) return false;
 
-        ICellWorkbenchItem workbenchItem = (ICellWorkbenchItem) cellStack.getItem();
         IAEStackInventory configInv = workbenchItem.getConfigAEInventory(cellStack);
         IInventory upgradesInv = workbenchItem.getUpgradesInventory(cellStack);
 
@@ -249,8 +248,7 @@ public class CellDataHandler {
     }
 
     private static String getStorageName(IChestOrDrive storage, String defaultName) {
-        if (storage instanceof IInventory) {
-            IInventory inv = (IInventory) storage;
+        if (storage instanceof IInventory inv) {
             if (inv.hasCustomInventoryName()) return inv.getInventoryName();
         }
 

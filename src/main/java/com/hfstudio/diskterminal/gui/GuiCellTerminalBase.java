@@ -539,8 +539,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
     protected void repositionSlots() {
         for (Object obj : this.inventorySlots.inventorySlots) {
-            if (obj instanceof AppEngSlot) {
-                AppEngSlot slot = (AppEngSlot) obj;
+            if (obj instanceof AppEngSlot slot) {
                 slot.yDisplayPosition = this.ySize + slot.getY() - 82;
                 slot.xDisplayPosition = slot.getX() + 14;
             }
@@ -796,14 +795,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             ctx.searchFieldHeight = searchField.h + 4;
         }
 
-        TooltipHandler.drawTooltips(ctx, new TooltipHandler.TooltipRenderer() {
-
-            @Override
-            public void drawHoveringText(List<String> lines, int x, int y) {
-                GuiCellTerminalBase.this.drawHoveringText(lines, x, y);
-            }
-
-        }, mouseX, mouseY);
+        TooltipHandler.drawTooltips(ctx, GuiCellTerminalBase.this::drawHoveringText, mouseX, mouseY);
     }
 
     private void drawSearchFieldBackground() {
@@ -1294,8 +1286,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
          */
 
         // Handle filter button clicks
-        if (btn instanceof GuiFilterButton) {
-            GuiFilterButton filterBtn = (GuiFilterButton) btn;
+        if (btn instanceof GuiFilterButton filterBtn) {
             if (filterPanelManager.handleClick(filterBtn)) {
                 applyFiltersToDataManager();
                 rebuildAndUpdateScrollbar();
@@ -1305,8 +1296,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         }
 
         // Handle slot limit button clicks
-        if (btn instanceof GuiSlotLimitButton) {
-            GuiSlotLimitButton slotLimitBtn = (GuiSlotLimitButton) btn;
+        if (btn instanceof GuiSlotLimitButton slotLimitBtn) {
             if (filterPanelManager.handleSlotLimitClick(slotLimitBtn)) {
                 rebuildAndUpdateScrollbar();
 

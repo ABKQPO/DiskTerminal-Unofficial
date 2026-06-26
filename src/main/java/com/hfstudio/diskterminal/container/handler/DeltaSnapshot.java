@@ -114,10 +114,9 @@ public class DeltaSnapshot {
 
         // Build delta payload: copy all non-list static keys from full payload, then attach diff lists.
         NBTTagCompound delta = new NBTTagCompound();
-        for (Object key : fullPayload.func_150296_c()) {
-            String k = (String) key;
-            if (k.equals(listKey)) continue;
-            delta.setTag(k, fullPayload.getTag(k));
+        for (String key : fullPayload.func_150296_c()) {
+            if (key.equals(listKey)) continue;
+            delta.setTag(key, fullPayload.getTag(key));
         }
         delta.setString("listKey", listKey);
         delta.setString("idKey", idKey);

@@ -171,9 +171,7 @@ public class SubnetDataHandler {
         IInterfaceHost interfaceHost = findPrimaryInterfaceHost(tracker.targetGrid);
         if (interfaceHost == null) return false;
 
-        if (!(interfaceHost instanceof ICustomNameObject)) return false;
-
-        ICustomNameObject nameable = (ICustomNameObject) interfaceHost;
+        if (!(interfaceHost instanceof ICustomNameObject nameable)) return false;
 
         if (newName == null || newName.trim()
             .isEmpty()) {
@@ -290,8 +288,7 @@ public class SubnetDataHandler {
             boolean outbound = i < tracker.isOutbound.size() && tracker.isOutbound.get(i);
             ForgeDirection connectionSide = i < tracker.connectionSides.size() ? tracker.connectionSides.get(i) : null;
 
-            if (outbound && part instanceof PartStorageBus) {
-                PartStorageBus bus = (PartStorageBus) part;
+            if (outbound && part instanceof PartStorageBus bus) {
                 TileEntity busHost = bus.getHost() == null ? null
                     : bus.getHost()
                         .getTile();

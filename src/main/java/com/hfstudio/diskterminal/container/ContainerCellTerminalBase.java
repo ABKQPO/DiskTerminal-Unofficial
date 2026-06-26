@@ -493,8 +493,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
         StorageTracker tracker = this.byId.get(storageId);
         if (tracker != null) {
-            if (tracker.tile instanceof IPriorityHost) {
-                IPriorityHost priorityHost = (IPriorityHost) tracker.tile;
+            if (tracker.tile instanceof IPriorityHost priorityHost) {
                 priorityHost.setPriority(priority);
                 tracker.tile.markDirty();
                 requestFullRefresh();
@@ -749,9 +748,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     }
 
     private IChatComponent getCustomInventoryName(Object nameableCandidate) {
-        if (!(nameableCandidate instanceof ICustomNameObject)) return null;
+        if (!(nameableCandidate instanceof ICustomNameObject nameable)) return null;
 
-        ICustomNameObject nameable = (ICustomNameObject) nameableCandidate;
         if (!nameable.hasCustomName()) return null;
 
         String customName = nameable.getCustomName();
@@ -780,9 +778,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
             if (cellInventory == null) return;
 
             ItemStack cellStack = CellDataHandler.getCellStack(cellInventory, tracker.storage, cellSlot);
-            if (ItemStacks.isEmpty(cellStack) || !(cellStack.getItem() instanceof ICellWorkbenchItem)) return;
+            if (ItemStacks.isEmpty(cellStack) || !(cellStack.getItem() instanceof ICellWorkbenchItem cellItem)) return;
 
-            ICellWorkbenchItem cellItem = (ICellWorkbenchItem) cellStack.getItem();
             if (!cellItem.isEditable(cellStack)) return;
 
             upgradesInv = cellItem.getUpgradesInventory(cellStack);
@@ -795,9 +792,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
             if (tempSlotIndex < 0 || tempSlotIndex >= tempInv.getSizeInventory()) return;
 
             ItemStack cellStack = tempInv.getStackInSlot(tempSlotIndex);
-            if (ItemStacks.isEmpty(cellStack) || !(cellStack.getItem() instanceof ICellWorkbenchItem)) return;
+            if (ItemStacks.isEmpty(cellStack) || !(cellStack.getItem() instanceof ICellWorkbenchItem cellItem)) return;
 
-            ICellWorkbenchItem cellItem = (ICellWorkbenchItem) cellStack.getItem();
             if (!cellItem.isEditable(cellStack)) return;
 
             upgradesInv = cellItem.getUpgradesInventory(cellStack);
@@ -923,7 +919,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
     @Override
     public ItemStack transferStackInSlot(EntityPlayer player, int slotIndex) {
-        Slot slot = (Slot) this.inventorySlots.get(slotIndex);
+        Slot slot = this.inventorySlots.get(slotIndex);
         if (slot == null || !slot.getHasStack()) return super.transferStackInSlot(player, slotIndex);
 
         ItemStack stack = slot.getStack();
@@ -1184,8 +1180,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     private IChatComponent getSubnetName(IGrid grid) {
         IInterfaceHost interfaceHost = SubnetDataHandler.findPrimaryInterfaceHost(grid);
 
-        if (interfaceHost instanceof ICustomNameObject) {
-            ICustomNameObject nameable = (ICustomNameObject) interfaceHost;
+        if (interfaceHost instanceof ICustomNameObject nameable) {
             if (nameable.hasCustomName()) return new ChatComponentText(nameable.getCustomName());
         }
 

@@ -70,9 +70,8 @@ public class NetworkToolsTabWidget extends AbstractTabWidget {
 
     @Override
     protected IWidget createRowWidget(Object lineData, int y, List<?> allLines, int lineIndex) {
-        if (!(lineData instanceof INetworkTool)) return null;
+        if (!(lineData instanceof INetworkTool tool)) return null;
 
-        INetworkTool tool = (INetworkTool) lineData;
         NetworkToolRowWidget row = new NetworkToolRowWidget(tool, y, fontRenderer, itemRender);
 
         // Wire up context supplier. Lazily fetches tool context each frame

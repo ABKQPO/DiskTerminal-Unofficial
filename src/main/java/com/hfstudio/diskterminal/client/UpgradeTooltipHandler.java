@@ -53,12 +53,11 @@ public class UpgradeTooltipHandler {
                 "§a" + I18n.format("gui.disk_terminal.upgrade.tooltip_hint_entry_drive"),
                 "§a" + I18n.format("gui.disk_terminal.upgrade.tooltip_hint_entry_cells"));
         } else if (tab == GuiConstants.TAB_TEMP_AREA) {
-            availableEntries = Arrays.asList("§a" + I18n.format("gui.disk_terminal.upgrade.tooltip_hint_entry_cells"));
+            availableEntries = List.of("§a" + I18n.format("gui.disk_terminal.upgrade.tooltip_hint_entry_cells"));
         } else if (tab == GuiConstants.TAB_STORAGE_BUS_INVENTORY || tab == GuiConstants.TAB_STORAGE_BUS_PARTITION) {
-            availableEntries = Arrays
-                .asList("§a" + I18n.format("gui.disk_terminal.upgrade.tooltip_hint_entry_storage_bus"));
+            availableEntries = List.of("§a" + I18n.format("gui.disk_terminal.upgrade.tooltip_hint_entry_storage_bus"));
         } else {
-            availableEntries = Arrays.asList();
+            availableEntries = List.of();
         }
 
         if (!availableEntries.isEmpty()) {

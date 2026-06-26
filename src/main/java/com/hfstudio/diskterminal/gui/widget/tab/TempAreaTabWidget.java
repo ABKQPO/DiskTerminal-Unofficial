@@ -159,9 +159,8 @@ public class TempAreaTabWidget extends AbstractTabWidget {
         for (Map.Entry<IWidget, Object> entry : getWidgetDataMap().entrySet()) {
             IWidget widget = entry.getKey();
             Object data = entry.getValue();
-            if (!(widget instanceof SlotsLine)) continue;
+            if (!(widget instanceof SlotsLine slotsLine)) continue;
 
-            SlotsLine slotsLine = (SlotsLine) widget;
             List<SlotsLine.PartitionSlotTarget> slotTargets = slotsLine.getPartitionTargets();
             if (slotTargets.isEmpty()) continue;
             if (!(data instanceof CellContentRow)) continue;
@@ -171,7 +170,7 @@ public class TempAreaTabWidget extends AbstractTabWidget {
             if (tempSlotIndex < 0) continue;
 
             for (SlotsLine.PartitionSlotTarget slot : slotTargets) {
-                targets.add(new GhostTarget<Object>() {
+                targets.add(new GhostTarget<>() {
 
                     @Override
                     public Rectangle getArea() {
@@ -257,8 +256,7 @@ public class TempAreaTabWidget extends AbstractTabWidget {
             IWidget widget = visibleRows.get(i);
             int lineIndex = scrollOffset + i;
 
-            if (widget instanceof AbstractHeader) {
-                AbstractHeader header = (AbstractHeader) widget;
+            if (widget instanceof AbstractHeader header) {
                 // Only draw connector if non-partition content rows follow below
                 // The vertical line connects header to content, NOT to partition
                 boolean hasContentBelow = hasNonPartitionContentBelow(allLines, lineIndex);
@@ -267,8 +265,7 @@ public class TempAreaTabWidget extends AbstractTabWidget {
                 // Reset partition cut Y for each new header (new temp cell)
                 lastPartitionCutY = GuiConstants.CONTENT_START_Y;
 
-            } else if (widget instanceof AbstractLine) {
-                AbstractLine line = (AbstractLine) widget;
+            } else if (widget instanceof AbstractLine line) {
                 boolean currentIsPartition = isPartitionRow(allLines, lineIndex);
                 boolean prevIsPartition = lineIndex > 0 && isPartitionRow(allLines, lineIndex - 1);
 
@@ -673,8 +670,7 @@ public class TempAreaTabWidget extends AbstractTabWidget {
      */
     private static TempCellInfo findTempCellBySlot(List<Object> lines, int slotIndex) {
         for (Object line : lines) {
-            if (line instanceof TempCellInfo) {
-                TempCellInfo tempCell = (TempCellInfo) line;
+            if (line instanceof TempCellInfo tempCell) {
                 if (tempCell.getTempSlotIndex() == slotIndex) return tempCell;
             }
         }
@@ -685,8 +681,7 @@ public class TempAreaTabWidget extends AbstractTabWidget {
     @Override
     public boolean handleUpgradeClick(Object hoveredData, ItemStack heldStack, boolean isShiftClick) {
         // Handle TempCellInfo (header) - specific temp cell slot
-        if (hoveredData instanceof TempCellInfo) {
-            TempCellInfo tempCell = (TempCellInfo) hoveredData;
+        if (hoveredData instanceof TempCellInfo tempCell) {
             CellInfo cellInfo = tempCell.getCellInfo();
             if (cellInfo == null) return false;
 
@@ -735,8 +730,7 @@ public class TempAreaTabWidget extends AbstractTabWidget {
      */
     private int findTempSlotIndexForCell(CellInfo cell) {
         for (Object line : getLines(guiContext.getDataManager())) {
-            if (line instanceof TempCellInfo) {
-                TempCellInfo tempCell = (TempCellInfo) line;
+            if (line instanceof TempCellInfo tempCell) {
                 if (tempCell.getCellInfo() == cell) return tempCell.getTempSlotIndex();
             }
         }
@@ -750,8 +744,7 @@ public class TempAreaTabWidget extends AbstractTabWidget {
     private TempCellInfo findExistingSelectedTempCell(Set<Integer> selectedSlots) {
         for (Integer slotIndex : selectedSlots) {
             for (Object line : getLines(guiContext.getDataManager())) {
-                if (line instanceof TempCellInfo) {
-                    TempCellInfo tempCell = (TempCellInfo) line;
+                if (line instanceof TempCellInfo tempCell) {
                     if (tempCell.getTempSlotIndex() == slotIndex) return tempCell;
                 }
             }

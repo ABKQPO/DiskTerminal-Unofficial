@@ -72,14 +72,11 @@ public class GuiFilterButton extends GuiAtlasButton {
 
     @Override
     protected int getBackgroundTexX() {
-        switch (currentState) {
-            case SHOW_ONLY:
-                return GuiConstants.TERMINAL_STYLE_BUTTON_X + SIZE; // Green background
-            case HIDE:
-                return GuiConstants.TERMINAL_STYLE_BUTTON_X + 2 * SIZE; // Red background
-            default:
-                return GuiConstants.TERMINAL_STYLE_BUTTON_X; // Default background
-        }
+        return switch (currentState) {
+            case SHOW_ONLY -> GuiConstants.TERMINAL_STYLE_BUTTON_X + SIZE; // Green background
+            case HIDE -> GuiConstants.TERMINAL_STYLE_BUTTON_X + 2 * SIZE; // Red background
+            default -> GuiConstants.TERMINAL_STYLE_BUTTON_X; // Default background
+        };
     }
 
     @Override
@@ -90,27 +87,13 @@ public class GuiFilterButton extends GuiAtlasButton {
     @Override
     protected void drawForeground(Minecraft mc) {
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        ItemStack iconStack;
-
-        switch (filter) {
-            case ITEM_CELLS:
-                iconStack = ITEM_CELL_ICON;
-                break;
-            case FLUID_CELLS:
-                iconStack = FLUID_CELL_ICON;
-                break;
-            case ESSENTIA_CELLS:
-                iconStack = ESSENTIA_CELL_ICON;
-                break;
-            case HAS_ITEMS:
-                iconStack = HAS_ITEMS_ICON;
-                break;
-            case PARTITIONED:
-                iconStack = PARTITIONED_ICON;
-                break;
-            default:
-                iconStack = null;
-        }
+        ItemStack iconStack = switch (filter) {
+            case ITEM_CELLS -> ITEM_CELL_ICON;
+            case FLUID_CELLS -> FLUID_CELL_ICON;
+            case ESSENTIA_CELLS -> ESSENTIA_CELL_ICON;
+            case HAS_ITEMS -> HAS_ITEMS_ICON;
+            case PARTITIONED -> PARTITIONED_ICON;
+        };
 
         if (!ItemStacks.isEmpty(iconStack)) renderItemIcon(mc, iconStack);
     }
@@ -156,20 +139,20 @@ public class GuiFilterButton extends GuiAtlasButton {
         tooltip.add(I18n.format("gui.disk_terminal.filter." + filter.getConfigKey()));
 
         String stateKey;
-        String colorCode;
-        switch (currentState) {
-            case SHOW_ONLY:
+        String colorCode = switch (currentState) {
+            case SHOW_ONLY -> {
                 stateKey = "gui.disk_terminal.filter.state.show_only";
-                colorCode = "§a"; // Green
-                break;
-            case HIDE:
+                yield "§a";
+            }
+            case HIDE -> {
                 stateKey = "gui.disk_terminal.filter.state.hide";
-                colorCode = "§c"; // Red
-                break;
-            default:
+                yield "§c";
+            }
+            default -> {
                 stateKey = "gui.disk_terminal.filter.state.show_all";
-                colorCode = "§7"; // Grey
-        }
+                yield "§7";
+            }
+        };
         tooltip.add(colorCode + I18n.format(stateKey));
 
         return tooltip;

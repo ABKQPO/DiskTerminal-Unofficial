@@ -36,9 +36,7 @@ public class PacketStorageBusIOMode implements IMessage {
         @Override
         public IMessage onMessage(PacketStorageBusIOMode message, MessageContext ctx) {
             NetUtil.run(ctx.getServerHandler().playerEntity, () -> {
-                if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase) {
-                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx
-                        .getServerHandler().playerEntity.openContainer;
+                if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase container) {
                     container.handleStorageBusIOModeToggle(message.storageBusId);
                 }
             });

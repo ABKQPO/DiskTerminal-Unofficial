@@ -50,7 +50,7 @@ public class GuiToolConfirmationModal {
 
         // Calculate width based on title length
         int titleWidth = fontRenderer.getStringWidth(title) + PADDING * 2;
-        int contentWidth = Math.max(MIN_MODAL_WIDTH, Math.min(MAX_MODAL_WIDTH, titleWidth));
+        int contentWidth = Math.clamp(titleWidth, MIN_MODAL_WIDTH, MAX_MODAL_WIDTH);
 
         // Wrap message text
         int maxTextWidth = contentWidth - PADDING * 2;

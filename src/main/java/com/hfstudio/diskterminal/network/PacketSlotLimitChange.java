@@ -44,9 +44,7 @@ public class PacketSlotLimitChange implements IMessage {
         @Override
         public IMessage onMessage(PacketSlotLimitChange message, MessageContext ctx) {
             NetUtil.run(ctx.getServerHandler().playerEntity, () -> {
-                if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase) {
-                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx
-                        .getServerHandler().playerEntity.openContainer;
+                if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase container) {
                     container.setSlotLimits(message.cellLimit, message.busLimit, message.subnetLimit);
                 }
             });

@@ -41,8 +41,7 @@ public class GhostIngredientHandler {
     private static ItemStack convert(Object ingredient, StorageType type, boolean bus) {
         if (ingredient == null) return null;
 
-        if (ingredient instanceof ItemStack) {
-            ItemStack itemStack = (ItemStack) ingredient;
+        if (ingredient instanceof ItemStack itemStack) {
 
             if (type.isEssentia()) {
                 ItemStack essentiaRep = ThaumicEnergisticsIntegration.tryConvertEssentiaContainerToAspect(itemStack);

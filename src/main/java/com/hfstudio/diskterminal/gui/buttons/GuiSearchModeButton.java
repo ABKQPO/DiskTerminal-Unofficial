@@ -53,19 +53,11 @@ public class GuiSearchModeButton extends GuiAtlasButton {
         List<String> tooltip = new ArrayList<>();
         tooltip.add(I18n.format("gui.disk_terminal.search_mode"));
 
-        String modeKey;
-        switch (currentMode) {
-            case INVENTORY:
-                modeKey = "gui.disk_terminal.search_mode.inventory";
-                break;
-            case PARTITION:
-                modeKey = "gui.disk_terminal.search_mode.partition";
-                break;
-            case MIXED:
-            default:
-                modeKey = "gui.disk_terminal.search_mode.mixed";
-                break;
-        }
+        String modeKey = switch (currentMode) {
+            case INVENTORY -> "gui.disk_terminal.search_mode.inventory";
+            case PARTITION -> "gui.disk_terminal.search_mode.partition";
+            default -> "gui.disk_terminal.search_mode.mixed";
+        };
         tooltip.add("§7" + I18n.format(modeKey));
 
         return tooltip;

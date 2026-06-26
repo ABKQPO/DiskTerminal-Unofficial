@@ -267,10 +267,6 @@ public class TerminalLine extends AbstractLine {
             return cardsDisplay.getTooltip(mouseX, mouseY);
         }
 
-        if (usageBarHovered) {
-            return Collections.emptyList();
-        }
-
         return Collections.emptyList();
     }
 
@@ -376,15 +372,11 @@ public class TerminalLine extends AbstractLine {
 
     private int getUsageColor() {
         int status = cellStatusSupplier != null ? cellStatusSupplier.get() : 1;
-        switch (status) {
-            case 2:
-                return GuiConstants.COLOR_USAGE_AE_BLUE;
-            case 3:
-                return GuiConstants.COLOR_USAGE_AE_ORANGE;
-            case 4:
-                return GuiConstants.COLOR_USAGE_AE_RED;
-            default:
-                return GuiConstants.COLOR_USAGE_AE_GREEN;
-        }
+        return switch (status) {
+            case 2 -> GuiConstants.COLOR_USAGE_AE_BLUE;
+            case 3 -> GuiConstants.COLOR_USAGE_AE_ORANGE;
+            case 4 -> GuiConstants.COLOR_USAGE_AE_RED;
+            default -> GuiConstants.COLOR_USAGE_AE_GREEN;
+        };
     }
 }

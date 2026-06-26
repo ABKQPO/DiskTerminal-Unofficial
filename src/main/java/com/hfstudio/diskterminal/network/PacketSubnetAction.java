@@ -70,9 +70,7 @@ public class PacketSubnetAction implements IMessage {
         @Override
         public IMessage onMessage(PacketSubnetAction message, MessageContext ctx) {
             NetUtil.run(ctx.getServerHandler().playerEntity, () -> {
-                if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase) {
-                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx
-                        .getServerHandler().playerEntity.openContainer;
+                if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase container) {
                     container.handleSubnetAction(message.subnetId, message.action, message.data);
                 }
             });

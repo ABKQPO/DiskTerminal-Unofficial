@@ -192,15 +192,13 @@ public abstract class AbstractTabWidget extends AbstractWidget {
         for (int i = 0; i < visibleRows.size(); i++) {
             IWidget widget = visibleRows.get(i);
 
-            if (widget instanceof AbstractHeader) {
-                AbstractHeader header = (AbstractHeader) widget;
+            if (widget instanceof AbstractHeader header) {
                 // Header's connector state: is the next visible line a content row?
                 boolean contentBelow = hasContentBelow(allLines, scrollOffset + i);
                 header.setDrawConnector(contentBelow);
                 lastCutY = header.getConnectorY();
 
-            } else if (widget instanceof AbstractLine) {
-                AbstractLine line = (AbstractLine) widget;
+            } else if (widget instanceof AbstractLine line) {
 
                 // For the first visible row that is a content line with content above,
                 // draw tree line from top of visible area
@@ -487,8 +485,7 @@ public abstract class AbstractTabWidget extends AbstractWidget {
      */
     public boolean handleUpgradeClick(Object hoveredData, ItemStack heldStack, boolean isShiftClick) {
         // Default: try cell-based upgrade insertion
-        if (hoveredData instanceof CellInfo) {
-            CellInfo cell = (CellInfo) hoveredData;
+        if (hoveredData instanceof CellInfo cell) {
             StorageInfo storage = guiContext.getDataManager()
                 .getStorageMap()
                 .get(cell.getParentStorageId());
@@ -499,8 +496,7 @@ public abstract class AbstractTabWidget extends AbstractWidget {
             return true;
         }
 
-        if (hoveredData instanceof StorageInfo) {
-            StorageInfo storage = (StorageInfo) hoveredData;
+        if (hoveredData instanceof StorageInfo storage) {
             // Let the server iterate through cells and find one that actually accepts
             // Use shiftClick=true so server handles the cell selection
             guiContext.sendPacket(new PacketUpgradeCell(storage.getId(), -1, true));

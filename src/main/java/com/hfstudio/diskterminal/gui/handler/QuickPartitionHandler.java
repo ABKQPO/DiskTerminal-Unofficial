@@ -92,28 +92,21 @@ public class QuickPartitionHandler {
             targetType,
             hoveredIngredient.originalIngredient);
         if (ItemStacks.isEmpty(partitionStack)) {
-            switch (targetType) {
-                case FLUID:
-                    return QuickPartitionResult.error("disk_terminal.error.fluid_cell_item");
-                case ESSENTIA:
-                    return QuickPartitionResult.error("disk_terminal.error.essentia_cell_item");
-                default:
-                    return QuickPartitionResult.error("disk_terminal.quick_partition.no_item");
-            }
+            return switch (targetType) {
+                case FLUID -> QuickPartitionResult.error("disk_terminal.error.fluid_cell_item");
+                case ESSENTIA -> QuickPartitionResult.error("disk_terminal.error.essentia_cell_item");
+                default -> QuickPartitionResult.error("disk_terminal.quick_partition.no_item");
+            };
         }
 
         CellSearchResult searchResult = findFirstCellWithoutPartition(targetType, partitionLines, storageMap);
         if (searchResult == null) {
-            switch (targetType) {
-                case ITEM:
-                    return QuickPartitionResult.error("disk_terminal.quick_partition.no_cell_item");
-                case FLUID:
-                    return QuickPartitionResult.error("disk_terminal.quick_partition.no_cell_fluid");
-                case ESSENTIA:
-                    return QuickPartitionResult.error("disk_terminal.quick_partition.no_cell_essentia");
-                default:
-                    return QuickPartitionResult.error("disk_terminal.quick_partition.no_cell_auto");
-            }
+            return switch (targetType) {
+                case ITEM -> QuickPartitionResult.error("disk_terminal.quick_partition.no_cell_item");
+                case FLUID -> QuickPartitionResult.error("disk_terminal.quick_partition.no_cell_fluid");
+                case ESSENTIA -> QuickPartitionResult.error("disk_terminal.quick_partition.no_cell_essentia");
+                default -> QuickPartitionResult.error("disk_terminal.quick_partition.no_cell_auto");
+            };
         }
 
         DiskTerminalNetwork.INSTANCE.sendToServer(
@@ -226,9 +219,8 @@ public class QuickPartitionHandler {
         Map<Long, StorageInfo> storageMap) {
         for (int i = 0; i < partitionLines.size(); i++) {
             Object line = partitionLines.get(i);
-            if (!(line instanceof CellContentRow)) continue;
+            if (!(line instanceof CellContentRow row)) continue;
 
-            CellContentRow row = (CellContentRow) line;
             if (!row.isFirstRow()) continue;
 
             CellInfo cell = row.getCell();
@@ -243,18 +235,12 @@ public class QuickPartitionHandler {
     }
 
     private static boolean matchesCellType(CellInfo cell, PartitionType type) {
-        switch (type) {
-            case ITEM:
-                return cell.isItem();
-            case FLUID:
-                return cell.isFluid();
-            case ESSENTIA:
-                return cell.isEssentia();
-            case AUTO:
-                return true;
-            default:
-                return false;
-        }
+        return switch (type) {
+            case ITEM -> cell.isItem();
+            case FLUID -> cell.isFluid();
+            case ESSENTIA -> cell.isEssentia();
+            case AUTO -> true;
+        };
     }
 
     private static boolean hasEmptyPartition(CellInfo cell) {

@@ -114,9 +114,7 @@ public class PacketSubnetPartitionAction implements IMessage {
         @Override
         public IMessage onMessage(PacketSubnetPartitionAction message, MessageContext ctx) {
             NetUtil.run(ctx.getServerHandler().playerEntity, () -> {
-                if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase) {
-                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx
-                        .getServerHandler().playerEntity.openContainer;
+                if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase container) {
                     container.handleSubnetPartitionAction(
                         message.subnetId,
                         message.pos,

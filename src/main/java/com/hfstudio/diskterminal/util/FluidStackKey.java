@@ -60,9 +60,8 @@ public class FluidStackKey {
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (!(o instanceof FluidStackKey)) return false;
+        if (!(o instanceof FluidStackKey that)) return false;
 
-        final FluidStackKey that = (FluidStackKey) o;
         return this.fluid == that.fluid && Objects.equals(this.nbt, that.nbt);
     }
 

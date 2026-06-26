@@ -1,7 +1,6 @@
 package com.hfstudio.diskterminal.client;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import net.minecraft.client.Minecraft;
@@ -45,12 +44,8 @@ public class BlockHighlightRenderer {
         if (highlightedBlocks.isEmpty()) return;
 
         long now = System.currentTimeMillis();
-        Iterator<Map.Entry<BlockPos, Long>> it = highlightedBlocks.entrySet()
-            .iterator();
-        while (it.hasNext()) {
-            if (it.next()
-                .getValue() < now) it.remove();
-        }
+        highlightedBlocks.entrySet()
+            .removeIf(blockPosLongEntry -> blockPosLongEntry.getValue() < now);
         if (highlightedBlocks.isEmpty()) return;
 
         EntityPlayer player = Minecraft.getMinecraft().thePlayer;

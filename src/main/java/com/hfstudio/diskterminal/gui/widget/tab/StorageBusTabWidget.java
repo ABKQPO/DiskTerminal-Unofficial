@@ -221,16 +221,15 @@ public class StorageBusTabWidget extends AbstractTabWidget {
         for (Map.Entry<IWidget, Object> entry : getWidgetDataMap().entrySet()) {
             IWidget widget = entry.getKey();
             Object data = entry.getValue();
-            if (!(widget instanceof SlotsLine)) continue;
+            if (!(widget instanceof SlotsLine slotsLine)) continue;
 
-            SlotsLine slotsLine = (SlotsLine) widget;
             List<SlotsLine.PartitionSlotTarget> slotTargets = slotsLine.getPartitionTargets();
             if (slotTargets.isEmpty()) continue;
             if (!(data instanceof StorageBusContentRow)) continue;
 
             StorageBusInfo bus = ((StorageBusContentRow) data).getStorageBus();
             for (SlotsLine.PartitionSlotTarget slot : slotTargets) {
-                targets.add(new GhostTarget<Object>() {
+                targets.add(new GhostTarget<>() {
 
                     @Override
                     public Rectangle getArea() {
@@ -335,15 +334,13 @@ public class StorageBusTabWidget extends AbstractTabWidget {
         int rightEdge = GuiConstants.EXPAND_ICON_X - 4;
 
         if (bus.supportsPriority()) {
-            rightEdge = Math.min(
-                rightEdge,
-                GuiConstants.CONTENT_RIGHT_EDGE - PriorityFieldManager.FIELD_WIDTH
-                    - PriorityFieldManager.RIGHT_MARGIN
-                    - 4);
+            rightEdge = GuiConstants.CONTENT_RIGHT_EDGE - PriorityFieldManager.FIELD_WIDTH
+                - PriorityFieldManager.RIGHT_MARGIN
+                - 4;
         }
 
         if (bus.supportsIOMode()) {
-            rightEdge = Math.min(rightEdge, GuiConstants.BUTTON_IO_MODE_X - 4);
+            rightEdge = GuiConstants.BUTTON_IO_MODE_X - 4;
         }
 
         return rightEdge;

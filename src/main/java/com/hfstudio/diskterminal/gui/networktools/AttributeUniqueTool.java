@@ -159,12 +159,10 @@ public class AttributeUniqueTool implements INetworkTool {
         // TODO: use ItemStackKey and FluidStackKey from util?
         if (type.isFluid()) {
             // For fluids, use a simpler key based on the representation item
-            return "fluid:" + String.valueOf(Item.itemRegistry.getNameForObject(stack.getItem()))
-                + "@"
-                + stack.getItemDamage();
+            return "fluid:" + Item.itemRegistry.getNameForObject(stack.getItem()) + "@" + stack.getItemDamage();
         }
 
-        String base = String.valueOf(Item.itemRegistry.getNameForObject(stack.getItem())) + "@" + stack.getItemDamage();
+        String base = Item.itemRegistry.getNameForObject(stack.getItem()) + "@" + stack.getItemDamage();
         if (stack.hasTagCompound()) base += "#" + stack.getTagCompound()
             .hashCode();
 
@@ -255,12 +253,13 @@ public class AttributeUniqueTool implements INetworkTool {
                     .toLowerCase();
                 String typeLabel = I18n
                     .format("gui.disk_terminal.networktools.attribute_unique.preview.type." + typeName);
-                errorBuilder.append(
-                    "\n" + I18n.format(
-                        "gui.disk_terminal.networktools.attribute_unique.error.type_detail",
-                        typeLabel,
-                        stats.getTotalAvailable(),
-                        stats.getUniqueCount()));
+                errorBuilder.append("\n")
+                    .append(
+                        I18n.format(
+                            "gui.disk_terminal.networktools.attribute_unique.error.type_detail",
+                            typeLabel,
+                            stats.getTotalAvailable(),
+                            stats.getUniqueCount()));
             }
         }
 

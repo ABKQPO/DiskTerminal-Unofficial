@@ -142,9 +142,8 @@ public class StorageBusDataHandler {
     }
 
     private static void addCustomName(NBTTagCompound busData, Object bus) {
-        if (!(bus instanceof ICustomNameObject)) return;
+        if (!(bus instanceof ICustomNameObject nameable)) return;
 
-        ICustomNameObject nameable = (ICustomNameObject) bus;
         if (nameable.hasCustomName()) {
             String customName = nameable.getCustomName();
             if (customName != null && !customName.isEmpty()) busData.setString("customName", customName);
@@ -264,9 +263,8 @@ public class StorageBusDataHandler {
         if (tracker == null) return false;
         if (action != Action.ADD_ITEM) return false;
         if (partitionSlot < 0 || stackData == null || stackData.hasNoTags()) return false;
-        if (!(tracker.storageBus instanceof PartStorageBus)) return false;
+        if (!(tracker.storageBus instanceof PartStorageBus bus)) return false;
 
-        PartStorageBus bus = (PartStorageBus) tracker.storageBus;
         IAEStackInventory config = bus.getAEInventoryByName(StorageName.CONFIG);
         if (config == null || partitionSlot >= config.getSizeInventory()) return false;
 
@@ -283,9 +281,8 @@ public class StorageBusDataHandler {
      */
     public static boolean handlePartitionAction(StorageBusTracker tracker, Action action, int partitionSlot,
         NBTTagCompound stackData) {
-        if (!(tracker.storageBus instanceof PartStorageBus)) return false;
+        if (!(tracker.storageBus instanceof PartStorageBus bus)) return false;
 
-        PartStorageBus bus = (PartStorageBus) tracker.storageBus;
         IAEStackInventory config = bus.getAEInventoryByName(StorageName.CONFIG);
         if (config == null) return false;
 
@@ -455,7 +452,7 @@ public class StorageBusDataHandler {
         IItemList<T> contents = type.createList();
         handler.getAvailableItems(contents, IterationCounter.fetchNewId());
 
-        return contents.size() > 0;
+        return !contents.isEmpty();
     }
 
     private static ItemStack getBlockAsItemStack(World world, int x, int y, int z) {

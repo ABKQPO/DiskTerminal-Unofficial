@@ -194,31 +194,26 @@ public class NetworkToolFilterUtils {
         if (state == CellFilter.State.SHOW_ALL) return true;
 
         // Determine what "has items" means based on search mode
-        boolean hasItems;
-        switch (searchMode) {
-            case INVENTORY:
+        boolean hasItems = switch (searchMode) {
+            case INVENTORY ->
                 // Only check contents
-                hasItems = cell.getContents()
+                cell.getContents()
                     .stream()
                     .anyMatch(stack -> !ItemStacks.isEmpty(stack));
-                break;
-            case PARTITION:
+            case PARTITION ->
                 // Only check partition
-                hasItems = cell.getPartition()
+                cell.getPartition()
                     .stream()
                     .anyMatch(stack -> !ItemStacks.isEmpty(stack));
-                break;
-            case MIXED:
-            default:
+            default ->
                 // Check both - cell has items if either contents or partition has items
-                hasItems = cell.getContents()
+                cell.getContents()
                     .stream()
                     .anyMatch(stack -> !ItemStacks.isEmpty(stack))
                     || cell.getPartition()
                         .stream()
                         .anyMatch(stack -> !ItemStacks.isEmpty(stack));
-                break;
-        }
+        };
 
         if (state == CellFilter.State.SHOW_ONLY) return hasItems;
         if (state == CellFilter.State.HIDE) return !hasItems;
@@ -279,24 +274,19 @@ public class NetworkToolFilterUtils {
         if (state == CellFilter.State.SHOW_ALL) return true;
 
         // Determine what "has items" means based on search mode
-        boolean hasItems;
-        switch (searchMode) {
-            case INVENTORY:
+        boolean hasItems = switch (searchMode) {
+            case INVENTORY ->
                 // Only check contents
-                hasItems = !bus.getContents()
+                !bus.getContents()
                     .isEmpty();
-                break;
-            case PARTITION:
+            case PARTITION ->
                 // Only check partition
-                hasItems = bus.hasPartition();
-                break;
-            case MIXED:
-            default:
+                bus.hasPartition();
+            default ->
                 // Check both - bus has items if either contents or partition has items
-                hasItems = !bus.getContents()
+                !bus.getContents()
                     .isEmpty() || bus.hasPartition();
-                break;
-        }
+        };
 
         if (state == CellFilter.State.SHOW_ONLY) return hasItems;
         if (state == CellFilter.State.HIDE) return !hasItems;
@@ -342,15 +332,11 @@ public class NetworkToolFilterUtils {
         boolean matchesInventory = itemListContainsText(cell.getContents(), searchFilter);
         boolean matchesPartition = itemListContainsText(cell.getPartition(), searchFilter);
 
-        switch (searchMode) {
-            case INVENTORY:
-                return matchesInventory;
-            case PARTITION:
-                return matchesPartition;
-            case MIXED:
-            default:
-                return matchesInventory || matchesPartition;
-        }
+        return switch (searchMode) {
+            case INVENTORY -> matchesInventory;
+            case PARTITION -> matchesPartition;
+            default -> matchesInventory || matchesPartition;
+        };
     }
 
     /**
@@ -378,15 +364,11 @@ public class NetworkToolFilterUtils {
         boolean matchesInventory = itemListContainsText(bus.getContents(), searchFilter);
         boolean matchesPartition = itemListContainsText(bus.getPartition(), searchFilter);
 
-        switch (searchMode) {
-            case INVENTORY:
-                return matchesInventory;
-            case PARTITION:
-                return matchesPartition;
-            case MIXED:
-            default:
-                return matchesInventory || matchesPartition;
-        }
+        return switch (searchMode) {
+            case INVENTORY -> matchesInventory;
+            case PARTITION -> matchesPartition;
+            default -> matchesInventory || matchesPartition;
+        };
     }
 
     /**

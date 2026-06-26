@@ -38,15 +38,13 @@ public abstract class AbstractSubnetScanner implements ISubnetScanner {
         if (tile == null) return null;
 
         // Handle IInterfaceHost (TileInterface implements this)
-        if (tile instanceof IInterfaceHost) {
-            IInterfaceHost iface = (IInterfaceHost) tile;
+        if (tile instanceof IInterfaceHost iface) {
             IGridNode node = iface.getActionableNode();
             if (node != null && node.getGrid() != null) return node.getGrid();
         }
 
         // Handle cable bus with parts
-        if (tile instanceof IPartHost) {
-            IPartHost host = (IPartHost) tile;
+        if (tile instanceof IPartHost host) {
             // Check all sides for parts with grid nodes
             for (ForgeDirection dir : ForgeDirection.VALID_DIRECTIONS) {
                 IPart part = host.getPart(dir);
@@ -179,8 +177,7 @@ public abstract class AbstractSubnetScanner implements ISubnetScanner {
         nbt.setInteger("posZ", locZ(primaryNode));
 
         IInterfaceHost interfaceHost = SubnetDataHandler.findPrimaryInterfaceHost(subnetGrid);
-        if (interfaceHost instanceof ICustomNameObject) {
-            ICustomNameObject nameable = (ICustomNameObject) interfaceHost;
+        if (interfaceHost instanceof ICustomNameObject nameable) {
             if (nameable.hasCustomName()) {
                 String customName = nameable.getCustomName();
                 if (customName != null && !customName.isEmpty()) nbt.setString("customName", customName);

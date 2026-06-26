@@ -64,9 +64,7 @@ public class PacketSwitchNetwork implements IMessage {
         @Override
         public IMessage onMessage(PacketSwitchNetwork message, MessageContext ctx) {
             NetUtil.run(ctx.getServerHandler().playerEntity, () -> {
-                if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase) {
-                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx
-                        .getServerHandler().playerEntity.openContainer;
+                if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase container) {
                     container.switchNetwork(message.networkId);
                 }
             });

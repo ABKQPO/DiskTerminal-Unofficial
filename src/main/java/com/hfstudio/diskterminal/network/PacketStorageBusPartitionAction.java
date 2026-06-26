@@ -81,9 +81,7 @@ public class PacketStorageBusPartitionAction implements IMessage {
         @Override
         public IMessage onMessage(PacketStorageBusPartitionAction message, MessageContext ctx) {
             NetUtil.run(ctx.getServerHandler().playerEntity, () -> {
-                if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase) {
-                    ContainerCellTerminalBase container = (ContainerCellTerminalBase) ctx
-                        .getServerHandler().playerEntity.openContainer;
+                if (ctx.getServerHandler().playerEntity.openContainer instanceof ContainerCellTerminalBase container) {
                     container.handleStorageBusPartitionAction(
                         message.storageBusId,
                         message.action,

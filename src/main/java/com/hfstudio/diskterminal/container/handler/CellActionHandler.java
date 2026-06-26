@@ -189,9 +189,9 @@ public class CellActionHandler {
      */
     public static boolean upgradeCell(IChestOrDrive storage, TileEntity tile, int cellSlot, ItemStack upgradeStack,
         EntityPlayer player, int fromSlot) {
-        if (ItemStacks.isEmpty(upgradeStack) || !(upgradeStack.getItem() instanceof IUpgradeModule)) return false;
+        if (ItemStacks.isEmpty(upgradeStack) || !(upgradeStack.getItem() instanceof IUpgradeModule upgradeModule))
+            return false;
 
-        IUpgradeModule upgradeModule = (IUpgradeModule) upgradeStack.getItem();
         Upgrades upgradeType = upgradeModule.getType(upgradeStack);
         if (upgradeType == null) return false;
 
@@ -202,9 +202,9 @@ public class CellActionHandler {
         if (!isValidInventorySlot(cellInventory, inventorySlot)) return false;
 
         ItemStack cellStack = cellInventory.getStackInSlot(inventorySlot);
-        if (ItemStacks.isEmpty(cellStack) || !(cellStack.getItem() instanceof ICellWorkbenchItem)) return false;
+        if (ItemStacks.isEmpty(cellStack) || !(cellStack.getItem() instanceof ICellWorkbenchItem cellItem))
+            return false;
 
-        ICellWorkbenchItem cellItem = (ICellWorkbenchItem) cellStack.getItem();
         if (!cellItem.isEditable(cellStack)) return false;
 
         IInventory upgradesInv = cellItem.getUpgradesInventory(cellStack);
@@ -239,8 +239,7 @@ public class CellActionHandler {
     public static ConfigResult getConfigInventory(ICellHandler cellHandler, ItemStack cellStack) {
         ConfigResult result = new ConfigResult();
 
-        if (cellStack.getItem() instanceof ICellWorkbenchItem) {
-            ICellWorkbenchItem workbenchItem = (ICellWorkbenchItem) cellStack.getItem();
+        if (cellStack.getItem() instanceof ICellWorkbenchItem workbenchItem) {
             result.configAEInv = workbenchItem.getConfigAEInventory(cellStack);
             result.configInv = workbenchItem.getConfigInventory(cellStack);
             result.stackType = workbenchItem.getStackType();

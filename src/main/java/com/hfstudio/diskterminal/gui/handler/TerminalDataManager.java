@@ -750,7 +750,7 @@ public class TerminalDataManager {
         if (partitionedState != State.SHOW_ALL) {
             boolean isPartitioned = bus.hasPartition();
             if (partitionedState == State.SHOW_ONLY && !isPartitioned) return false;
-            if (partitionedState == State.HIDE && isPartitioned) return false;
+            return partitionedState != State.HIDE || !isPartitioned;
         }
 
         return true;
@@ -799,15 +799,11 @@ public class TerminalDataManager {
     private boolean matchesCellForMode(boolean matchesInventory, boolean matchesPartition) {
         if (searchFilter.isEmpty() && !useAdvancedSearch) return true;
 
-        switch (searchMode) {
-            case INVENTORY:
-                return matchesInventory;
-            case PARTITION:
-                return matchesPartition;
-            case MIXED:
-            default:
-                return matchesInventory || matchesPartition;
-        }
+        return switch (searchMode) {
+            case INVENTORY -> matchesInventory;
+            case PARTITION -> matchesPartition;
+            default -> matchesInventory || matchesPartition;
+        };
     }
 
     /**
@@ -883,7 +879,7 @@ public class TerminalDataManager {
         if (partitionedState != State.SHOW_ALL) {
             boolean isPartitioned = hasNonEmptyPartition(cell);
             if (partitionedState == State.SHOW_ONLY && !isPartitioned) return false;
-            if (partitionedState == State.HIDE && isPartitioned) return false;
+            return partitionedState != State.HIDE || !isPartitioned;
         }
 
         return true;

@@ -230,16 +230,15 @@ public class CellContentTabWidget extends AbstractTabWidget {
         for (Map.Entry<IWidget, Object> entry : getWidgetDataMap().entrySet()) {
             IWidget widget = entry.getKey();
             Object data = entry.getValue();
-            if (!(widget instanceof SlotsLine)) continue;
+            if (!(widget instanceof SlotsLine slotsLine)) continue;
 
-            SlotsLine slotsLine = (SlotsLine) widget;
             List<SlotsLine.PartitionSlotTarget> slotTargets = slotsLine.getPartitionTargets();
             if (slotTargets.isEmpty()) continue;
             if (!(data instanceof CellContentRow)) continue;
 
             CellInfo cell = ((CellContentRow) data).getCell();
             for (SlotsLine.PartitionSlotTarget slot : slotTargets) {
-                targets.add(new GhostTarget<Object>() {
+                targets.add(new GhostTarget<>() {
 
                     @Override
                     public Rectangle getArea() {
@@ -305,17 +304,15 @@ public class CellContentTabWidget extends AbstractTabWidget {
             IWidget widget = visibleRows.get(i);
             int lineIndex = scrollOffset + i;
 
-            if (widget instanceof AbstractHeader) {
-                AbstractHeader header = (AbstractHeader) widget;
+            if (widget instanceof AbstractHeader header) {
                 header.setDrawConnector(hasContentBelow(allLines, lineIndex));
                 lastCutY = header.getConnectorY();
 
                 continue;
             }
 
-            if (!(widget instanceof AbstractLine)) continue;
+            if (!(widget instanceof AbstractLine line)) continue;
 
-            AbstractLine line = (AbstractLine) widget;
             boolean drawTreeLine = shouldDrawCellTreeLine(allLines, lineIndex);
             int lineAboveCutY = (i == 0 && hasContentAbove) ? GuiConstants.CONTENT_START_Y : lastCutY;
             line.setTreeLineParams(drawTreeLine, lineAboveCutY);
@@ -352,9 +349,8 @@ public class CellContentTabWidget extends AbstractTabWidget {
 
         Object line = allLines.get(index);
         if (line instanceof EmptySlotInfo) return true;
-        if (!(line instanceof CellContentRow)) return false;
+        if (!(line instanceof CellContentRow row)) return false;
 
-        CellContentRow row = (CellContentRow) line;
         if (row.isFirstRow()) return true;
 
         return hasCellBelowInStorage(allLines, index);

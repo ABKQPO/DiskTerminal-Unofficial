@@ -100,15 +100,13 @@ public class StorageBusHeader extends StorageHeader {
         int rightEdge = GuiConstants.EXPAND_ICON_X - 4;
 
         if (prioritizable != null && prioritizable.supportsPriority()) {
-            rightEdge = Math.min(
-                rightEdge,
-                GuiConstants.CONTENT_RIGHT_EDGE - PriorityFieldManager.FIELD_WIDTH
-                    - PriorityFieldManager.RIGHT_MARGIN
-                    - 4);
+            rightEdge = GuiConstants.CONTENT_RIGHT_EDGE - PriorityFieldManager.FIELD_WIDTH
+                - PriorityFieldManager.RIGHT_MARGIN
+                - 4;
         }
 
         if (supportsIOModeSupplier != null && supportsIOModeSupplier.get()) {
-            rightEdge = Math.min(rightEdge, GuiConstants.BUTTON_IO_MODE_X - 4);
+            rightEdge = GuiConstants.BUTTON_IO_MODE_X - 4;
         }
 
         return Math.max(0, rightEdge - GuiConstants.HEADER_NAME_X);

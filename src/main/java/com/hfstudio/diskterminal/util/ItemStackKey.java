@@ -73,9 +73,8 @@ public class ItemStackKey {
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (!(o instanceof ItemStackKey)) return false;
+        if (!(o instanceof ItemStackKey that)) return false;
 
-        final ItemStackKey that = (ItemStackKey) o;
         return this.meta == that.meta && this.item == that.item && Objects.equals(this.nbt, that.nbt);
     }
 

@@ -250,15 +250,11 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
             simpleSearch);
         boolean matchesPartition = matchesItemList(connection.getPartition(), simpleSearch);
 
-        switch (searchMode) {
-            case INVENTORY:
-                return matchesInventory;
-            case PARTITION:
-                return matchesPartition;
-            case MIXED:
-            default:
-                return matchesInventory || matchesPartition;
-        }
+        return switch (searchMode) {
+            case INVENTORY -> matchesInventory;
+            case PARTITION -> matchesPartition;
+            default -> matchesInventory || matchesPartition;
+        };
     }
 
     private boolean matchesItemList(List<ItemStack> items, String searchFilter) {
@@ -361,8 +357,7 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
             IWidget widget = visibleRows.get(i);
             int lineIndex = scrollOffset + i;
 
-            if (widget instanceof AbstractHeader) {
-                AbstractHeader header = (AbstractHeader) widget;
+            if (widget instanceof AbstractHeader header) {
                 // If no content rows below but partition rows exist, connector still needed
                 boolean hasAnyContentBelow = (lineIndex + 1) < allLines.size()
                     && isContentLine(allLines, lineIndex + 1);
@@ -372,8 +367,7 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
                 lastPartitionCutY = GuiConstants.CONTENT_START_Y;
                 hadContentInSection = false;
 
-            } else if (widget instanceof AbstractLine) {
-                AbstractLine line = (AbstractLine) widget;
+            } else if (widget instanceof AbstractLine line) {
                 boolean currentIsPartition = isPartitionRow(allLines, lineIndex);
                 boolean prevIsPartition = lineIndex > 0 && isPartitionRow(allLines, lineIndex - 1);
 
@@ -662,21 +656,19 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
         for (Map.Entry<IWidget, Object> entry : getWidgetDataMap().entrySet()) {
             IWidget widget = entry.getKey();
             Object data = entry.getValue();
-            if (!(widget instanceof SlotsLine)) continue;
+            if (!(widget instanceof SlotsLine slotsLine)) continue;
 
-            SlotsLine slotsLine = (SlotsLine) widget;
             List<SlotsLine.PartitionSlotTarget> slotTargets = slotsLine.getPartitionTargets();
             if (slotTargets.isEmpty()) continue;
-            if (!(data instanceof SubnetConnectionRow)) continue;
+            if (!(data instanceof SubnetConnectionRow row)) continue;
 
-            SubnetConnectionRow row = (SubnetConnectionRow) data;
             if (!row.isPartitionRow()) continue;
 
             SubnetInfo subnet = row.getSubnet();
             SubnetInfo.ConnectionPoint conn = row.getConnection();
 
             for (SlotsLine.PartitionSlotTarget slot : slotTargets) {
-                targets.add(new GhostTarget<Object>() {
+                targets.add(new GhostTarget<>() {
 
                     @Override
                     public Rectangle getArea() {

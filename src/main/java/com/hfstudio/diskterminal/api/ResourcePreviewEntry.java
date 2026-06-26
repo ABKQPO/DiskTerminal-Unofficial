@@ -16,7 +16,7 @@ public class ResourcePreviewEntry {
     private final long amount;
 
     public ResourcePreviewEntry(@Nonnull ResourceType resourceType, ItemStack displayStack, long amount) {
-        this.resourceType = resourceType != null ? resourceType : ResourceType.ITEM;
+        this.resourceType = resourceType;
 
         if (ItemStacks.isEmpty(displayStack)) {
             this.displayStack = null;

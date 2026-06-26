@@ -31,9 +31,8 @@ public class AEStackUtil {
         if (nbt == null || stack == null) return;
 
         NBTTagCompound generic = stack.toNBTGeneric();
-        for (Object key : generic.func_150296_c()) {
-            String name = (String) key;
-            nbt.setTag(name, generic.getTag(name));
+        for (String key : generic.func_150296_c()) {
+            nbt.setTag(key, generic.getTag(key));
         }
     }
 

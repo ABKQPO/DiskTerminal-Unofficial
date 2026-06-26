@@ -206,18 +206,15 @@ public class FilterPanelManager {
             startX = panelX;
 
             // For 2 columns in pushUp mode, also adjust X
-            if (layout.columns == 2) {
-                startX = panelX - BUTTON_WITH_SPACING;
-            }
         } else {
             // Normal vertical layout
             startX = panelX;
             startY = availableTop;
 
             // For 2 columns, adjust X to fit both columns
-            if (layout.columns == 2) {
-                startX = panelX - BUTTON_WITH_SPACING;
-            }
+        }
+        if (layout.columns == 2) {
+            startX = panelX - BUTTON_WITH_SPACING;
         }
 
         // Style button forbidden zone (with margin)

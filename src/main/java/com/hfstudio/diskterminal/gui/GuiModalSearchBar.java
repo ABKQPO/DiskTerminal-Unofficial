@@ -109,7 +109,7 @@ public class GuiModalSearchBar {
         cursorBlinkCounter++;
         updateCachedLines();
 
-        int numLines = Math.max(MIN_LINES, Math.min(cachedLines.size(), MAX_LINES));
+        int numLines = Math.clamp(cachedLines.size(), MIN_LINES, MAX_LINES);
         int textAreaHeight = numLines * LINE_HEIGHT + 8;
         int height = textAreaHeight + (PADDING * 2);
         int y = screenHeight - height - VERTICAL_MARGIN;
@@ -322,7 +322,7 @@ public class GuiModalSearchBar {
             }
         }
 
-        if (currentLine.length() > 0) lines.add(currentLine.toString());
+        if (!currentLine.isEmpty()) lines.add(currentLine.toString());
 
         return lines;
     }
@@ -333,7 +333,7 @@ public class GuiModalSearchBar {
     public boolean handleMouseClick(int mouseX, int mouseY, int mouseButton) {
         if (!visible) return false;
 
-        int numLines = Math.max(MIN_LINES, Math.min(cachedLines.size(), MAX_LINES));
+        int numLines = Math.clamp(cachedLines.size(), MIN_LINES, MAX_LINES);
         int textAreaHeight = numLines * LINE_HEIGHT + 8;
         int height = textAreaHeight + (PADDING * 2);
         int y = screenHeight - height - VERTICAL_MARGIN;
@@ -364,7 +364,7 @@ public class GuiModalSearchBar {
 
         // Left-click positions cursor based on click location
         int clickedLine = (mouseY - y - PADDING) / LINE_HEIGHT;
-        clickedLine = Math.max(0, Math.min(clickedLine, cachedLines.size() - 1));
+        clickedLine = Math.clamp(clickedLine, 0, cachedLines.size() - 1);
 
         if (clickedLine < cachedLines.size()) {
             String line = cachedLines.get(clickedLine);
