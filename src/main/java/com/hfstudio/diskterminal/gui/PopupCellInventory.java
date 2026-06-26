@@ -28,7 +28,7 @@ import appeng.util.ReadableNumberConverter;
  */
 public class PopupCellInventory extends Gui {
 
-    private static final int SLOTS_PER_ROW = 7;
+    private static final int SLOTS_PER_ROW = GuiConstants.POPUP_SLOTS_PER_ROW;
     private static final int MAX_ROWS = GuiConstants.POPUP_MAX_ROWS;
     private static final int SLOT_SIZE = GuiConstants.SLOT_SIZE;
     private static final int PADDING = GuiConstants.PADDING;
@@ -40,15 +40,17 @@ public class PopupCellInventory extends Gui {
     private final CellInfo cell;
     private final long storageId;
     private final int cellSlot;
-    private final int x;
-    private final int y;
+    private int x;
+    private int y;
     private final int width;
     private final int height;
     private final int slotOffsetX;
+    private final int screenWidth;
+    private final int screenHeight;
 
     // Button for set/unset all partition
-    private final int partitionButtonX;
-    private final int partitionButtonY;
+    private int partitionButtonX;
+    private int partitionButtonY;
     private final int partitionButtonWidth;
     private boolean partitionAllHovered = false;
 
@@ -56,6 +58,9 @@ public class PopupCellInventory extends Gui {
     private ItemStack hoveredStack = null;
     private int hoveredX = 0;
     private int hoveredY = 0;
+    private boolean dragging = false;
+    private int dragOffsetX = 0;
+    private int dragOffsetY = 0;
 
     public PopupCellInventory(GuiScreen parent, CellInfo cell, int mouseX, int mouseY) {
         this.parent = parent;
@@ -85,6 +90,8 @@ public class PopupCellInventory extends Gui {
 
         // Center on screen using scaled resolution
         ScaledResolution sr = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
+        this.screenWidth = sr.getScaledWidth();
+        this.screenHeight = sr.getScaledHeight();
         this.x = (sr.getScaledWidth() - this.width) / 2;
         this.y = (sr.getScaledHeight() - this.height) / 2;
 
@@ -99,6 +106,8 @@ public class PopupCellInventory extends Gui {
 
         // Reset hovered state
         hoveredStack = null;
+
+        if (dragging) moveTo(mouseX - dragOffsetX, mouseY - dragOffsetY);
 
         // Reset GL state to known good state before drawing
         GL11.glDisable(GL11.GL_LIGHTING);
@@ -268,6 +277,13 @@ public class PopupCellInventory extends Gui {
             return true;
         }
 
+        if (mouseButton == 0 && isInHeader(mouseX, mouseY)) {
+            dragging = true;
+            dragOffsetX = mouseX - x;
+            dragOffsetY = mouseY - y;
+            return true;
+        }
+
         // Check slot click for partition add
         int slotStartY = y + HEADER_HEIGHT + BUTTON_HEIGHT + 4;
         int relX = mouseX - x - slotOffsetX;
@@ -303,6 +319,34 @@ public class PopupCellInventory extends Gui {
         return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
     }
 
+    public boolean handleDrag(int mouseX, int mouseY, int mouseButton) {
+        if (!dragging || mouseButton != 0) return false;
+
+        moveTo(mouseX - dragOffsetX, mouseY - dragOffsetY);
+        return true;
+    }
+
+    public void stopDragging() {
+        dragging = false;
+    }
+
+    private boolean isInHeader(int mouseX, int mouseY) {
+        return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + HEADER_HEIGHT;
+    }
+
+    private void moveTo(int newX, int newY) {
+        int maxX = Math.max(0, screenWidth - width);
+        int maxY = Math.max(0, screenHeight - height);
+        x = Math.max(0, Math.min(maxX, newX));
+        y = Math.max(0, Math.min(maxY, newY));
+        updateButtonPositions();
+    }
+
+    private void updateButtonPositions() {
+        partitionButtonX = this.x + PADDING;
+        partitionButtonY = this.y + HEADER_HEIGHT;
+    }
+
     /**
      * Get current partition list from parent's storageMap.
      * This ensures we show up-to-date partition status after server updates.
@@ -329,6 +373,10 @@ public class PopupCellInventory extends Gui {
 
     public int getHeight() {
         return height;
+    }
+
+    public ItemStack getHoveredStack() {
+        return hoveredStack;
     }
 
     public int getX() {

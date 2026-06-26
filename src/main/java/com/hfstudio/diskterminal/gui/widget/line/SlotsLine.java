@@ -120,6 +120,7 @@ public class SlotsLine extends AbstractLine {
 
     /** Whether to draw a horizontal separator line at the top of this row */
     protected boolean drawTopSeparator = false;
+    protected int separatorRightOffset = 0;
 
     /**
      * @param y            Y position relative to GUI
@@ -183,6 +184,10 @@ public class SlotsLine extends AbstractLine {
         this.guiTop = guiTop;
     }
 
+    public void setSeparatorRightOffset(int separatorRightOffset) {
+        this.separatorRightOffset = separatorRightOffset;
+    }
+
     /**
      * Get the NEI partition slot targets accumulated during the last draw.
      * Only populated in PARTITION mode.
@@ -200,7 +205,7 @@ public class SlotsLine extends AbstractLine {
             Gui.drawRect(
                 GuiConstants.GUI_INDENT,
                 y - 1,
-                GuiConstants.CONTENT_RIGHT_EDGE,
+                GuiConstants.CONTENT_RIGHT_EDGE + separatorRightOffset,
                 y,
                 GuiConstants.COLOR_SEPARATOR);
         }
@@ -212,7 +217,7 @@ public class SlotsLine extends AbstractLine {
                 GuiConstants.GUI_INDENT,
                 y,
                 GuiConstants.CONTENT_RIGHT_EDGE,
-                y + GuiConstants.ROW_HEIGHT,
+                y + rowHeight,
                 GuiConstants.COLOR_SELECTION);
         }
 

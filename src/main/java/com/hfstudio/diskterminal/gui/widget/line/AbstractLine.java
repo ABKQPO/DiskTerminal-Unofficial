@@ -63,8 +63,15 @@ public abstract class AbstractLine extends AbstractWidget {
     /** X offset for tree button (default: -5 from TREE_LINE_X). Storage buses use -3 for tighter layout. */
     protected int treeButtonXOffset = -5;
 
+    protected int rowHeight = GuiConstants.ROW_HEIGHT;
+
     protected AbstractLine(int x, int y, int width) {
         super(x, y, width, GuiConstants.ROW_HEIGHT);
+    }
+
+    public void setRowHeight(int rowHeight) {
+        this.rowHeight = rowHeight;
+        this.height = rowHeight;
     }
 
     /**

@@ -74,6 +74,8 @@ public class TempAreaTabWidget extends AbstractTabWidget {
 
     /** X offset for content/partition slots (no inline cell slot) */
     private static final int SLOTS_X_OFFSET = GuiConstants.CELL_INDENT + 5;
+    private static final int SLOT_ROW_HEIGHT = GuiConstants.EXPANDED_SLOT_ROW_HEIGHT;
+    private static final int SLOT_ROW_SEPARATOR_RIGHT_OFFSET = 2;
 
     public TempAreaTabWidget(FontRenderer fontRenderer, RenderItem itemRender) {
         super(fontRenderer, itemRender);
@@ -93,6 +95,18 @@ public class TempAreaTabWidget extends AbstractTabWidget {
     @Override
     public boolean showSearchModeButton() {
         return true;
+    }
+
+    @Override
+    public int getVisibleItemCount() {
+        int contentHeight = rowsVisible * GuiConstants.ROW_HEIGHT;
+
+        return Math.max(1, contentHeight / SLOT_ROW_HEIGHT);
+    }
+
+    @Override
+    protected int getRowStep(List<?> lines, int index) {
+        return isContentLine(lines, index) ? SLOT_ROW_HEIGHT : GuiConstants.ROW_HEIGHT;
     }
 
     @Override
@@ -424,6 +438,8 @@ public class TempAreaTabWidget extends AbstractTabWidget {
         });
         line.setTreeButton(treeBtn);
         line.setTreeButtonXOffset(-4);
+        line.setRowHeight(SLOT_ROW_HEIGHT);
+        line.setSeparatorRightOffset(SLOT_ROW_SEPARATOR_RIGHT_OFFSET);
 
         line.setGuiOffsets(guiLeft, guiTop);
 
@@ -451,6 +467,8 @@ public class TempAreaTabWidget extends AbstractTabWidget {
 
         int tempSlotIndex = findTempSlotIndexForCell(cell);
         configureSlotData(line, cell, mode, tempSlotIndex);
+        line.setRowHeight(SLOT_ROW_HEIGHT);
+        line.setSeparatorRightOffset(SLOT_ROW_SEPARATOR_RIGHT_OFFSET);
         line.setGuiOffsets(guiLeft, guiTop);
 
         // Selection highlight

@@ -126,6 +126,10 @@ public abstract class AbstractTabWidget extends AbstractWidget {
         return rowsVisible;
     }
 
+    protected int getRowStep(List<?> lines, int index) {
+        return GuiConstants.ROW_HEIGHT;
+    }
+
     /**
      * Build the list of visible row widgets for the current scroll window.
      * Called once per frame before draw. Subclasses implement
@@ -138,15 +142,19 @@ public abstract class AbstractTabWidget extends AbstractWidget {
         visibleRows.clear();
         widgetDataMap.clear();
 
-        int end = Math.min(scrollOffset + rowsVisible, lines.size());
-        for (int i = scrollOffset; i < end; i++) {
-            int rowY = GuiConstants.CONTENT_START_Y + (i - scrollOffset) * GuiConstants.ROW_HEIGHT;
+        int y = GuiConstants.CONTENT_START_Y;
+        int contentBottom = GuiConstants.CONTENT_START_Y + rowsVisible * GuiConstants.ROW_HEIGHT;
+        for (int i = scrollOffset; i < lines.size(); i++) {
+            int rowStep = getRowStep(lines, i);
+            if (y + rowStep > contentBottom) break;
+
             Object lineData = lines.get(i);
-            IWidget widget = createRowWidget(lineData, rowY, lines, i);
+            IWidget widget = createRowWidget(lineData, y, lines, i);
             if (widget != null) {
                 visibleRows.add(widget);
                 widgetDataMap.put(widget, lineData);
             }
+            y += rowStep;
         }
 
         propagateTreeLines(lines, scrollOffset);
@@ -207,12 +215,16 @@ public abstract class AbstractTabWidget extends AbstractWidget {
         }
 
         // Draw a bottom continuation line if there is more content below the visible window
-        int lastVisibleIndex = scrollOffset + visibleRows.size() - 1;
+        int lastVisibleIndex = getLastVisibleLineIndex(scrollOffset);
         if (lastVisibleIndex + 1 < allLines.size() && isContentLine(allLines, lastVisibleIndex + 1)) {
             bottomContinuationFromY = lastCutY;
         } else {
             bottomContinuationFromY = -1;
         }
+    }
+
+    protected int getLastVisibleLineIndex(int scrollOffset) {
+        return scrollOffset + visibleRows.size() - 1;
     }
 
     /**

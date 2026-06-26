@@ -29,7 +29,7 @@ import com.hfstudio.diskterminal.util.ItemStacks;
  */
 public class PopupCellPartition extends Gui {
 
-    private static final int SLOTS_PER_ROW = 7;
+    private static final int SLOTS_PER_ROW = GuiConstants.POPUP_SLOTS_PER_ROW;
     private static final int MAX_PARTITION_SLOTS = 63;
     private static final int MAX_ROWS = (MAX_PARTITION_SLOTS + SLOTS_PER_ROW - 1) / SLOTS_PER_ROW;
     private static final int SLOT_SIZE = GuiConstants.SLOT_SIZE;
@@ -39,11 +39,13 @@ public class PopupCellPartition extends Gui {
 
     private final GuiScreen parent;
     private final CellInfo cell;
-    private final int x;
-    private final int y;
+    private int x;
+    private int y;
     private final int width;
     private final int height;
     private final int slotOffsetX;
+    private final int screenWidth;
+    private final int screenHeight;
 
     private final List<ItemStack> editablePartition;
 
@@ -51,6 +53,9 @@ public class PopupCellPartition extends Gui {
     private ItemStack hoveredStack = null;
     private int hoveredX = 0;
     private int hoveredY = 0;
+    private boolean dragging = false;
+    private int dragOffsetX = 0;
+    private int dragOffsetY = 0;
 
     public PopupCellPartition(GuiScreen parent, CellInfo cell, int mouseX, int mouseY) {
         this.parent = parent;
@@ -77,6 +82,8 @@ public class PopupCellPartition extends Gui {
 
         // Center on screen using scaled resolution
         ScaledResolution sr = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
+        this.screenWidth = sr.getScaledWidth();
+        this.screenHeight = sr.getScaledHeight();
         this.x = (sr.getScaledWidth() - this.width) / 2;
         this.y = (sr.getScaledHeight() - this.height) / 2;
     }
@@ -87,6 +94,8 @@ public class PopupCellPartition extends Gui {
 
         // Reset hovered state
         hoveredStack = null;
+
+        if (dragging) moveTo(mouseX - dragOffsetX, mouseY - dragOffsetY);
 
         // Reset GL state to known good state before drawing
         GL11.glDisable(GL11.GL_LIGHTING);
@@ -177,6 +186,13 @@ public class PopupCellPartition extends Gui {
     public boolean handleClick(int mouseX, int mouseY, int mouseButton) {
         if (!isInsidePopup(mouseX, mouseY)) return false;
 
+        if (mouseButton == 0 && isInHeader(mouseX, mouseY)) {
+            dragging = true;
+            dragOffsetX = mouseX - x;
+            dragOffsetY = mouseY - y;
+            return true;
+        }
+
         // Check slot click to replace or remove.
         int slotStartY = y + HEADER_HEIGHT;
         int relX = mouseX - x - slotOffsetX;
@@ -263,6 +279,28 @@ public class PopupCellPartition extends Gui {
         return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
     }
 
+    public boolean handleDrag(int mouseX, int mouseY, int mouseButton) {
+        if (!dragging || mouseButton != 0) return false;
+
+        moveTo(mouseX - dragOffsetX, mouseY - dragOffsetY);
+        return true;
+    }
+
+    public void stopDragging() {
+        dragging = false;
+    }
+
+    private boolean isInHeader(int mouseX, int mouseY) {
+        return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + HEADER_HEIGHT;
+    }
+
+    private void moveTo(int newX, int newY) {
+        int maxX = Math.max(0, screenWidth - width);
+        int maxY = Math.max(0, screenHeight - height);
+        x = Math.max(0, Math.min(maxX, newX));
+        y = Math.max(0, Math.min(maxY, newY));
+    }
+
     /**
      * Get NEI ghost ingredient targets for this popup.
      * The parent GUI will wrap these to handle clearing the drag state.
@@ -306,6 +344,10 @@ public class PopupCellPartition extends Gui {
 
     public int getHeight() {
         return height;
+    }
+
+    public ItemStack getHoveredStack() {
+        return hoveredStack;
     }
 
     public int getX() {

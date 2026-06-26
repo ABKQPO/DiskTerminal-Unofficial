@@ -454,14 +454,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     protected void updateFilterButtonPositions() {
         int styleButtonY = (this.terminalStyleButton != null) ? this.terminalStyleButton.yPosition : this.guiTop + 8;
         int styleButtonBottom = styleButtonY + 16; // BUTTON_SIZE = 16
-        Rectangle controlsHelpBounds = getControlsHelpBounds();
-        filterPanelManager.updatePositions(
-            this.guiLeft,
-            this.guiTop,
-            this.ySize,
-            styleButtonY,
-            styleButtonBottom,
-            controlsHelpBounds);
+        filterPanelManager.updatePositions(this.guiLeft, this.guiTop, this.ySize, styleButtonY, styleButtonBottom);
     }
 
     protected void applyFiltersToDataManager() {
@@ -749,6 +742,8 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     }
 
     protected void drawTooltips(int mouseX, int mouseY) {
+        if (inventoryPopup != null || partitionPopup != null) return;
+
         int relMouseX = mouseX - guiLeft;
         int relMouseY = mouseY - guiTop;
 
@@ -811,6 +806,27 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         }, mouseX, mouseY);
     }
 
+    private void drawSearchFieldBackground() {
+        int x = this.searchField.x - 2;
+        int y = this.searchField.y;
+        int width = this.searchField.w + 4;
+        int height = GuiConstants.SEARCH_FIELD_TEXTURE_HEIGHT;
+        if (dataManager.hasAdvancedSearchError()) {
+            drawRect(x - 1, y - 1, x + width + 1, y + height + 1, 0xFFFF0000);
+        }
+
+        GuiConstants.drawHorizontalSlicedTerminalSprite(
+            x,
+            y,
+            GuiConstants.SEARCH_FIELD_TEXTURE_X,
+            GuiConstants.SEARCH_FIELD_TEXTURE_Y,
+            GuiConstants.SEARCH_FIELD_TEXTURE_WIDTH,
+            GuiConstants.SEARCH_FIELD_TEXTURE_HEIGHT,
+            width,
+            height,
+            GuiConstants.SEARCH_FIELD_TEXTURE_EDGE);
+    }
+
     @Override
     public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY) {
         this.fontRendererObj.drawString(getGuiTitle(), 22, 6, 0x404040);
@@ -821,15 +837,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             GL11.glPushMatrix();
             GL11.glTranslatef(-this.guiLeft, -this.guiTop, 0);
 
-            // Draw red border if there's a parse error
-            if (dataManager.hasAdvancedSearchError()) {
-                int fx = this.searchField.x - 3;
-                int fy = this.searchField.y - 3;
-                int fw = this.searchField.w + 6;
-                int fh = this.searchField.h + 6;
-                drawRect(fx, fy, fx + fw, fy + fh, 0xFFFF0000);
-            }
-
+            drawSearchFieldBackground();
             this.searchField.drawTextBox();
             GL11.glPopMatrix();
         }
@@ -947,6 +955,12 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         Rectangle controlsHelp = getControlsHelpBounds();
 
         areas.add(new Rectangle(this.guiLeft, this.guiTop, this.xSize, this.ySize));
+        areas.add(
+            new Rectangle(
+                this.guiLeft - GuiConstants.TAB_WIDTH - 2,
+                this.guiTop + GuiConstants.TAB_Y_OFFSET,
+                GuiConstants.TAB_WIDTH + 4,
+                this.ySize));
 
         if (controlsHelp.width > 0) areas.add(controlsHelp);
 
@@ -990,6 +1004,15 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         return areas;
     }
 
+    private boolean isInVirtualContentArea(int mouseX, int mouseY) {
+        int relMouseX = mouseX - this.guiLeft;
+        int relMouseY = mouseY - this.guiTop;
+
+        return relMouseX >= 0 && relMouseX < GuiConstants.CONTENT_RIGHT_EDGE
+            && relMouseY >= GuiConstants.CONTENT_START_Y
+            && relMouseY < GuiConstants.CONTENT_START_Y + this.rowsVisible * ROW_HEIGHT;
+    }
+
     @Override
     public boolean hideItemPanelSlot(GuiContainer gui, int x, int y, int w, int h) {
         Rectangle checkedArea = new Rectangle(x, y, w, h);
@@ -1008,7 +1031,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glEnable(GL11.GL_ALPHA_TEST);
 
-        this.bindTexture("guis/newinterfaceterminal.png");
+        this.bindTexture("disk_terminal", "guis/disk_terminal.png");
 
         // Draw top section
         this.drawTexturedModalRect(offsetX, offsetY, 0, 0, this.xSize, 18);
@@ -1111,24 +1134,18 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         // Handle upgrade insertion (player holding upgrade + left-click on cell/bus)
         if (mouseButton == 0 && handleWidgetUpgradeClick(mouseX, mouseY)) return;
 
+        boolean hadPopupAtStart = inventoryPopup != null || partitionPopup != null;
         if (inventoryPopup != null) {
             if (inventoryPopup.handleClick(mouseX, mouseY, mouseButton)) return;
 
-            // Click outside popup closes it
             inventoryPopup = null;
-
-            return;
         }
 
         if (partitionPopup != null) {
             if (partitionPopup.handleClick(mouseX, mouseY, mouseButton)) return;
-
-            // Keep partition editing open so NEI ghost drags and held-item marking can target it.
-            return;
         }
 
-        // Handle tab header clicks via TabManager
-        if (tabManager.handleClick(mouseX, mouseY, guiLeft, guiTop)) return;
+        if (!hadPopupAtStart && tabManager.handleClick(mouseX, mouseY, guiLeft, guiTop)) return;
 
         ghostDropConsumedClick = false;
 
@@ -1139,10 +1156,28 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         if (ghostDropConsumedClick) return;
 
         // Delegate content area clicks to the active tab widget
+        if (hadPopupAtStart || !isInVirtualContentArea(mouseX, mouseY)) return;
+
         int relMouseX = mouseX - guiLeft;
         int relMouseY = mouseY - guiTop;
         AbstractTabWidget activeTab = tabManager.getActiveTab();
         if (activeTab != null) activeTab.handleClick(relMouseX, relMouseY, mouseButton);
+    }
+
+    @Override
+    protected void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
+        if (partitionPopup != null && partitionPopup.handleDrag(mouseX, mouseY, clickedMouseButton)) return;
+        if (inventoryPopup != null && inventoryPopup.handleDrag(mouseX, mouseY, clickedMouseButton)) return;
+
+        super.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
+    }
+
+    @Override
+    protected void mouseMovedOrUp(int mouseX, int mouseY, int state) {
+        if (partitionPopup != null) partitionPopup.stopDragging();
+        if (inventoryPopup != null) inventoryPopup.stopDragging();
+
+        super.mouseMovedOrUp(mouseX, mouseY, state);
     }
 
     @Override
@@ -1490,6 +1525,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
     public List<GhostTarget<?>> getPhantomTargets(Object ingredient) {
         if (partitionPopup != null) return partitionPopup.getGhostTargets();
+        if (inventoryPopup != null) return Collections.emptyList();
 
         AbstractTabWidget activeTab = tabManager.getActiveTab();
         if (activeTab == null) return Collections.emptyList();
@@ -1650,6 +1686,9 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
      * @return The hovered ItemStack, or null if none
      */
     public ItemStack getVirtualHoveredItemStack(int screenMouseX, int screenMouseY) {
+        if (partitionPopup != null) return partitionPopup.getHoveredStack();
+        if (inventoryPopup != null) return inventoryPopup.getHoveredStack();
+
         AbstractTabWidget activeTab = tabManager != null ? tabManager.getActiveTab() : null;
         if (activeTab == null) return null;
 

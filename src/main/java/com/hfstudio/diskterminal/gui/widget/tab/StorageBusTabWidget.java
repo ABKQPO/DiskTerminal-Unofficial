@@ -77,6 +77,8 @@ public class StorageBusTabWidget extends AbstractTabWidget {
 
     /** X offset for content/partition slots */
     private static final int SLOTS_X_OFFSET = GuiConstants.CELL_INDENT + 5;
+    private static final int SLOT_ROW_HEIGHT = GuiConstants.EXPANDED_SLOT_ROW_HEIGHT;
+    private static final int SLOT_ROW_SEPARATOR_RIGHT_OFFSET = 2;
 
     private final SlotsLine.SlotMode slotMode;
     private final ButtonType treeButtonType;
@@ -105,6 +107,18 @@ public class StorageBusTabWidget extends AbstractTabWidget {
     @Override
     public boolean showSearchModeButton() {
         return false;
+    }
+
+    @Override
+    public int getVisibleItemCount() {
+        int contentHeight = rowsVisible * GuiConstants.ROW_HEIGHT;
+
+        return Math.max(1, contentHeight / SLOT_ROW_HEIGHT);
+    }
+
+    @Override
+    protected int getRowStep(List<?> lines, int index) {
+        return isContentLine(lines, index) ? SLOT_ROW_HEIGHT : GuiConstants.ROW_HEIGHT;
     }
 
     @Override
@@ -374,6 +388,8 @@ public class StorageBusTabWidget extends AbstractTabWidget {
         });
         line.setTreeButton(treeBtn);
         line.setTreeButtonXOffset(-4);
+        line.setRowHeight(SLOT_ROW_HEIGHT);
+        line.setSeparatorRightOffset(SLOT_ROW_SEPARATOR_RIGHT_OFFSET);
 
         line.setGuiOffsets(guiLeft, guiTop);
 
@@ -401,6 +417,8 @@ public class StorageBusTabWidget extends AbstractTabWidget {
             itemRender);
 
         configureSlotData(line, bus);
+        line.setRowHeight(SLOT_ROW_HEIGHT);
+        line.setSeparatorRightOffset(SLOT_ROW_SEPARATOR_RIGHT_OFFSET);
         line.setGuiOffsets(guiLeft, guiTop);
 
         // Selection highlight (partition mode only)

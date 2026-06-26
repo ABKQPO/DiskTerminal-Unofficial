@@ -94,7 +94,7 @@ public class ContinuationLine extends SlotsLine {
                 GuiConstants.GUI_INDENT,
                 y,
                 GuiConstants.CONTENT_RIGHT_EDGE,
-                y + GuiConstants.ROW_HEIGHT,
+                y + rowHeight,
                 GuiConstants.COLOR_SELECTION);
         }
 

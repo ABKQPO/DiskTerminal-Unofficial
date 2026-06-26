@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.entity.RenderItem;
@@ -269,8 +268,7 @@ public class TerminalLine extends AbstractLine {
         }
 
         if (usageBarHovered) {
-            ItemStack cellItem = cellItemSupplier != null ? cellItemSupplier.get() : null;
-            if (!ItemStacks.isEmpty(cellItem)) return cellItem.getTooltip(Minecraft.getMinecraft().thePlayer, false);
+            return Collections.emptyList();
         }
 
         return Collections.emptyList();
@@ -279,6 +277,11 @@ public class TerminalLine extends AbstractLine {
     @Override
     public ItemStack getHoveredItemStack(int mouseX, int mouseY) {
         if (!visible || !isHovered(mouseX, mouseY)) return null;
+
+        if (usageBarHovered) {
+            ItemStack cellItem = cellItemSupplier != null ? cellItemSupplier.get() : null;
+            if (!ItemStacks.isEmpty(cellItem)) return cellItem;
+        }
 
         // Check if hovering the cell icon
         int cellX = GuiConstants.CELL_INDENT + TARGET_RENDER_X_OFFSET;

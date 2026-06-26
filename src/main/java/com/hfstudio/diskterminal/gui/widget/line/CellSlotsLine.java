@@ -33,8 +33,6 @@ import com.hfstudio.diskterminal.util.ItemStacks;
  */
 public class CellSlotsLine extends SlotsLine {
 
-    private static final int TARGET_RENDER_X_OFFSET = -1;
-
     /** Supplier for the cell item stack in the cell slot */
     private Supplier<ItemStack> cellItemSupplier;
 
@@ -197,7 +195,7 @@ public class CellSlotsLine extends SlotsLine {
     }
 
     private void drawCellSlot(int mouseX, int mouseY) {
-        int cellX = GuiConstants.CELL_INDENT + TARGET_RENDER_X_OFFSET;
+        int cellX = GuiConstants.CELL_INDENT;
         drawSlotBackground(cellX, y);
 
         ItemStack cellItem = cellItemSupplier != null ? cellItemSupplier.get() : null;

@@ -127,15 +127,13 @@ public class FilterPanelManager {
     /**
      * Update button positions based on available space.
      *
-     * @param guiLeft            GUI left edge X coordinate
-     * @param guiTop             GUI top edge Y coordinate
-     * @param ySize              GUI height
-     * @param styleButtonY       Y coordinate of the terminal style button (top)
-     * @param styleButtonBottom  Y coordinate of the terminal style button (bottom)
-     * @param controlsHelpBounds Bounding rectangle of controls help widget (or empty if none)
+     * @param guiLeft           GUI left edge X coordinate
+     * @param guiTop            GUI top edge Y coordinate
+     * @param ySize             GUI height
+     * @param styleButtonY      Y coordinate of the terminal style button (top)
+     * @param styleButtonBottom Y coordinate of the terminal style button (bottom)
      */
-    public void updatePositions(int guiLeft, int guiTop, int ySize, int styleButtonY, int styleButtonBottom,
-        Rectangle controlsHelpBounds) {
+    public void updatePositions(int guiLeft, int guiTop, int ySize, int styleButtonY, int styleButtonBottom) {
         // Count all buttons (slot limit + filters)
         int buttonCount = filterButtons.size();
         if (slotLimitButton != null) buttonCount++;

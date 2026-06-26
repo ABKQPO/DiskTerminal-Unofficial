@@ -78,14 +78,7 @@ public class PartCellTerminal extends AbstractPartDisplay implements IAEAppEngIn
         IIcon sideTexture = CableBusTextures.PartMonitorSides.getIcon();
         IIcon backTexture = CableBusTextures.PartMonitorBack.getIcon();
 
-        rh.setTexture(
-            sideTexture,
-            sideTexture,
-            backTexture,
-            this.getItemStack()
-                .getIconIndex(),
-            sideTexture,
-            sideTexture);
+        rh.setTexture(sideTexture, sideTexture, backTexture, getPartBackgroundIcon(), sideTexture, sideTexture);
         rh.renderInventoryBox(renderer);
 
         IIcon background = getPartBackgroundIcon();
@@ -112,14 +105,7 @@ public class PartCellTerminal extends AbstractPartDisplay implements IAEAppEngIn
         IIcon sideTexture = CableBusTextures.PartMonitorSides.getIcon();
         IIcon backTexture = CableBusTextures.PartMonitorBack.getIcon();
 
-        rh.setTexture(
-            sideTexture,
-            sideTexture,
-            backTexture,
-            this.getItemStack()
-                .getIconIndex(),
-            sideTexture,
-            sideTexture);
+        rh.setTexture(sideTexture, sideTexture, backTexture, getPartBackgroundIcon(), sideTexture, sideTexture);
         rh.setBounds(2, 2, 14, 14, 14, 16);
         rh.renderBlock(x, y, z, renderer);
 
@@ -152,8 +138,7 @@ public class PartCellTerminal extends AbstractPartDisplay implements IAEAppEngIn
             sideStatusTexture,
             sideStatusTexture,
             backTexture,
-            this.getItemStack()
-                .getIconIndex(),
+            getPartBackgroundIcon(),
             sideStatusTexture,
             sideStatusTexture);
 

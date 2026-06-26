@@ -38,7 +38,7 @@ import com.hfstudio.diskterminal.util.ItemStacks;
  */
 public class NetworkToolRowWidget extends AbstractWidget {
 
-    public static final int ROW_HEIGHT = 36;
+    public static final int ROW_HEIGHT = 38;
 
     private static final int PADDING = 4;
     private static final int ICON_SIZE = 16;
@@ -92,7 +92,7 @@ public class NetworkToolRowWidget extends AbstractWidget {
         Gui.drawRect(x, y, x + width, y + height - 1, bgColor);
 
         // Bottom separator line
-        Gui.drawRect(x, y + height - 1, x + width, y + height, GuiConstants.COLOR_SEPARATOR);
+        Gui.drawRect(x, y + height - 1, x + width + 2, y + height, GuiConstants.COLOR_SEPARATOR);
 
         // Get preview from current tool context
         ToolContext ctx = contextSupplier != null ? contextSupplier.get() : null;

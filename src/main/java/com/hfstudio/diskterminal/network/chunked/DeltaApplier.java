@@ -1,6 +1,7 @@
 package com.hfstudio.diskterminal.network.chunked;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -103,7 +104,7 @@ public class DeltaApplier {
      */
     @SuppressWarnings("unchecked")
     private static String findListKey(NBTTagCompound payload) {
-        for (String key : (java.util.Set<String>) payload.func_150296_c()) {
+        for (String key : (Set<String>) payload.func_150296_c()) {
             if (payload.getTag(key) instanceof NBTTagList) {
                 NBTTagList l = (NBTTagList) payload.getTag(key);
                 if (l.func_150303_d() == Constants.NBT.TAG_COMPOUND || l.tagCount() == 0) return key;

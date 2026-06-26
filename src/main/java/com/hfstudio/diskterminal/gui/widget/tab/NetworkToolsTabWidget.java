@@ -52,17 +52,17 @@ public class NetworkToolsTabWidget extends AbstractTabWidget {
         visibleRows.clear();
         widgetDataMap.clear();
 
-        int visibleCount = getVisibleItemCount();
-        int end = Math.min(scrollOffset + visibleCount + 1, lines.size());
+        int rowY = GuiConstants.CONTENT_START_Y;
+        int contentBottom = GuiConstants.CONTENT_START_Y + rowsVisible * GuiConstants.ROW_HEIGHT;
 
-        for (int i = scrollOffset; i < end; i++) {
-            int rowY = GuiConstants.CONTENT_START_Y + (i - scrollOffset) * NetworkToolRowWidget.ROW_HEIGHT;
+        for (int i = scrollOffset; i < lines.size() && rowY + NetworkToolRowWidget.ROW_HEIGHT <= contentBottom; i++) {
             Object lineData = lines.get(i);
             IWidget widget = createRowWidget(lineData, rowY, lines, i);
             if (widget != null) {
                 visibleRows.add(widget);
                 widgetDataMap.put(widget, lineData);
             }
+            rowY += NetworkToolRowWidget.ROW_HEIGHT;
         }
 
         // No tree line propagation needed for tool rows

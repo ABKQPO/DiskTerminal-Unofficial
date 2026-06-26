@@ -111,11 +111,22 @@ public abstract class AbstractWidget implements IWidget {
 
         int textX = slotX + slotSize - 1 - fontRenderer.getStringWidth(text);
         int textY = slotY + slotSize - fontRenderer.FONT_HEIGHT;
-        fontRenderer.drawStringWithShadow(text, textX, textY, color);
+        drawOverlayString(fontRenderer, text, textX, textY, color);
     }
 
     public static void drawPartitionIndicator(FontRenderer fontRenderer, int slotX, int slotY, int color) {
-        fontRenderer.drawStringWithShadow("P", slotX + 1, slotY + 1, color);
+        drawOverlayString(fontRenderer, "P", slotX + 1, slotY + 1, color);
+    }
+
+    private static void drawOverlayString(FontRenderer fontRenderer, String text, int x, int y, int color) {
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glPushMatrix();
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GL11.glDisable(GL11.GL_LIGHTING);
+        GL11.glTranslatef(0.0F, 0.0F, 300.0F);
+        fontRenderer.drawStringWithShadow(text, x, y, color);
+        GL11.glPopMatrix();
+        GL11.glPopAttrib();
     }
 
     /**

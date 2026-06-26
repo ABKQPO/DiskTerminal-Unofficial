@@ -30,6 +30,11 @@ public class GuiConstants {
         "disk_terminal",
         "textures/guis/atlas.png");
 
+    /** Main terminal texture resource location. */
+    public static final ResourceLocation TERMINAL_TEXTURE = new ResourceLocation(
+        "disk_terminal",
+        "textures/guis/disk_terminal.png");
+
     /**
      * Bind the atlas texture and draw a sprite from it.
      * Combines bindTexture + color reset + enableBlend + a scaled custom-size blit.
@@ -69,6 +74,45 @@ public class GuiConstants {
 
     public static void drawAtlasSprite(int x, int y, int texX, int texY) {
         drawAtlasSprite(x, y, texX, texY, 16, 16);
+    }
+
+    public static void drawTerminalSlice(int x, int y, int texX, int texY, int sourceWidth, int sourceHeight, int width,
+        int height) {
+        Minecraft.getMinecraft()
+            .getTextureManager()
+            .bindTexture(TERMINAL_TEXTURE);
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        GL11.glEnable(GL11.GL_BLEND);
+        drawScaledCustomSizeModalRect(x, y, texX, texY, sourceWidth, sourceHeight, width, height, 256, 256);
+    }
+
+    public static void drawHorizontalSlicedTerminalSprite(int x, int y, int texX, int texY, int sourceWidth,
+        int sourceHeight, int width, int height, int edgeWidth) {
+        if (width <= 0 || height <= 0) return;
+        if (width <= edgeWidth * 2) {
+            drawTerminalSlice(x, y, texX, texY, sourceWidth, sourceHeight, width, height);
+            return;
+        }
+
+        drawTerminalSlice(x, y, texX, texY, edgeWidth, sourceHeight, edgeWidth, height);
+        drawTerminalSlice(
+            x + edgeWidth,
+            y,
+            texX + edgeWidth,
+            texY,
+            sourceWidth - edgeWidth * 2,
+            sourceHeight,
+            width - edgeWidth * 2,
+            height);
+        drawTerminalSlice(
+            x + width - edgeWidth,
+            y,
+            texX + sourceWidth - edgeWidth,
+            texY,
+            edgeWidth,
+            sourceHeight,
+            edgeWidth,
+            height);
     }
 
     /**
@@ -113,6 +157,9 @@ public class GuiConstants {
 
     /** Height of each row in the scrollable area */
     public static final int ROW_HEIGHT = 18;
+
+    /** Taller row height used by dense slot-list tabs so 18px slots do not touch separators. */
+    public static final int EXPANDED_SLOT_ROW_HEIGHT = 20;
 
     /** Minimum number of visible rows */
     public static final int MIN_ROWS = 6;
@@ -235,6 +282,13 @@ public class GuiConstants {
     /** Search Help Tooltip Button: Texture Y position in the atlas */
     public static final int SEARCH_HELP_TOOLTIP_BUTTON_Y = SEARCH_MODE_BUTTON_Y;
 
+    /** Search field texture coordinates in the main terminal texture. */
+    public static final int SEARCH_FIELD_TEXTURE_X = 131;
+    public static final int SEARCH_FIELD_TEXTURE_Y = 38;
+    public static final int SEARCH_FIELD_TEXTURE_WIDTH = 70;
+    public static final int SEARCH_FIELD_TEXTURE_HEIGHT = 11;
+    public static final int SEARCH_FIELD_TEXTURE_EDGE = 4;
+
     /** Network Tool Run Button: Texture X position */
     public static final int NETWORK_TOOL_RUN_BUTTON_X = 0;
 
@@ -273,8 +327,8 @@ public class GuiConstants {
 
     // SLOT CONFIGURATION
 
-    /** Number of content slots per row for cells */
-    public static final int CELL_SLOTS_PER_ROW = 8;
+    /** Number of content slots per row for cell content and partition views */
+    public static final int CELL_SLOTS_PER_ROW = 7;
 
     /** Number of content slots per row for storage buses */
     public static final int STORAGE_BUS_SLOTS_PER_ROW = 8;
@@ -344,7 +398,7 @@ public class GuiConstants {
     // POPUP CONFIGURATION
 
     /** Slots per row in popup views */
-    public static final int POPUP_SLOTS_PER_ROW = 9;
+    public static final int POPUP_SLOTS_PER_ROW = 7;
 
     /** Maximum rows in popup views */
     public static final int POPUP_MAX_ROWS = 7;
