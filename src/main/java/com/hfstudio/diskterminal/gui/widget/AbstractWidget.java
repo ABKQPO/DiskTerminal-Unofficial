@@ -2,13 +2,17 @@ package com.hfstudio.diskterminal.gui.widget;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.item.ItemStack;
 
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
 
 import com.hfstudio.diskterminal.util.ItemStacks;
+
+import appeng.api.storage.data.IAEStack;
 
 /**
  * Base implementation of {@link IWidget} providing common fields and behavior.
@@ -93,20 +97,65 @@ public abstract class AbstractWidget implements IWidget {
     }
 
     /**
+     * Render an IAEStack at the given position using AE2's native rendering.
+     * This is the preferred method for rendering storage contents as it properly handles
+     * all stack types (items, fluids, essentia, gas, etc.) with their custom renderers.
+     */
+    public static void renderAEStack(IAEStack<?> stack, int renderX, int renderY) {
+        if (stack == null) return;
+
+        Minecraft mc = Minecraft.getMinecraft();
+
+        // Save GL state before rendering
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glPushMatrix();
+
+        try {
+            // Reset color and alpha
+            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+
+            // Use AE2's native rendering which handles all custom renderers properly
+            stack.drawInGui(mc, renderX, renderY);
+
+        } finally {
+            // Restore GL state
+            GL11.glPopMatrix();
+            GL11.glPopAttrib();
+        }
+    }
+
+    /**
      * Render an item stack at the given position with standard GUI lighting.
-     * Restores GL state (lighting, blend) after rendering.
+     * Uses AE2's rendering approach to properly handle custom item renderers (e.g., ItemFluidDrop).
+     * For rendering storage contents, prefer renderAEStack() instead.
      */
     public static void renderItemStack(RenderItem itemRender, ItemStack stack, int renderX, int renderY) {
         if (ItemStacks.isEmpty(stack)) return;
 
         Minecraft mc = Minecraft.getMinecraft();
+
+        // Save all GL state before rendering to prevent pollution
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+
+        // Set up proper rendering state for items with custom renderers
+        GL11.glEnable(GL11.GL_LIGHTING);
+        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+
+        // Translate forward slightly to ensure proper rendering order
+        GL11.glTranslatef(0.0F, 0.0F, 32.0F);
+
+        // Enable GUI standard lighting (required for proper item rendering)
         RenderHelper.enableGUIStandardItemLighting();
+
+        // Render the item with effects (enchantment glint, etc.)
         itemRender.renderItemAndEffectIntoGUI(mc.fontRenderer, mc.renderEngine, stack, renderX, renderY);
-        RenderHelper.disableStandardItemLighting();
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
+        // Translate back
+        GL11.glTranslatef(0.0F, 0.0F, -32.0F);
+
+        // Restore all GL state
+        GL11.glPopAttrib();
     }
 }

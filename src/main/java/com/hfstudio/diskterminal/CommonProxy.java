@@ -6,6 +6,8 @@ import com.hfstudio.diskterminal.integration.storage.AE2StorageScanner;
 import com.hfstudio.diskterminal.integration.storage.StorageScannerRegistry;
 import com.hfstudio.diskterminal.integration.storagebus.AE2StorageBusScanner;
 import com.hfstudio.diskterminal.integration.storagebus.StorageBusScannerRegistry;
+import com.hfstudio.diskterminal.integration.subnet.AE2SubnetScanner;
+import com.hfstudio.diskterminal.integration.subnet.SubnetScannerRegistry;
 import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
 
 import cpw.mods.fml.common.event.FMLInitializationEvent;
@@ -26,8 +28,10 @@ public class CommonProxy {
     public void init(FMLInitializationEvent event) {
         NetworkRegistry.INSTANCE.registerGuiHandler(DiskTerminal.instance, new GuiHandler());
 
+        // Register scanners for storage devices, storage buses, and subnets
         StorageScannerRegistry.register(AE2StorageScanner.INSTANCE);
         StorageBusScannerRegistry.register(AE2StorageBusScanner.INSTANCE);
+        SubnetScannerRegistry.register(AE2SubnetScanner.INSTANCE);
 
         RecipeRegistry.init();
     }

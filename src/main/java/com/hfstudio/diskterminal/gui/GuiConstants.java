@@ -143,8 +143,8 @@ public final class GuiConstants {
     /** Height of each tab */
     public static final int TAB_HEIGHT = 22;
 
-    /** Y offset for tabs (above the GUI) */
-    public static final int TAB_Y_OFFSET = -22;
+    /** Y offset for tabs (above the GUI, moved down 3 pixels from original -22) */
+    public static final int TAB_Y_OFFSET = -19;
 
     // ATLAS POSITIONS
 

@@ -44,11 +44,20 @@ public class SubnetDataHandler {
     public static class SubnetTracker {
 
         public final long id;
-        public final IGrid targetGrid;
+        public IGrid targetGrid;
         public final List<Object> connectionParts; // Storage Buses and Interfaces that connect to this subnet
         public final List<TileEntity> hostTiles;
         public final List<Boolean> isOutbound; // Whether each connection is outbound vs inbound
         public final List<ForgeDirection> connectionSides; // The facing of each connection
+
+        public SubnetTracker(long id) {
+            this.id = id;
+            this.targetGrid = null;
+            this.connectionParts = new ArrayList<>();
+            this.hostTiles = new ArrayList<>();
+            this.isOutbound = new ArrayList<>();
+            this.connectionSides = new ArrayList<>();
+        }
 
         public SubnetTracker(long id, IGrid targetGrid) {
             this.id = id;
@@ -77,6 +86,14 @@ public class SubnetDataHandler {
             hostTiles.add(hostTile);
             isOutbound.add(false);
             connectionSides.add(side);
+        }
+
+        /**
+         * Write connection info to NBT (for client sync).
+         */
+        public void writeConnectionsToNBT(NBTTagCompound nbt) {
+            nbt.setInteger("connectionCount", connectionParts.size());
+            // Connection details can be expanded later if needed for GUI display
         }
     }
 

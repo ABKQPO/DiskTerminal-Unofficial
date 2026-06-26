@@ -909,12 +909,14 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         // (slot == null). If it consumed the click, the cursor item changes (cleared or replaced
         // with next bookmark). We must suppress our subsequent activeTab.handleClick to prevent
         // sending a conflicting REMOVE_ITEM for a stale hoveredSlotIndex from the previous draw.
-        ItemStack cursorBefore = slot == null ? mc.thePlayer.inventory.getItemStack()
-            .copy() : null;
+        ItemStack cursorBefore = slot == null && mc.thePlayer.inventory.getItemStack() != null
+            ? mc.thePlayer.inventory.getItemStack().copy()
+            : null;
 
         super.handleMouseClick(slot, slotIdx, mouseButton, clickType);
 
-        if (slot == null && !ItemStack.areItemStacksEqual(cursorBefore, mc.thePlayer.inventory.getItemStack())) {
+        ItemStack cursorAfter = mc.thePlayer.inventory.getItemStack();
+        if (slot == null && cursorBefore != null && !ItemStack.areItemStacksEqual(cursorBefore, cursorAfter)) {
             ghostDropConsumedClick = true;
         }
     }
