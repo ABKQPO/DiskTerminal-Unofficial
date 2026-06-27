@@ -3,6 +3,7 @@ package com.hfstudio.diskterminal.gui.widget.line;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
 import net.minecraft.client.gui.FontRenderer;
@@ -95,12 +96,15 @@ public class SlotsLine extends AbstractLine {
 
     /** Supplier for item counts (used in content mode, index-aligned with items) */
     protected Supplier<ContentCountProvider> countProvider;
+    protected IntFunction<String> slotTypeProvider;
+    protected IntFunction<String> contentTypeProvider;
 
     /** Starting index into the data list for this row */
     protected int startIndex;
 
     /** Maximum number of slots allowed */
     protected int maxSlots = Integer.MAX_VALUE;
+    protected int visibleSlotCount = -1;
 
     /** Absolute GUI position offsets for NEI target registration */
     protected int guiLeft;
@@ -154,6 +158,14 @@ public class SlotsLine extends AbstractLine {
         this.countProvider = provider;
     }
 
+    public void setSlotTypeProvider(IntFunction<String> provider) {
+        this.slotTypeProvider = provider;
+    }
+
+    public void setContentTypeProvider(IntFunction<String> provider) {
+        this.contentTypeProvider = provider;
+    }
+
     public void setSlotClickCallback(SlotClickCallback callback) {
         this.slotClickCallback = callback;
     }
@@ -177,6 +189,10 @@ public class SlotsLine extends AbstractLine {
 
     public void setMaxSlots(int maxSlots) {
         this.maxSlots = maxSlots;
+    }
+
+    public void setVisibleSlotCount(int visibleSlotCount) {
+        this.visibleSlotCount = visibleSlotCount;
     }
 
     public void setGuiOffsets(int guiLeft, int guiTop) {
@@ -269,11 +285,16 @@ public class SlotsLine extends AbstractLine {
         List<ItemStack> partition = partitionSupplier != null ? partitionSupplier.get() : Collections.emptyList();
         ContentCountProvider counts = countProvider != null ? countProvider.get() : null;
 
-        for (int x = slotsXOffset; x < slotsXOffset + (slotsPerRow * SIZE); x += SIZE) {
-            drawSlotBackground(x, y);
+        int rowSlots = getVisibleSlotsForRow();
+        for (int x = slotsXOffset; x < slotsXOffset + (rowSlots * SIZE); x += SIZE) {
+            int localIndex = (x - slotsXOffset) / SIZE;
+            drawSlotBackground(x, y, startIndex + localIndex, contentTypeProvider);
         }
 
-        int slots = Integer.min(startIndex + slotsPerRow, items.size()) - startIndex;
+        int slots = Integer.min(startIndex + rowSlots, items.size()) - startIndex;
+        boolean[] drawPartitionIndicators = new boolean[Math.max(slots, 0)];
+        int hoveredLocalIndex = -1;
+
         for (int i = 0; i < slots; i++) {
             int absIndex = startIndex + i;
             int slotX = slotsXOffset + (i * SIZE);
@@ -283,22 +304,38 @@ public class SlotsLine extends AbstractLine {
 
             renderItemStack(stack, slotX, y);
 
-            // Draw partition indicator "P" if item is in partition
-            if (ComparisonUtils.isInPartition(stack, partition)) {
-                drawPartitionIndicator(slotX, y);
+            if (contentTypeProvider != null && ComparisonUtils.isInPartition(
+                stack,
+                contentTypeProvider.apply(absIndex),
+                partition,
+                slotTypeProvider != null ? slotTypeProvider::apply : ignored -> "item")) {
+                drawPartitionIndicators[i] = true;
             }
 
-            // Draw item count
-            if (counts != null) {
-                long count = counts.getCount(absIndex);
-                drawItemCount(count, slotX, y);
-            }
-
-            // Check hover
             if (mouseX >= slotX && mouseX < slotX + SIZE && mouseY >= y && mouseY < y + SIZE) {
-                drawSlotHoverHighlight(slotX, y);
+                hoveredLocalIndex = i;
                 hoveredSlotIndex = absIndex;
                 hoveredStack = stack;
+            }
+        }
+
+        if (hoveredLocalIndex >= 0) {
+            int slotX = slotsXOffset + (hoveredLocalIndex * SIZE);
+            drawSlotHoverHighlight(slotX, y);
+        }
+
+        for (int i = 0; i < slots; i++) {
+            int absIndex = startIndex + i;
+            int slotX = slotsXOffset + (i * SIZE);
+            ItemStack stack = items.get(absIndex);
+            if (ItemStacks.isEmpty(stack)) continue;
+
+            if (counts != null) {
+                drawItemCount(counts.getCount(absIndex), slotX, y);
+            }
+
+            if (drawPartitionIndicators[i]) {
+                drawPartitionIndicator(slotX, y);
             }
         }
     }
@@ -307,15 +344,16 @@ public class SlotsLine extends AbstractLine {
         List<ItemStack> partition = itemsSupplier != null ? itemsSupplier.get() : Collections.emptyList();
 
         // Only draw slot backgrounds for slots that are within the valid range
-        for (int i = 0; i < slotsPerRow; i++) {
+        int rowSlots = getVisibleSlotsForRow();
+        for (int i = 0; i < rowSlots; i++) {
             int absIndex = startIndex + i;
             if (absIndex >= maxSlots) break;
 
             int slotBgX = slotsXOffset + (i * SIZE);
-            drawPartitionSlotBackground(slotBgX, y);
+            drawPartitionSlotBackground(slotBgX, y, absIndex);
         }
 
-        for (int i = 0; i < slotsPerRow; i++) {
+        for (int i = 0; i < rowSlots; i++) {
             int absIndex = startIndex + i;
             if (absIndex >= maxSlots) break;
 
@@ -342,21 +380,33 @@ public class SlotsLine extends AbstractLine {
         }
     }
 
-    protected void drawSlotBackground(int slotX, int slotY) {
-        int texX = GuiConstants.MINI_SLOT_X;
+    protected void drawSlotBackground(int slotX, int slotY, int index, IntFunction<String> typeProvider) {
+        int texX = slotTextureX(typeProvider != null ? typeProvider.apply(index) : "item", false);
         int texY = GuiConstants.MINI_SLOT_Y;
         GuiConstants.drawAtlasSprite(slotX, slotY, texX, texY, SIZE, SIZE);
     }
 
-    protected void drawPartitionSlotBackground(int slotX, int slotY) {
-        // Partition variant uses the orange slot directly after the normal slot.
-        int texX = GuiConstants.MINI_SLOT_X + SIZE;
+    protected void drawPartitionSlotBackground(int slotX, int slotY, int index) {
+        int texX = slotTextureX(slotTypeProvider != null ? slotTypeProvider.apply(index) : "item", true);
         int texY = GuiConstants.MINI_SLOT_Y;
         GuiConstants.drawAtlasSprite(slotX, slotY, texX, texY, SIZE, SIZE);
     }
 
     protected void drawSlotHoverHighlight(int slotX, int slotY) {
         Gui.drawRect(slotX + 1, slotY + 1, slotX + SIZE - 1, slotY + SIZE - 1, GuiConstants.COLOR_HOVER_HIGHLIGHT);
+    }
+
+    private int slotTextureX(String stackTypeId, boolean partition) {
+        if ("fluid".equals(stackTypeId)) return 36;
+        if ("essentia".equals(stackTypeId)) return 54;
+
+        return partition ? GuiConstants.MINI_SLOT_X + SIZE : GuiConstants.MINI_SLOT_X;
+    }
+
+    private int getVisibleSlotsForRow() {
+        if (visibleSlotCount > 0) return Math.min(slotsPerRow, visibleSlotCount);
+
+        return slotsPerRow;
     }
 
     protected void renderItemStack(ItemStack stack, int renderX, int renderY) {

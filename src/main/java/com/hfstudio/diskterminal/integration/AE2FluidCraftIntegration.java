@@ -5,6 +5,7 @@ import net.minecraftforge.fluids.FluidStack;
 
 import com.glodblock.github.common.item.ItemFluidDrop;
 import com.hfstudio.diskterminal.integration.storagebus.AE2FluidCraftStorageBusScanner;
+import com.hfstudio.diskterminal.integration.storagebus.StockReplenisherScanner;
 import com.hfstudio.diskterminal.integration.storagebus.StorageBusScannerRegistry;
 
 import cpw.mods.fml.common.Optional;
@@ -46,5 +47,6 @@ public class AE2FluidCraftIntegration {
     @Optional.Method(modid = Mods.AE2_FLUID_CRAFT)
     private static void registerStorageBusScannerInternal() {
         StorageBusScannerRegistry.register(AE2FluidCraftStorageBusScanner.INSTANCE);
+        StorageBusScannerRegistry.register(StockReplenisherScanner.INSTANCE);
     }
 }

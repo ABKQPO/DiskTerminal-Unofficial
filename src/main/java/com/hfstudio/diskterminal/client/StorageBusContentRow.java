@@ -9,6 +9,7 @@ public class StorageBusContentRow {
     private final StorageBusInfo storageBus;
     private final int startIndex;
     private final boolean isFirstRow;
+    private final int visibleSlotCount;
 
     /**
      * @param storageBus The storage bus this row belongs to
@@ -16,9 +17,14 @@ public class StorageBusContentRow {
      * @param isFirstRow Whether this is the first row for this storage bus (shows bus info)
      */
     public StorageBusContentRow(StorageBusInfo storageBus, int startIndex, boolean isFirstRow) {
+        this(storageBus, startIndex, isFirstRow, -1);
+    }
+
+    public StorageBusContentRow(StorageBusInfo storageBus, int startIndex, boolean isFirstRow, int visibleSlotCount) {
         this.storageBus = storageBus;
         this.startIndex = startIndex;
         this.isFirstRow = isFirstRow;
+        this.visibleSlotCount = visibleSlotCount;
     }
 
     public StorageBusInfo getStorageBus() {
@@ -31,5 +37,9 @@ public class StorageBusContentRow {
 
     public boolean isFirstRow() {
         return isFirstRow;
+    }
+
+    public int getVisibleSlotCount() {
+        return visibleSlotCount;
     }
 }

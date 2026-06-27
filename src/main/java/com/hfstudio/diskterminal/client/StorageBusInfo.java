@@ -11,13 +11,16 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.fluids.FluidStack;
 
 import com.gtnewhorizon.gtnhlib.blockpos.BlockPos;
+import com.hfstudio.diskterminal.gui.ComparisonUtils;
 import com.hfstudio.diskterminal.gui.rename.RenameTargetType;
 import com.hfstudio.diskterminal.gui.rename.Renameable;
 import com.hfstudio.diskterminal.storagebus.model.StorageBusId;
 import com.hfstudio.diskterminal.storagebus.runtime.StorageBusCapabilityIds;
 import com.hfstudio.diskterminal.util.AEStackUtil;
+import com.hfstudio.diskterminal.util.FluidStacks;
 import com.hfstudio.diskterminal.util.ItemStacks;
 import com.hfstudio.diskterminal.util.PosUtil;
 
@@ -66,6 +69,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     private final long id;
     private final BlockPos pos;
     private final int dimension;
+    private final int sideOrdinal;
     private final EnumFacing side;
     private final int priority;
     private final int baseConfigSlots;
@@ -84,8 +88,10 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     private final boolean connectedIconIsTarget;
     private final boolean preferDisplayName;
     private final List<ItemStack> partition = new ArrayList<>();
+    private final List<String> partitionSlotTypeIds = new ArrayList<>();
     private final List<ItemStack> contents = new ArrayList<>();
     private final List<Long> contentCounts = new ArrayList<>();
+    private final List<String> contentTypeIds = new ArrayList<>();
     private final List<ItemStack> upgrades = new ArrayList<>();
     private final List<Integer> upgradeSlotIndices = new ArrayList<>();
     private final boolean supportsPriorityFlag;
@@ -100,7 +106,8 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         this.id = nbt.getLong("id");
         this.pos = PosUtil.fromLong(nbt.getLong("pos"));
         this.dimension = nbt.getInteger("dim");
-        this.side = EnumFacing.getFront(nbt.getInteger("side"));
+        this.sideOrdinal = nbt.getInteger("side");
+        this.side = readSide(sideOrdinal);
         this.priority = nbt.getInteger("priority");
         this.storageType = StorageType.fromNBT(nbt);
         this.busRole = BusRole.fromNBT(nbt);
@@ -160,6 +167,15 @@ public class StorageBusInfo implements Renameable, Prioritizable {
             }
         }
 
+        fillPartitionSlotTypeIds(getAvailableConfigSlots());
+        if (nbt.hasKey("slotTypes")) {
+            NBTTagList slotTypes = nbt.getTagList("slotTypes", Constants.NBT.TAG_STRING);
+            for (int i = 0; i < slotTypes.tagCount(); i++) {
+                fillPartitionSlotTypeIds(i + 1);
+                partitionSlotTypeIds.set(i, normalizeStackTypeId(slotTypes.getStringTagAt(i)));
+            }
+        }
+
         fillPartitionSlots(getAvailableConfigSlots());
 
         // Parse partition (config inventory)
@@ -170,13 +186,17 @@ public class StorageBusInfo implements Renameable, Prioritizable {
             for (int i = 0; i < partList.tagCount(); i++) {
                 NBTTagCompound partNbt = partList.getCompoundTagAt(i);
                 int slot = partNbt.hasKey("slot") ? partNbt.getInteger("slot") : i;
+                String partTypeId = normalizeStackTypeId(
+                    partNbt.hasKey("stackTypeId") ? partNbt.getString("stackTypeId") : this.stackTypeId);
 
                 IAEStack<?> aeStack = AEStackUtil.readStackFromNBT(partNbt);
-                ItemStack stack = AEStackUtil.getDisplayStack(aeStack);
+                ItemStack stack = readClientDisplayStack(partNbt, aeStack, partTypeId);
                 if (ItemStacks.isEmpty(stack) && partNbt.hasKey("id")) stack = ItemStacks.load(partNbt);
                 if (!ItemStacks.isEmpty(stack)) {
                     fillPartitionSlots(slot + 1);
                     this.partition.set(slot, stack);
+                    fillPartitionSlotTypeIds(slot + 1);
+                    this.partitionSlotTypeIds.set(slot, partTypeId);
                 }
             }
         }
@@ -186,8 +206,10 @@ public class StorageBusInfo implements Renameable, Prioritizable {
             NBTTagList contentList = nbt.getTagList("contents", Constants.NBT.TAG_COMPOUND);
             for (int i = 0; i < contentList.tagCount(); i++) {
                 NBTTagCompound stackNbt = contentList.getCompoundTagAt(i);
+                String contentTypeId = normalizeStackTypeId(
+                    stackNbt.hasKey("stackTypeId") ? stackNbt.getString("stackTypeId") : this.stackTypeId);
                 IAEStack<?> aeStack = AEStackUtil.readStackFromNBT(stackNbt);
-                ItemStack stack = AEStackUtil.getDisplayStack(aeStack);
+                ItemStack stack = readClientDisplayStack(stackNbt, aeStack, contentTypeId);
                 if (ItemStacks.isEmpty(stack)) stack = ItemStacks.load(stackNbt);
 
                 long count;
@@ -199,7 +221,12 @@ public class StorageBusInfo implements Renameable, Prioritizable {
 
                 this.contents.add(stack);
                 this.contentCounts.add(count);
+                this.contentTypeIds.add(contentTypeId);
             }
+        }
+
+        while (this.contentTypeIds.size() < this.contents.size()) {
+            this.contentTypeIds.add(this.stackTypeId);
         }
     }
 
@@ -221,7 +248,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
      * storage type. Used by the GUI to address unified capability actions.
      */
     public StorageBusId toTargetId() {
-        return new StorageBusId(dimension, pos, side.ordinal(), busRole, storageType);
+        return new StorageBusId(dimension, pos, sideOrdinal, busRole, storageType);
     }
 
     public BlockPos getPos() {
@@ -234,6 +261,10 @@ public class StorageBusInfo implements Renameable, Prioritizable {
 
     public EnumFacing getSide() {
         return side;
+    }
+
+    public int getSideOrdinal() {
+        return sideOrdinal;
     }
 
     @Override
@@ -265,15 +296,15 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     }
 
     public boolean isFluid() {
-        return storageType.isFluid();
+        return supportsStackType("fluid");
     }
 
     public boolean isEssentia() {
-        return storageType.isEssentia();
+        return supportsStackType("essentia");
     }
 
     public boolean isItem() {
-        return storageType.isItem();
+        return supportsStackType("item");
     }
 
     /**
@@ -325,8 +356,61 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         return partition;
     }
 
+    public boolean applyOptimisticFilterSet(int slot, ItemStack stack, String stackTypeId) {
+        if (slot < 0 || slot >= getAvailableConfigSlots() || ItemStacks.isEmpty(stack)) return false;
+
+        String normalizedType = normalizeStackTypeId(stackTypeId);
+        if (!normalizedType.equals(getPartitionSlotTypeId(slot))) return false;
+
+        fillPartitionSlots(slot + 1);
+        ItemStack displayStack = stack.copy();
+        displayStack.stackSize = 1;
+        this.partition.set(slot, displayStack);
+        return true;
+    }
+
+    public boolean applyOptimisticFilterClear(int slot) {
+        if (slot < 0 || slot >= this.partition.size()) return false;
+        if (ItemStacks.isEmpty(this.partition.get(slot))) return false;
+
+        this.partition.set(slot, null);
+        return true;
+    }
+
+    public boolean applyOptimisticFilterClearAll() {
+        boolean changed = false;
+        for (int i = 0; i < this.partition.size(); i++) {
+            if (ItemStacks.isEmpty(this.partition.get(i))) continue;
+
+            this.partition.set(i, null);
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    public boolean applyOptimisticFilterToggle(ItemStack stack, String stackTypeId) {
+        if (ItemStacks.isEmpty(stack)) return false;
+
+        String normalizedType = normalizeStackTypeId(stackTypeId);
+        int existingSlot = findPartitionSlot(stack, normalizedType);
+        if (existingSlot >= 0) {
+            this.partition.set(existingSlot, null);
+            return true;
+        }
+
+        int emptySlot = findFirstEmptyPartitionSlot(normalizedType);
+        if (emptySlot < 0) return false;
+
+        return applyOptimisticFilterSet(emptySlot, stack, normalizedType);
+    }
+
     private void fillPartitionSlots(int size) {
         while (this.partition.size() < size) this.partition.add(null);
+    }
+
+    private void fillPartitionSlotTypeIds(int size) {
+        while (this.partitionSlotTypeIds.size() < size) this.partitionSlotTypeIds.add(this.stackTypeId);
     }
 
     public List<ItemStack> getContents() {
@@ -337,6 +421,62 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         if (index < 0 || index >= contentCounts.size()) return 0;
 
         return contentCounts.get(index);
+    }
+
+    public String getPartitionSlotTypeId(int slot) {
+        if (slot < 0 || slot >= partitionSlotTypeIds.size()) return stackTypeId;
+
+        return partitionSlotTypeIds.get(slot);
+    }
+
+    public String getContentTypeId(int index) {
+        if (index < 0 || index >= contentTypeIds.size()) return stackTypeId;
+
+        return contentTypeIds.get(index);
+    }
+
+    public boolean hasMixedPartitionSlotTypes() {
+        String first = null;
+        for (String slotTypeId : partitionSlotTypeIds) {
+            if (first == null) {
+                first = slotTypeId;
+                continue;
+            }
+
+            if (!first.equals(slotTypeId)) return true;
+        }
+
+        return false;
+    }
+
+    public boolean supportsStackType(String typeId) {
+        String normalized = normalizeStackTypeId(typeId);
+        for (String slotTypeId : partitionSlotTypeIds) {
+            if (normalized.equals(slotTypeId)) return true;
+        }
+
+        if (!partitionSlotTypeIds.isEmpty()) return false;
+
+        return normalized.equals(stackTypeId);
+    }
+
+    public String resolvePreferredStackTypeId(ItemStack stack) {
+        if (ItemStacks.isEmpty(stack)) return stackTypeId;
+
+        FluidStack fluid = FluidStacks.extract(stack);
+        if (fluid != null && supportsStackType("fluid")) return "fluid";
+
+        if (supportsStackType("essentia")) return "essentia";
+        if (supportsStackType("item")) return "item";
+
+        return stackTypeId;
+    }
+
+    public boolean isContentInPartition(int index) {
+        if (index < 0 || index >= contents.size()) return false;
+
+        return ComparisonUtils
+            .isInPartition(contents.get(index), getContentTypeId(index), partition, this::getPartitionSlotTypeId);
     }
 
     public List<ItemStack> getUpgrades() {
@@ -411,6 +551,22 @@ public class StorageBusInfo implements Renameable, Prioritizable {
 
     public String getLocationString() {
         return I18n.format("gui.disk_terminal.location_format", pos.getX(), pos.getY(), pos.getZ(), dimension);
+    }
+
+    private static EnumFacing readSide(int ordinal) {
+        EnumFacing[] values = EnumFacing.values();
+        if (ordinal >= 0 && ordinal < values.length) return EnumFacing.getFront(ordinal);
+
+        return EnumFacing.NORTH;
+    }
+
+    private static ItemStack readClientDisplayStack(NBTTagCompound stackNbt, IAEStack<?> aeStack, String stackTypeId) {
+        if ("item".equals(stackTypeId)) {
+            ItemStack display = AEStackUtil.readDisplayStack(stackNbt);
+            if (!ItemStacks.isEmpty(display)) return display;
+        }
+
+        return AEStackUtil.getDisplayStack(aeStack);
     }
 
     /**
@@ -551,6 +707,13 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         return "item";
     }
 
+    private static String normalizeStackTypeId(String typeId) {
+        if ("fluid".equals(typeId)) return "fluid";
+        if ("essentia".equals(typeId)) return "essentia";
+
+        return "item";
+    }
+
     private String getResolvedDisplayName() {
         if (customName != null && !customName.isEmpty()) return customName;
 
@@ -576,6 +739,30 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         if (namePrefixKey != null && !namePrefixKey.isEmpty()) return namePrefixKey;
 
         return busRole.getPrefixKey();
+    }
+
+    private int findPartitionSlot(ItemStack stack, String stackTypeId) {
+        for (int i = 0; i < this.partition.size(); i++) {
+            ItemStack partitionStack = this.partition.get(i);
+            if (ItemStacks.isEmpty(partitionStack)) continue;
+            if (!stackTypeId.equals(getPartitionSlotTypeId(i))) continue;
+
+            if (ComparisonUtils.isInPartition(stack, stackTypeId, List.of(partitionStack), ignored -> stackTypeId)) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private int findFirstEmptyPartitionSlot(String stackTypeId) {
+        int availableSlots = getAvailableConfigSlots();
+        for (int i = 0; i < availableSlots; i++) {
+            if (!stackTypeId.equals(getPartitionSlotTypeId(i))) continue;
+            if (i >= this.partition.size() || ItemStacks.isEmpty(this.partition.get(i))) return i;
+        }
+
+        return -1;
     }
 
 }

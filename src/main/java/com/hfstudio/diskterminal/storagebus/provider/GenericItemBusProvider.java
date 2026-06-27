@@ -1,6 +1,5 @@
 package com.hfstudio.diskterminal.storagebus.provider;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -26,22 +25,18 @@ import com.hfstudio.diskterminal.storagebus.runtime.StorageBusHandle;
 import com.hfstudio.diskterminal.storagebus.runtime.StorageBusResolver;
 
 import appeng.api.config.Upgrades;
-import appeng.api.networking.IGrid;
-import appeng.api.networking.storage.IStorageGrid;
 import appeng.api.parts.IPart;
-import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.StorageName;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IAEStackType;
-import appeng.api.storage.data.IItemList;
 import appeng.parts.automation.PartSharedItemBus;
 import appeng.tile.inventory.IAEStackInventory;
-import appeng.util.IterationCounter;
 
 /**
  * Capability provider for AE2 shared import/export buses ({@link PartSharedItemBus}), including AE2FC
  * fluid and Thaumic Energistics essentia variants. These buses support rename and filter editing but
- * not priority. Contents for preview fill come from the network monitor.
+ * not priority. They do not expose stable local contents, so preview fill intentionally avoids using
+ * the entire AE network as a fallback.
  */
 public class GenericItemBusProvider implements ICapabilityProvider<StorageBusId> {
 
@@ -65,7 +60,7 @@ public class GenericItemBusProvider implements ICapabilityProvider<StorageBusId>
         if (resolved.isEmpty() || !(resolved.get() instanceof AEStorageBusHandle handle)) return Optional.empty();
 
         IPart part = handle.getPart();
-        if (!(part instanceof PartSharedItemBus<?>bus)) return Optional.empty();
+        if (!(part instanceof PartSharedItemBus<?> bus)) return Optional.empty();
 
         if (capabilityType == IRenameCapability.class) {
             return Optional.of((T) new AEStorageBusRenameCapability(part));
@@ -89,7 +84,7 @@ public class GenericItemBusProvider implements ICapabilityProvider<StorageBusId>
             return Collections.emptySet();
         }
 
-        if (!(handle.getPart() instanceof PartSharedItemBus<?>bus)) return Collections.emptySet();
+        if (!(handle.getPart() instanceof PartSharedItemBus<?> bus)) return Collections.emptySet();
 
         Set<ResourceLocation> capabilities = new LinkedHashSet<>();
         capabilities.add(StorageBusCapabilityIds.RENAME);
@@ -108,7 +103,7 @@ public class GenericItemBusProvider implements ICapabilityProvider<StorageBusId>
         FilterType filterType = filterTypeOf(stackType);
 
         return Optional
-            .of(new AEStorageBusFilterCapability(config, stackType, availableSlots, filterType, contentsSupplier(bus)));
+                .of(new AEStorageBusFilterCapability(config, stackType, availableSlots, filterType, contentsSupplier(bus)));
     }
 
     private Supplier<List<IAEStack<?>>> contentsSupplier(PartSharedItemBus<?> bus) {
@@ -116,39 +111,7 @@ public class GenericItemBusProvider implements ICapabilityProvider<StorageBusId>
     }
 
     private List<IAEStack<?>> collectContents(PartSharedItemBus<?> bus) {
-        List<IAEStack<?>> result = new ArrayList<>();
-        IMEMonitor<?> monitor = monitorOf(bus);
-        IAEStackType<?> type = bus.getStackType();
-        if (monitor == null || type == null) return result;
-
-        collectFromMonitor(result, monitor, type);
-
-        return result;
-    }
-
-    @SuppressWarnings("unchecked")
-    private <S extends IAEStack<S>> void collectFromMonitor(List<IAEStack<?>> out, IMEMonitor<?> monitor,
-        IAEStackType<?> type) {
-        IItemList<S> list = ((IAEStackType<S>) type).createList();
-        ((IMEMonitor<S>) monitor).getAvailableItems(list, IterationCounter.fetchNewId());
-        for (S stack : list) out.add(stack);
-    }
-
-    private IMEMonitor<?> monitorOf(PartSharedItemBus<?> bus) {
-        try {
-            if (bus.getGridNode() == null) return null;
-
-            IGrid grid = bus.getGridNode()
-                .getGrid();
-            if (grid == null) return null;
-
-            IStorageGrid storageGrid = grid.getCache(IStorageGrid.class);
-            if (storageGrid == null) return null;
-
-            return storageGrid.getMEMonitor(bus.getStackType());
-        } catch (RuntimeException ignored) {
-            return null;
-        }
+        return Collections.emptyList();
     }
 
     private FilterType filterTypeOf(IAEStackType<?> stackType) {

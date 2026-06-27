@@ -655,6 +655,11 @@ public class TerminalDataManager {
         }
 
         int availableSlots = bus.getAvailableConfigSlots();
+        if (bus.hasMixedPartitionSlotTypes()) {
+            addMixedStorageBusPartitionRows(bus, availableSlots);
+            return;
+        }
+
         int highestSlot = getHighestNonEmptyStorageBusPartitionSlot(bus);
 
         int partitionRows;
@@ -675,6 +680,46 @@ public class TerminalDataManager {
         for (int row = 0; row < partitionRows; row++) {
             this.storageBusPartitionLines.add(new StorageBusContentRow(bus, row * SLOTS_PER_ROW_BUS, row == 0));
         }
+    }
+
+    private void addMixedStorageBusPartitionRows(StorageBusInfo bus, int availableSlots) {
+        boolean firstRow = true;
+        int groupStart = 0;
+
+        while (groupStart < availableSlots) {
+            String groupType = bus.getPartitionSlotTypeId(groupStart);
+            int groupEnd = groupStart + 1;
+            while (groupEnd < availableSlots && groupType.equals(bus.getPartitionSlotTypeId(groupEnd))) {
+                groupEnd++;
+            }
+
+            int visibleSlots = getVisibleMixedPartitionSlots(bus, groupStart, groupEnd);
+            for (int rowStart = groupStart; rowStart < groupStart + visibleSlots; rowStart += SLOTS_PER_ROW_BUS) {
+                int rowSlots = Math.min(SLOTS_PER_ROW_BUS, groupStart + visibleSlots - rowStart);
+                this.storageBusPartitionLines.add(new StorageBusContentRow(bus, rowStart, firstRow, rowSlots));
+                firstRow = false;
+            }
+
+            groupStart = groupEnd;
+        }
+    }
+
+    private int getVisibleMixedPartitionSlots(StorageBusInfo bus, int groupStart, int groupEnd) {
+        int highestSlot = -1;
+        List<ItemStack> partition = bus.getPartition();
+
+        for (int i = groupStart; i < groupEnd && i < partition.size(); i++) {
+            if (!ItemStacks.isEmpty(partition.get(i))) highestSlot = i;
+        }
+
+        if (highestSlot < 0) return Math.min(SLOTS_PER_ROW_BUS, groupEnd - groupStart);
+
+        int relativeHighest = highestSlot - groupStart;
+        int rows = relativeHighest / SLOTS_PER_ROW_BUS + 1;
+        int lastSlotOfCurrentRow = groupStart + rows * SLOTS_PER_ROW_BUS - 1;
+        if (highestSlot == lastSlotOfCurrentRow && lastSlotOfCurrentRow < groupEnd - 1) rows++;
+
+        return Math.min(rows * SLOTS_PER_ROW_BUS, groupEnd - groupStart);
     }
 
     /**
@@ -785,11 +830,7 @@ public class TerminalDataManager {
             if (distCompare != 0) return distCompare;
 
             // Same position - sort by facing index
-            return Integer.compare(
-                a.getSide()
-                    .ordinal(),
-                b.getSide()
-                    .ordinal());
+            return Integer.compare(a.getSideOrdinal(), b.getSideOrdinal());
         };
     }
 

@@ -2,6 +2,7 @@ package com.hfstudio.diskterminal.network;
 
 import com.hfstudio.diskterminal.Tags;
 import com.hfstudio.diskterminal.network.chunked.PacketNBTChunk;
+import com.hfstudio.diskterminal.storagebus.model.StorageBusIdSerializer;
 
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
@@ -20,6 +21,10 @@ public class DiskTerminalNetwork {
     private static int packetId = 0;
 
     public static void init() {
+        // Register target-id serializers so the network layer resolves identities by type, never
+        // by instanceof.
+        TargetIdSerializers.INSTANCE.register(StorageBusIdSerializer.INSTANCE);
+
         // Server -> Client: Generic chunked NBT payload (terminal data, subnet data, etc).
         INSTANCE.registerMessage(PacketNBTChunk.Handler.class, PacketNBTChunk.class, packetId++, Side.CLIENT);
 

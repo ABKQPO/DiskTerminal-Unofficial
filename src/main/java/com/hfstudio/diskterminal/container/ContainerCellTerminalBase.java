@@ -52,7 +52,6 @@ import com.hfstudio.diskterminal.storagebus.runtime.StorageBusActionExecutor;
 import com.hfstudio.diskterminal.storagebus.runtime.StorageBusCapabilityIds;
 import com.hfstudio.diskterminal.storagebus.runtime.StorageBusCapabilityProviderRegistry;
 import com.hfstudio.diskterminal.storagebus.scanner.StorageBusScanCollector;
-import com.hfstudio.diskterminal.storagebus.scanner.StorageBusSnapshotAssembler;
 import com.hfstudio.diskterminal.util.InventoryHelper;
 import com.hfstudio.diskterminal.util.ItemStacks;
 import com.hfstudio.diskterminal.util.PlayerMessageHelper;
@@ -93,7 +92,6 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     protected final Map<Long, SubnetTracker> subnetById = new LinkedHashMap<>();
     protected final StorageBusCapabilityProviderRegistry storageBusProviders = new StorageBusCapabilityProviderRegistry();
     protected final StorageBusScanCollector storageBusCollector = new StorageBusScanCollector();
-    protected final StorageBusSnapshotAssembler storageBusAssembler = new StorageBusSnapshotAssembler();
     protected final StorageBusActionExecutor storageBusActionExecutor = new StorageBusActionExecutor();
     protected IGrid grid;
     protected boolean needsFullRefresh = true;
@@ -340,12 +338,11 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     protected void regenStorageBusList() {
         this.storageBusById.clear();
 
-        NBTTagList busList = storageBusCollector
+        StorageBusScanCollector.CollectResult result = storageBusCollector
             .collect(getEffectiveGrid(), this.storageBusById, this.storageBusProviders, busSlotLimit);
-        storageBusAssembler.writeCapabilityMetadata(busList, this.storageBusById, this.storageBusProviders);
 
         NBTTagCompound data = new NBTTagCompound();
-        data.setTag("storageBuses", busList);
+        data.setTag("storageBuses", result.busList());
         sendChunked(TerminalChannels.BUSES, data, "storageBuses", "id");
     }
 

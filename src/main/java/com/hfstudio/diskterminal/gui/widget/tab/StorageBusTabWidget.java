@@ -38,7 +38,6 @@ import com.hfstudio.diskterminal.gui.widget.button.SmallButton;
 import com.hfstudio.diskterminal.gui.widget.header.StorageBusHeader;
 import com.hfstudio.diskterminal.gui.widget.line.ContinuationLine;
 import com.hfstudio.diskterminal.gui.widget.line.SlotsLine;
-import com.hfstudio.diskterminal.integration.ThaumicEnergisticsIntegration;
 import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
 import com.hfstudio.diskterminal.network.PacketCapabilityAction;
 import com.hfstudio.diskterminal.network.PacketExtractUpgrade;
@@ -236,7 +235,10 @@ public class StorageBusTabWidget extends AbstractTabWidget {
 
                     @Override
                     public void accept(Object ing) {
-                        ItemStack stack = convertPartitionInput(ing, bus);
+                        ItemStack stack = convertPartitionInput(
+                            ing,
+                            bus,
+                            bus.getPartitionSlotTypeId(slot.absoluteIndex));
                         if (!ItemStacks.isEmpty(stack)) {
                             guiContext.sendPacket(PacketCapabilityAction.filterSetSlot(bus, slot.absoluteIndex, stack));
                         }
@@ -348,16 +350,16 @@ public class StorageBusTabWidget extends AbstractTabWidget {
         StorageBusInfo bus = row.getStorageBus();
 
         if (row.isFirstRow()) {
-            return createFirstRow(bus, row.getStartIndex(), y);
+            return createFirstRow(bus, row.getStartIndex(), row.getVisibleSlotCount(), y);
         }
 
-        return createContinuationRow(bus, row.getStartIndex(), y);
+        return createContinuationRow(bus, row.getStartIndex(), row.getVisibleSlotCount(), y);
     }
 
     /**
      * First content row: SlotsLine with tree junction button.
      */
-    private SlotsLine createFirstRow(StorageBusInfo bus, int startIndex, int y) {
+    private SlotsLine createFirstRow(StorageBusInfo bus, int startIndex, int visibleSlotCount, int y) {
         SlotsLine line = new SlotsLine(
             y,
             SLOTS_PER_ROW,
@@ -368,6 +370,7 @@ public class StorageBusTabWidget extends AbstractTabWidget {
             itemRender);
 
         configureSlotData(line, bus);
+        line.setVisibleSlotCount(visibleSlotCount);
 
         // Tree junction button
         SmallButton treeBtn = new SmallButton(0, 0, treeButtonType, () -> {
@@ -375,6 +378,9 @@ public class StorageBusTabWidget extends AbstractTabWidget {
             if (bus.isAutoPullEnabled()) return;
 
             if (isPartitionMode) {
+                if (bus.applyOptimisticFilterClearAll()) {
+                    guiContext.rebuildAndUpdateScrollbar();
+                }
                 guiContext.sendPacket(PacketCapabilityAction.filterClearAll(bus));
             } else {
                 guiContext.sendPacket(PacketCapabilityAction.filterFillFromPreview(bus));
@@ -400,7 +406,7 @@ public class StorageBusTabWidget extends AbstractTabWidget {
     /**
      * Continuation row (not the first row for this bus).
      */
-    private ContinuationLine createContinuationRow(StorageBusInfo bus, int startIndex, int y) {
+    private ContinuationLine createContinuationRow(StorageBusInfo bus, int startIndex, int visibleSlotCount, int y) {
         ContinuationLine line = new ContinuationLine(
             y,
             SLOTS_PER_ROW,
@@ -411,6 +417,7 @@ public class StorageBusTabWidget extends AbstractTabWidget {
             itemRender);
 
         configureSlotData(line, bus);
+        line.setVisibleSlotCount(visibleSlotCount);
         line.setRowHeight(SLOT_ROW_HEIGHT);
         line.setSeparatorRightOffset(SLOT_ROW_SEPARATOR_RIGHT_OFFSET);
         line.setGuiOffsets(guiLeft, guiTop);
@@ -433,9 +440,12 @@ public class StorageBusTabWidget extends AbstractTabWidget {
             line.setItemsSupplier(bus::getContents);
             line.setPartitionSupplier(bus::getPartition);
             line.setCountProvider(() -> bus::getContentCount);
+            line.setContentTypeProvider(bus::getContentTypeId);
+            line.setSlotTypeProvider(bus::getPartitionSlotTypeId);
         } else {
             line.setItemsSupplier(bus::getPartition);
             line.setMaxSlots(bus.getAvailableConfigSlots());
+            line.setSlotTypeProvider(bus::getPartitionSlotTypeId);
         }
 
         line.setSlotClickCallback((slotIndex, mouseButton) -> {
@@ -454,31 +464,46 @@ public class StorageBusTabWidget extends AbstractTabWidget {
                 boolean slotOccupied = slotIndex < partition.size() && !ItemStacks.isEmpty(partition.get(slotIndex));
 
                 if (!ItemStacks.isEmpty(heldStack)) {
-                    ItemStack stackToSend = convertPartitionInput(heldStack, bus);
+                    ItemStack stackToSend = convertPartitionInput(
+                        heldStack,
+                        bus,
+                        bus.getPartitionSlotTypeId(slotIndex));
                     if (ItemStacks.isEmpty(stackToSend)) return;
 
+                    if (bus.applyOptimisticFilterSet(slotIndex, stackToSend, bus.getPartitionSlotTypeId(slotIndex))) {
+                        guiContext.rebuildAndUpdateScrollbar();
+                    }
                     guiContext.sendPacket(PacketCapabilityAction.filterSetSlot(bus, slotIndex, stackToSend));
                 } else if (slotOccupied) {
+                    if (bus.applyOptimisticFilterClear(slotIndex)) {
+                        guiContext.rebuildAndUpdateScrollbar();
+                    }
                     guiContext.sendPacket(PacketCapabilityAction.filterClearSlot(bus, slotIndex));
                 }
             } else {
                 // Content mode: toggle partition for content item
                 List<ItemStack> contents = bus.getContents();
                 if (slotIndex < contents.size() && !ItemStacks.isEmpty(contents.get(slotIndex))) {
-                    guiContext.sendPacket(PacketCapabilityAction.filterToggle(bus, contents.get(slotIndex)));
+                    if (bus.applyOptimisticFilterToggle(contents.get(slotIndex), bus.getContentTypeId(slotIndex))) {
+                        guiContext.rebuildAndUpdateScrollbar();
+                    }
+                    guiContext.sendPacket(
+                        PacketCapabilityAction
+                            .filterToggle(bus, contents.get(slotIndex), bus.getContentTypeId(slotIndex)));
                 }
             }
         });
     }
 
-    private static ItemStack convertPartitionInput(Object ingredient, StorageBusInfo bus) {
-        if (ingredient instanceof ItemStack itemStack && bus.isFluid() && FluidStacks.extract(itemStack) != null) {
+    private static ItemStack convertPartitionInput(Object ingredient, StorageBusInfo bus, String slotTypeId) {
+        if (ingredient instanceof ItemStack itemStack && "fluid".equals(slotTypeId)
+            && FluidStacks.extract(itemStack) != null) {
             ItemStack single = itemStack.copy();
             single.stackSize = 1;
             return single;
         }
 
-        return GhostIngredientHandler.convertIngredientForType(ingredient, bus.getStackTypeId(), true);
+        return GhostIngredientHandler.convertIngredientForType(ingredient, slotTypeId, true);
     }
 
     /**
@@ -533,49 +558,18 @@ public class StorageBusTabWidget extends AbstractTabWidget {
             // Auto-pull manages the partition; skip those buses in batch marking.
             if (storageBus.isAutoPullEnabled()) continue;
 
-            // Convert the item for non-item bus types first to check validity
-            ItemStack stackToSend = stack;
-            boolean validForBusType = true;
-
-            if (storageBus.isFluid()) {
-                // For fluid buses, the item must carry a fluid (AE2FC drop or a fluid container).
-                if (FluidStacks.extract(stack) == null) {
+            CompatiblePartitionSlot compatibleSlot = findFirstCompatiblePartitionSlot(storageBus, stack);
+            if (compatibleSlot == null) {
+                if (hasAnyEmptyPartitionSlot(storageBus)) {
                     invalidItemCount++;
-                    validForBusType = false;
-                }
-            } else if (storageBus.isEssentia()) {
-                // For essentia buses, need ItemDummyAspect or essentia container
-                ItemStack essentiaRep = ThaumicEnergisticsIntegration.tryConvertEssentiaContainerToAspect(stack);
-                // Can't use this item on essentia bus
-                if (ItemStacks.isEmpty(essentiaRep)) {
-                    invalidItemCount++;
-                    validForBusType = false;
                 } else {
-                    stackToSend = essentiaRep;
+                    noSlotCount++;
                 }
-            }
-
-            if (!validForBusType) continue;
-
-            // Find first empty slot in this storage bus
-            List<ItemStack> partition = storageBus.getPartition();
-            int availableSlots = storageBus.getAvailableConfigSlots();
-            int targetSlot = -1;
-
-            for (int i = 0; i < availableSlots; i++) {
-                if (i >= partition.size() || ItemStacks.isEmpty(partition.get(i))) {
-                    targetSlot = i;
-                    break;
-                }
-            }
-
-            if (targetSlot < 0) {
-                noSlotCount++;
                 continue;
             }
 
-            DiskTerminalNetwork.INSTANCE
-                .sendToServer(PacketCapabilityAction.filterSetSlot(storageBus, targetSlot, stackToSend));
+            DiskTerminalNetwork.INSTANCE.sendToServer(
+                PacketCapabilityAction.filterSetSlot(storageBus, compatibleSlot.slotIndex(), compatibleSlot.stack()));
             successCount++;
         }
 
@@ -639,4 +633,33 @@ public class StorageBusTabWidget extends AbstractTabWidget {
         boolean toInventory = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
         guiContext.sendPacket(PacketExtractUpgrade.forStorageBus(bus.getId(), upgradeSlotIndex, toInventory));
     }
+
+    private static CompatiblePartitionSlot findFirstCompatiblePartitionSlot(StorageBusInfo bus, ItemStack stack) {
+        List<ItemStack> partition = bus.getPartition();
+        int availableSlots = bus.getAvailableConfigSlots();
+
+        for (int i = 0; i < availableSlots; i++) {
+            if (i < partition.size() && !ItemStacks.isEmpty(partition.get(i))) continue;
+
+            ItemStack converted = convertPartitionInput(stack, bus, bus.getPartitionSlotTypeId(i));
+            if (!ItemStacks.isEmpty(converted)) {
+                return new CompatiblePartitionSlot(i, converted);
+            }
+        }
+
+        return null;
+    }
+
+    private static boolean hasAnyEmptyPartitionSlot(StorageBusInfo bus) {
+        List<ItemStack> partition = bus.getPartition();
+        int availableSlots = bus.getAvailableConfigSlots();
+
+        for (int i = 0; i < availableSlots; i++) {
+            if (i >= partition.size() || ItemStacks.isEmpty(partition.get(i))) return true;
+        }
+
+        return false;
+    }
+
+    private record CompatiblePartitionSlot(int slotIndex, ItemStack stack) {}
 }

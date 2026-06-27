@@ -196,7 +196,7 @@ public class CellSlotsLine extends SlotsLine {
 
     private void drawCellSlot(int mouseX, int mouseY) {
         int cellX = GuiConstants.CELL_INDENT;
-        drawSlotBackground(cellX, y);
+        drawSlotBackground(cellX, y, -1, index -> "item");
 
         ItemStack cellItem = cellItemSupplier != null ? cellItemSupplier.get() : null;
         if (!ItemStacks.isEmpty(cellItem)) renderItemStack(cellItem, cellX, y);

@@ -6,6 +6,8 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fluids.FluidStack;
 
+import com.hfstudio.diskterminal.api.identity.TargetId;
+import com.hfstudio.diskterminal.api.identity.TargetIdSerializer;
 import com.hfstudio.diskterminal.client.StorageBusInfo;
 import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
 import com.hfstudio.diskterminal.storagebus.model.StorageBusId;
@@ -28,6 +30,7 @@ import io.netty.buffer.ByteBuf;
  */
 public class PacketCapabilityAction implements IMessage {
 
+    private String targetType;
     private NBTTagCompound targetIdData;
     private String capability;
     private String action;
@@ -37,18 +40,26 @@ public class PacketCapabilityAction implements IMessage {
 
     public PacketCapabilityAction(StorageBusId targetId, ResourceLocation capability, ResourceLocation action,
         NBTTagCompound payload) {
+        this.targetType = targetId.type()
+            .toString();
         this.targetIdData = new NBTTagCompound();
-        targetId.writeToNBT(this.targetIdData);
+        writeTargetId(this.targetIdData, targetId);
         this.capability = capability.toString();
         this.action = action.toString();
         this.payload = payload != null ? payload : new NBTTagCompound();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void writeTargetId(NBTTagCompound tag, TargetId id) {
+        TargetIdSerializers.INSTANCE.find(id.type())
+            .ifPresent(serializer -> ((TargetIdSerializer<TargetId>) serializer).write(tag, id));
     }
 
     /**
      * Build a filter "set slot" action carrying the given stack at the given filter slot.
      */
     public static PacketCapabilityAction filterSetSlot(StorageBusInfo bus, int slot, ItemStack stack) {
-        NBTTagCompound payload = filterPayload(bus, stack);
+        NBTTagCompound payload = filterPayload(bus, stack, bus.getPartitionSlotTypeId(slot));
         payload.setInteger("slot", slot);
 
         return new PacketCapabilityAction(
@@ -76,11 +87,18 @@ public class PacketCapabilityAction implements IMessage {
      * Build a filter "toggle" action for the given stack.
      */
     public static PacketCapabilityAction filterToggle(StorageBusInfo bus, ItemStack stack) {
+        return filterToggle(bus, stack, bus.resolvePreferredStackTypeId(stack));
+    }
+
+    /**
+     * Build a filter "toggle" action for the given stack using the explicit content slot type.
+     */
+    public static PacketCapabilityAction filterToggle(StorageBusInfo bus, ItemStack stack, String stackTypeId) {
         return new PacketCapabilityAction(
             bus.toTargetId(),
             StorageBusCapabilityIds.FILTER,
             StorageBusActionIds.FILTER_TOGGLE,
-            filterPayload(bus, stack));
+            filterPayload(bus, stack, stackTypeId));
     }
 
     /**
@@ -105,20 +123,18 @@ public class PacketCapabilityAction implements IMessage {
             new NBTTagCompound());
     }
 
-    private static NBTTagCompound filterPayload(StorageBusInfo bus, ItemStack stack) {
+    private static NBTTagCompound filterPayload(StorageBusInfo bus, ItemStack stack, String stackTypeId) {
         NBTTagCompound payload = new NBTTagCompound();
-        NBTTagCompound filterData = createFilterData(bus, stack);
+        NBTTagCompound filterData = createFilterData(stack, stackTypeId);
         if (filterData != null) payload.setTag("filter", filterData);
-        payload.setInteger(
-            "filterType",
-            bus.getStorageType()
-                .ordinal());
+        payload.setInteger("filterType", filterTypeOrdinal(stackTypeId));
+        payload.setString("stackTypeId", stackTypeId);
 
         return payload;
     }
 
-    private static NBTTagCompound createFilterData(StorageBusInfo bus, ItemStack stack) {
-        if (bus.isFluid()) {
+    private static NBTTagCompound createFilterData(ItemStack stack, String stackTypeId) {
+        if ("fluid".equals(stackTypeId)) {
             FluidStack fluid = FluidStacks.extract(stack);
             if (fluid != null) {
                 fluid = fluid.copy();
@@ -140,8 +156,16 @@ public class PacketCapabilityAction implements IMessage {
         return AEStackUtil.writeItemLikePartitionStack(stack);
     }
 
+    private static int filterTypeOrdinal(String stackTypeId) {
+        if ("fluid".equals(stackTypeId)) return 1;
+        if ("essentia".equals(stackTypeId)) return 2;
+
+        return 0;
+    }
+
     @Override
     public void fromBytes(ByteBuf buf) {
+        this.targetType = ByteBufUtils.readUTF8String(buf);
         this.targetIdData = ByteBufUtils.readTag(buf);
         this.capability = ByteBufUtils.readUTF8String(buf);
         this.action = ByteBufUtils.readUTF8String(buf);
@@ -150,6 +174,7 @@ public class PacketCapabilityAction implements IMessage {
 
     @Override
     public void toBytes(ByteBuf buf) {
+        ByteBufUtils.writeUTF8String(buf, targetType);
         ByteBufUtils.writeTag(buf, targetIdData);
         ByteBufUtils.writeUTF8String(buf, capability);
         ByteBufUtils.writeUTF8String(buf, action);
@@ -165,11 +190,17 @@ public class PacketCapabilityAction implements IMessage {
             NetUtil.run(ctx.getServerHandler().playerEntity, () -> {
                 if (!(player.openContainer instanceof ContainerCellTerminalBase container)) return;
 
-                StorageBusId targetId = StorageBusId.readFromNBT(message.targetIdData);
+                // Resolve the identity through the serializer registry so the network layer never
+                // branches on concrete identity classes.
+                TargetId targetId = TargetIdSerializers.INSTANCE.find(new ResourceLocation(message.targetType))
+                    .map(serializer -> (TargetId) serializer.read(message.targetIdData))
+                    .orElse(null);
+                if (!(targetId instanceof StorageBusId storageBusId)) return;
+
                 ResourceLocation capability = new ResourceLocation(message.capability);
                 ResourceLocation action = new ResourceLocation(message.action);
 
-                container.handleCapabilityAction(targetId, capability, action, message.payload);
+                container.handleCapabilityAction(storageBusId, capability, action, message.payload);
             });
 
             return null;

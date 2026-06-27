@@ -5,6 +5,7 @@ import com.hfstudio.diskterminal.storagebus.model.StorageBusId;
 import com.hfstudio.diskterminal.storagebus.provider.AEStorageBusProvider;
 import com.hfstudio.diskterminal.storagebus.provider.GTStorageBusProvider;
 import com.hfstudio.diskterminal.storagebus.provider.GenericItemBusProvider;
+import com.hfstudio.diskterminal.storagebus.provider.StockReplenisherProvider;
 
 /**
  * Creates the capability provider for a storage bus from its identity and source family. Provider
@@ -15,6 +16,7 @@ public class StorageBusProviderFactory {
 
     private final StorageBusResolver aeResolver = new AEStorageBusResolver();
     private final StorageBusResolver gtResolver = new GTStorageBusResolver();
+    private final StorageBusResolver stockReplenisherResolver = new StockReplenisherResolver();
 
     /**
      * Build a provider for the given identity and source family.
@@ -24,6 +26,7 @@ public class StorageBusProviderFactory {
             case AE_STORAGE_BUS -> new AEStorageBusProvider(id, aeResolver);
             case AE_SHARED_BUS -> new GenericItemBusProvider(id, aeResolver);
             case GREGTECH -> new GTStorageBusProvider(id, gtResolver);
+            case AE2FC_STOCK_REPLENISHER -> new StockReplenisherProvider(id, stockReplenisherResolver);
         };
     }
 }
