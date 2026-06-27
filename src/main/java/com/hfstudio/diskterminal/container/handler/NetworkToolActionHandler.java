@@ -198,6 +198,7 @@ public class NetworkToolActionHandler {
         for (CellTarget target : filteredTargets) {
             CellAccess access = getCellAccess(target, type);
             if (access == null) continue;
+            if (access.inventory.getUsedBytes() <= 0) continue;
 
             plan.filteredTargets.add(target);
             IItemList<?> contents = collectContents(access, type);
@@ -449,7 +450,8 @@ public class NetworkToolActionHandler {
 
         CellFilter.State hasItems = activeFilters.getOrDefault(CellFilter.HAS_ITEMS, CellFilter.State.SHOW_ALL);
         if (hasItems != CellFilter.State.SHOW_ALL) {
-            boolean busHasContents = StorageBusDataHandler.busHasConnectedInventory(tracker);
+            boolean busHasContents = tracker.hasConnectedContents
+                || StorageBusDataHandler.busHasConnectedInventory(tracker);
             if (hasItems == CellFilter.State.SHOW_ONLY && !busHasContents) return false;
             if (hasItems == CellFilter.State.HIDE && busHasContents) return false;
         }

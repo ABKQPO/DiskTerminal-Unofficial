@@ -225,6 +225,8 @@ public class AE2SubnetScanner extends AbstractSubnetScanner {
 
     private NBTTagList collectSubnetInventory(IGrid subnetGrid, int slotLimit) {
         NBTTagList inventory = new NBTTagList();
+        if (slotLimit <= 0) return inventory;
+
         IStorageGrid storageGrid;
         try {
             storageGrid = subnetGrid.getCache(IStorageGrid.class);
@@ -255,6 +257,8 @@ public class AE2SubnetScanner extends AbstractSubnetScanner {
 
     private <T extends IAEStack<T>> int appendContents(NBTTagList out, IMEMonitor<T> monitor, IAEStackType<T> type,
         int slotLimit, int startCount) {
+        if (startCount >= slotLimit) return startCount;
+
         IItemList<T> list = type.createList();
         monitor.getAvailableItems(list, IterationCounter.fetchNewId());
 
@@ -371,6 +375,8 @@ public class AE2SubnetScanner extends AbstractSubnetScanner {
 
     private <T extends IAEStack<T>> int appendHandlerContentsForType(NBTTagList out, IMEInventoryHandler<T> handler,
         IAEStackType<T> type, int slotLimit, int startCount) {
+        if (startCount >= slotLimit) return startCount;
+
         IItemList<T> list = type.createList();
         handler.getAvailableItems(list, IterationCounter.fetchNewId());
 

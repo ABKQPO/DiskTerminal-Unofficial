@@ -183,19 +183,19 @@ public class TerminalDataManager {
      * Common bookkeeping after any section channel update.
      */
     private void finishUpdate(Section section, boolean hasNewEntries) {
-        boolean needsFullRebuild = !hasInitialData || hasNewEntries;
+        boolean evaluateFilters = !hasInitialData || hasNewEntries;
 
         switch (section) {
             case STORAGES:
-                needsFullRebuild |= !this.hasInitialStorageData;
+                evaluateFilters |= !this.hasInitialStorageData;
                 this.hasInitialStorageData = true;
                 break;
             case BUSES:
-                needsFullRebuild |= !this.hasInitialBusData;
+                evaluateFilters |= !this.hasInitialBusData;
                 this.hasInitialBusData = true;
                 break;
             case TEMP_CELLS:
-                needsFullRebuild |= !this.hasInitialTempCellData;
+                evaluateFilters |= !this.hasInitialTempCellData;
                 this.hasInitialTempCellData = true;
                 break;
             default:
@@ -203,11 +203,21 @@ public class TerminalDataManager {
         }
 
         this.hasInitialData = true;
+        rebuildUpdatedSection(section, evaluateFilters);
+    }
 
-        if (needsFullRebuild) {
-            rebuildLines();
-        } else {
-            rebuildLinesFromSnapshot();
+    private void rebuildUpdatedSection(Section section, boolean evaluateFilters) {
+        switch (section) {
+            case STORAGES:
+                rebuildStorageSectionLines(evaluateFilters);
+                break;
+            case BUSES:
+                rebuildBusSectionLines(evaluateFilters);
+                break;
+            case TEMP_CELLS:
+                break;
+            default:
+                break;
         }
     }
 
@@ -360,14 +370,8 @@ public class TerminalDataManager {
         this.visibleBusSnapshotInventory.clear();
         this.visibleBusSnapshotPartition.clear();
 
-        this.lines.clear();
-        this.inventoryLines.clear();
-        this.partitionLines.clear();
-        this.storageBusInventoryLines.clear();
-        this.storageBusPartitionLines.clear();
-
-        rebuildCellLines(true);
-        rebuildStorageBusLines(true);
+        rebuildStorageSectionLines(true);
+        rebuildBusSectionLines(true);
     }
 
     /**
@@ -376,19 +380,26 @@ public class TerminalDataManager {
      * Items that weren't visible stay hidden, even if they would now match.
      */
     private void rebuildLinesFromSnapshot() {
+        rebuildStorageSectionLines(false);
+        rebuildBusSectionLines(false);
+    }
+
+    private void rebuildStorageSectionLines(boolean evaluateFilters) {
         this.lines.clear();
         this.inventoryLines.clear();
         this.partitionLines.clear();
+        rebuildCellLines(evaluateFilters);
+    }
+
+    private void rebuildBusSectionLines(boolean evaluateFilters) {
         this.storageBusInventoryLines.clear();
         this.storageBusPartitionLines.clear();
-
-        rebuildCellLines(false);
-        rebuildStorageBusLines(false);
+        rebuildStorageBusLines(evaluateFilters);
     }
 
     /**
      * Rebuild lines for cell storages (drives/chests).
-     * 
+     *
      * @param evaluateFilters If true, re-evaluate filters and update snapshots.
      *                        If false, use existing snapshots to determine visibility.
      */
@@ -575,7 +586,7 @@ public class TerminalDataManager {
      * Rebuild lines for storage bus inventory and partition tabs.
      * Storage buses are sorted by position then by facing.
      * Each bus has a header row (StorageBusInfo) followed by content rows (StorageBusContentRow).
-     * 
+     *
      * @param evaluateFilters If true, re-evaluate filters and update snapshots.
      *                        If false, use existing snapshots to determine visibility.
      */
@@ -724,7 +735,7 @@ public class TerminalDataManager {
 
     /**
      * Check if a storage bus matches the search filter.
-     * 
+     *
      * @param bus            The storage bus to check
      * @param checkInventory true to check inventory contents, false to check partition
      * @return true if the bus matches the filter or if filter is empty
@@ -755,7 +766,7 @@ public class TerminalDataManager {
 
     /**
      * Check if a storage bus matches the cell type filters.
-     * 
+     *
      * @param bus The storage bus to check
      * @return true if the bus passes all active filters
      */
@@ -849,7 +860,7 @@ public class TerminalDataManager {
 
     /**
      * Check if a cell matches the search filter for a specific search type.
-     * 
+     *
      * @param cell           The cell to check
      * @param checkInventory true to check inventory contents, false to check partition
      * @return true if the cell matches the filter or if filter is empty
@@ -880,7 +891,7 @@ public class TerminalDataManager {
 
     /**
      * Check if a cell matches the cell type filters.
-     * 
+     *
      * @param cell The cell to check
      * @return true if the cell passes all active filters
      */
@@ -1017,6 +1028,11 @@ public class TerminalDataManager {
         this.storageMap.clear();
         this.storageBusMap.clear();
         this.tempCellSlotData.clear();
+        this.lines.clear();
+        this.inventoryLines.clear();
+        this.partitionLines.clear();
+        this.storageBusInventoryLines.clear();
+        this.storageBusPartitionLines.clear();
         this.tempAreaLines.clear();
     }
 

@@ -81,6 +81,11 @@ public class ThaumicEnergisticsIntegration {
                 cellData.setTag("partition", partitionList);
             }
 
+            if (slotLimit <= 0) {
+                cellData.setTag("contents", new NBTTagList());
+                return cellData;
+            }
+
             IItemList<AEEssentiaStack> contents = cellInv
                 .getAvailableItems(AEEssentiaStackType.ESSENTIA_STACK_TYPE.createList(), IterationCounter.fetchNewId());
 

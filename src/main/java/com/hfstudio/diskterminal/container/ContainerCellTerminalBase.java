@@ -95,7 +95,9 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     protected final StorageBusActionExecutor storageBusActionExecutor = new StorageBusActionExecutor();
     protected IGrid grid;
     protected boolean needsFullRefresh = true;
+    protected boolean needsStorageRefresh = true;
     protected boolean needsStorageBusRefresh = false;
+    protected boolean needsTempCellRefresh = true;
     protected boolean needsSubnetRefresh = false;
 
     protected int tickCounter = 0;
@@ -114,6 +116,9 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
     protected long currentNetworkId = 0;
     protected IGrid currentNetworkGrid = null;
+    protected long lastSentMetaNetworkId = Long.MIN_VALUE;
+    protected long lastSentMetaTerminalPos = Long.MIN_VALUE;
+    protected int lastSentMetaTerminalDim = Integer.MIN_VALUE;
 
     private int toolboxSlot;
     private NetworkToolViewer toolboxInventory;
@@ -188,26 +193,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
             || (this.tickCounter - this.lastFullRefreshTick) >= minInterval;
 
         if (needsFullRefresh && throttleSatisfied) {
-            sendMeta();
-
-            switch (this.activeTab) {
-                case GuiConstants.TAB_STORAGE_BUS_INVENTORY:
-                case GuiConstants.TAB_STORAGE_BUS_PARTITION:
-                    regenStorageBusList();
-                    regenStorageList();
-                    regenTempCellList();
-                    break;
-                case GuiConstants.TAB_TEMP_AREA:
-                    regenTempCellList();
-                    regenStorageList();
-                    regenStorageBusList();
-                    break;
-                default:
-                    regenStorageList();
-                    regenStorageBusList();
-                    regenTempCellList();
-                    break;
-            }
+            sendMetaIfChanged();
+            regenDirtySectionsForActiveTab();
 
             needsFullRefresh = false;
             this.lastFullRefreshTick = this.tickCounter;
@@ -272,6 +259,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     }
 
     public void setActiveTab(int tab) {
+        if (this.activeTab == tab) return;
+
         boolean isOnStorageBusTab = (tab == GuiConstants.TAB_STORAGE_BUS_INVENTORY
             || tab == GuiConstants.TAB_STORAGE_BUS_PARTITION);
 
@@ -281,14 +270,28 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
             requestStorageBusRefresh();
             storageBusPollCounter = 0;
         }
+
+        if (tabNeedsStorages(tab)) requestStorageRefresh();
+        if (tabNeedsTempCells(tab)) requestTempCellRefresh();
     }
 
     public void setSlotLimits(int cellLimit, int busLimit, int subnetLimit) {
-        this.cellSlotLimit = cellLimit < 0 ? Integer.MAX_VALUE : cellLimit;
-        this.busSlotLimit = busLimit < 0 ? Integer.MAX_VALUE : busLimit;
-        this.subnetSlotLimit = subnetLimit < 0 ? Integer.MAX_VALUE : subnetLimit;
+        int normalizedCellLimit = cellLimit < 0 ? Integer.MAX_VALUE : cellLimit;
+        int normalizedBusLimit = busLimit < 0 ? Integer.MAX_VALUE : busLimit;
+        int normalizedSubnetLimit = subnetLimit < 0 ? Integer.MAX_VALUE : subnetLimit;
 
-        requestFullRefresh();
+        if (this.cellSlotLimit == normalizedCellLimit && this.busSlotLimit == normalizedBusLimit
+            && this.subnetSlotLimit == normalizedSubnetLimit) {
+            return;
+        }
+
+        this.cellSlotLimit = normalizedCellLimit;
+        this.busSlotLimit = normalizedBusLimit;
+        this.subnetSlotLimit = normalizedSubnetLimit;
+
+        requestStorageRefresh();
+        requestStorageBusRefresh();
+        requestTempCellRefresh();
         requestSubnetRefresh();
     }
 
@@ -312,6 +315,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     }
 
     protected void regenStorageList() {
+        this.needsStorageRefresh = false;
         this.trackers.clear();
         this.byId.clear();
 
@@ -336,6 +340,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     }
 
     protected void regenStorageBusList() {
+        this.needsStorageBusRefresh = false;
         this.storageBusById.clear();
 
         StorageBusScanCollector.CollectResult result = storageBusCollector
@@ -347,6 +352,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     }
 
     protected void regenTempCellList() {
+        this.needsTempCellRefresh = false;
         IInventory tempInv = getTempCellInventory();
         if (tempInv == null) return;
 
@@ -383,15 +389,30 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         sendChunked(TerminalChannels.TEMP_CELLS, data, "tempCells", "id");
     }
 
-    protected void sendMeta() {
+    protected void sendMetaIfChanged() {
         EntityPlayerMP player = getServerPlayer();
         if (player == null) return;
 
+        NBTTagCompound meta = createMetaPayload();
+        long terminalPos = meta.hasKey("terminalPos") ? meta.getLong("terminalPos") : Long.MIN_VALUE;
+        int terminalDim = meta.hasKey("terminalDim") ? meta.getInteger("terminalDim") : Integer.MIN_VALUE;
+
+        if (this.lastSentMetaNetworkId == this.currentNetworkId && this.lastSentMetaTerminalPos == terminalPos
+            && this.lastSentMetaTerminalDim == terminalDim) {
+            return;
+        }
+
+        ChunkedNBTSender.send(player, TerminalChannels.META, PayloadMode.FULL, meta);
+        this.lastSentMetaNetworkId = this.currentNetworkId;
+        this.lastSentMetaTerminalPos = terminalPos;
+        this.lastSentMetaTerminalDim = terminalDim;
+    }
+
+    protected NBTTagCompound createMetaPayload() {
         NBTTagCompound meta = new NBTTagCompound();
         meta.setLong("networkId", this.currentNetworkId);
         addTerminalPosition(meta);
-
-        ChunkedNBTSender.send(player, TerminalChannels.META, PayloadMode.FULL, meta);
+        return meta;
     }
 
     protected void sendChunked(String channel, NBTTagCompound fullPayload, String listKey, String idKey) {
@@ -451,7 +472,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
         if (CellActionHandler
             .handlePartitionAction(tracker.storage, tracker.tile, cellSlot, action, partitionSlot, stackData)) {
-            requestFullRefresh();
+            requestStorageRefresh();
         }
     }
 
@@ -510,7 +531,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         StorageTracker tracker = this.byId.get(storageId);
         if (tracker == null) return;
 
-        if (CellActionHandler.ejectCell(tracker.storage, cellSlot, player)) requestFullRefresh();
+        if (CellActionHandler.ejectCell(tracker.storage, cellSlot, player)) requestStorageRefresh();
     }
 
     public void handleSetPriority(long storageId, int priority) {
@@ -526,7 +547,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
             if (tracker.tile instanceof IPriorityHost priorityHost) {
                 priorityHost.setPriority(priority);
                 tracker.tile.markDirty();
-                requestFullRefresh();
+                requestStorageRefresh();
             }
         }
     }
@@ -555,7 +576,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
                             upgradeStack,
                             player,
                             fromSlot)) {
-                            requestFullRefresh();
+                            requestStorageRefresh();
 
                             return;
                         }
@@ -578,7 +599,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
                 for (int slot = 0; slot < tracker.storage.getCellCount(); slot++) {
                     if (CellActionHandler
                         .upgradeCell(tracker.storage, tracker.tile, slot, upgradeStack, player, fromSlot)) {
-                        requestFullRefresh();
+                        requestStorageRefresh();
 
                         return;
                     }
@@ -594,7 +615,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         if (tracker == null) return;
 
         if (CellActionHandler.upgradeCell(tracker.storage, tracker.tile, cellSlot, upgradeStack, player, fromSlot)) {
-            requestFullRefresh();
+            requestStorageRefresh();
 
             return;
         }
@@ -886,7 +907,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         if (tile != null) tile.markDirty();
 
         if (targetType == PacketExtractUpgrade.TargetType.CELL) {
-            requestFullRefresh();
+            requestStorageRefresh();
         } else if (targetType == PacketExtractUpgrade.TargetType.TEMP_CELL) {
             IInventory tempInv = getTempCellInventory();
             if (tempInv != null) {
@@ -897,7 +918,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
                 }
             }
 
-            requestFullRefresh();
+            requestTempCellRefresh();
         } else {
             requestStorageBusRefresh();
         }
@@ -943,7 +964,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         }
 
         if (CellActionHandler.pickupCell(tracker.storage, cellSlot, player, toInventory)) {
-            requestFullRefresh();
+            requestStorageRefresh();
         }
     }
 
@@ -959,7 +980,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         if (tracker == null) return;
 
         if (CellActionHandler.insertCell(tracker.storage, targetSlot, player)) {
-            requestFullRefresh();
+            requestStorageRefresh();
         }
     }
 
@@ -988,7 +1009,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
                         if (ItemStacks.isEmpty(stack)) slot.putStack(null);
 
                         slot.onSlotChanged();
-                        requestFullRefresh();
+                        requestTempCellRefresh();
                         this.detectAndSendChanges();
 
                         return null;
@@ -1030,7 +1051,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
                 slot.onSlotChanged();
                 cellInventory.markDirty();
                 tracker.tile.markDirty();
-                requestFullRefresh();
+                requestStorageRefresh();
                 this.detectAndSendChanges();
 
                 return null;
@@ -1104,7 +1125,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         EntityPlayer player = this.getPlayerInv().player;
         NetworkToolActionHandler.handleAction(toolId, activeFilters, byId, storageBusById, grid, player);
 
-        requestFullRefresh();
+        requestStorageRefresh();
         requestStorageBusRefresh();
     }
 
@@ -1219,6 +1240,9 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         }
 
         this.deltaSnapshot.resetAll();
+        this.lastSentMetaNetworkId = Long.MIN_VALUE;
+        this.lastSentMetaTerminalPos = Long.MIN_VALUE;
+        this.lastSentMetaTerminalDim = Integer.MIN_VALUE;
 
         requestFullRefresh();
         requestStorageBusRefresh();
@@ -1288,13 +1312,46 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
     public void requestFullRefresh() {
         this.needsFullRefresh = true;
+        this.needsStorageRefresh = true;
+        this.needsTempCellRefresh = true;
+    }
+
+    public void requestStorageRefresh() {
+        this.needsStorageRefresh = true;
+        this.needsFullRefresh = true;
     }
 
     public void requestStorageBusRefresh() {
         this.needsStorageBusRefresh = true;
+        this.needsFullRefresh = true;
+    }
+
+    public void requestTempCellRefresh() {
+        this.needsTempCellRefresh = true;
+        this.needsFullRefresh = true;
     }
 
     public IInventory getTempCellInventory() {
         return null;
+    }
+
+    protected void regenDirtySectionsForActiveTab() {
+        if (tabNeedsStorages(this.activeTab) && this.needsStorageRefresh) regenStorageList();
+        if (tabNeedsStorageBuses(this.activeTab) && this.needsStorageBusRefresh) regenStorageBusList();
+        if (tabNeedsTempCells(this.activeTab) && this.needsTempCellRefresh) regenTempCellList();
+    }
+
+    protected boolean tabNeedsStorages(int tab) {
+        return tab != GuiConstants.TAB_STORAGE_BUS_INVENTORY && tab != GuiConstants.TAB_STORAGE_BUS_PARTITION
+            && tab != GuiConstants.TAB_SUBNETS;
+    }
+
+    protected boolean tabNeedsStorageBuses(int tab) {
+        return tab == GuiConstants.TAB_STORAGE_BUS_INVENTORY || tab == GuiConstants.TAB_STORAGE_BUS_PARTITION
+            || tab == GuiConstants.TAB_NETWORK_TOOLS;
+    }
+
+    protected boolean tabNeedsTempCells(int tab) {
+        return tab == GuiConstants.TAB_TEMP_AREA;
     }
 }

@@ -53,6 +53,8 @@ public class StorageBusScanCollector {
             NBTTagCompound busData = busList.getCompoundTagAt(i);
             StorageBusTracker tracker = trackerMap.get(busData.getLong("id"));
             if (tracker == null) continue;
+            tracker.hasConnectedContents = busData.hasKey("contents") && busData.getTagList("contents", 10)
+                .tagCount() > 0;
 
             StorageBusScanEntry entry = assembler.assemble(tracker, busData, registry);
             if (entry != null) entries.add(entry);

@@ -27,6 +27,8 @@ import com.hfstudio.diskterminal.util.PosUtil;
 import appeng.api.config.Upgrades;
 import appeng.api.implementations.items.IUpgradeModule;
 import appeng.api.storage.data.IAEStack;
+import appeng.api.storage.data.IAEStackType;
+import appeng.api.storage.data.AEStackTypeRegistry;
 
 /**
  * Client-side data holder for storage bus information received from server.
@@ -363,8 +365,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         if (!normalizedType.equals(getPartitionSlotTypeId(slot))) return false;
 
         fillPartitionSlots(slot + 1);
-        ItemStack displayStack = stack.copy();
-        displayStack.stackSize = 1;
+        ItemStack displayStack = createOptimisticFilterDisplayStack(stack, normalizedType);
         this.partition.set(slot, displayStack);
         return true;
     }
@@ -567,6 +568,23 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         }
 
         return AEStackUtil.getDisplayStack(aeStack);
+    }
+
+    private static ItemStack createOptimisticFilterDisplayStack(ItemStack stack, String stackTypeId) {
+        IAEStackType<?> targetType = AEStackTypeRegistry.getType(stackTypeId);
+        IAEStack<?> convertedStack = AEStackUtil.convertItemForType(stack, targetType);
+        ItemStack displayStack = AEStackUtil.getDisplayStack(convertedStack);
+        if (!ItemStacks.isEmpty(displayStack)) return displayStack;
+
+        if ("fluid".equals(stackTypeId)) {
+            FluidStack fluid = FluidStacks.extract(stack);
+            ItemStack fluidDisplayStack = FluidStacks.toDisplayStack(fluid);
+            if (!ItemStacks.isEmpty(fluidDisplayStack)) return fluidDisplayStack;
+        }
+
+        ItemStack fallback = stack.copy();
+        fallback.stackSize = 1;
+        return fallback;
     }
 
     /**

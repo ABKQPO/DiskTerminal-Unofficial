@@ -4,8 +4,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 import net.minecraft.nbt.NBTBase;
+import net.minecraft.nbt.NBTTagByte;
+import net.minecraft.nbt.NBTTagByteArray;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagDouble;
+import net.minecraft.nbt.NBTTagFloat;
+import net.minecraft.nbt.NBTTagInt;
+import net.minecraft.nbt.NBTTagIntArray;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.NBTTagLong;
+import net.minecraft.nbt.NBTTagShort;
+import net.minecraft.nbt.NBTTagString;
 import net.minecraftforge.common.util.Constants;
 
 /**
@@ -26,6 +35,8 @@ import net.minecraftforge.common.util.Constants;
  * next payload is forced to be a full rebuild on the client.
  */
 public class DeltaSnapshot {
+
+    private record SnapshotEntry(NBTTagCompound data, int fingerprint) {}
 
     /**
      * Wrapper for the result of {@link #buildDelta(String, NBTTagCompound, String, String)}.
@@ -51,7 +62,7 @@ public class DeltaSnapshot {
      * Map: channel -> (entryId -> last-sent NBT compound for that entry).
      * Empty map means we have never sent a full payload yet (next send must be FULL).
      */
-    private final Map<String, Map<Long, NBTTagCompound>> snapshots = new HashMap<>();
+    private final Map<String, Map<Long, SnapshotEntry>> snapshots = new HashMap<>();
 
     /**
      * Reset the snapshot for one channel (next send on that channel will be FULL).
@@ -77,14 +88,14 @@ public class DeltaSnapshot {
      */
     public DeltaResult buildDelta(String channel, NBTTagCompound fullPayload, String listKey, String idKey) {
         NBTTagList list = fullPayload.getTagList(listKey, Constants.NBT.TAG_COMPOUND);
-        Map<Long, NBTTagCompound> oldSnapshot = snapshots.get(channel);
+        Map<Long, SnapshotEntry> oldSnapshot = snapshots.get(channel);
 
         // Build new snapshot map first (we always commit it after sending, regardless of mode).
-        Map<Long, NBTTagCompound> newSnapshot = new HashMap<>(list.tagCount() * 2);
+        Map<Long, SnapshotEntry> newSnapshot = new HashMap<>(list.tagCount() * 2);
         for (int i = 0; i < list.tagCount(); i++) {
             NBTTagCompound entry = list.getCompoundTagAt(i);
             if (!entry.hasKey(idKey)) continue;
-            newSnapshot.put(entry.getLong(idKey), entry);
+            newSnapshot.put(entry.getLong(idKey), new SnapshotEntry(entry, fingerprint(entry)));
         }
 
         // First send on this channel: full snapshot.
@@ -98,13 +109,18 @@ public class DeltaSnapshot {
         NBTTagList updated = new NBTTagList();
         NBTTagList removedIds = new NBTTagList();
 
-        for (Map.Entry<Long, NBTTagCompound> e : newSnapshot.entrySet()) {
-            NBTTagCompound oldEntry = oldSnapshot.get(e.getKey());
+        for (Map.Entry<Long, SnapshotEntry> e : newSnapshot.entrySet()) {
+            SnapshotEntry oldEntry = oldSnapshot.get(e.getKey());
             if (oldEntry == null) {
-                added.appendTag(e.getValue());
-            } else if (!nbtEquals(oldEntry, e.getValue())) {
-                updated.appendTag(e.getValue());
-            }
+                added.appendTag(
+                    e.getValue()
+                        .data());
+            } else if (oldEntry.fingerprint() != e.getValue()
+                .fingerprint()) {
+                    updated.appendTag(
+                        e.getValue()
+                            .data());
+                }
         }
 
         for (Long oldId : oldSnapshot.keySet()) {
@@ -135,12 +151,94 @@ public class DeltaSnapshot {
         return new DeltaResult(delta, false, empty);
     }
 
-    /**
-     * Deep equality check between two NBT bases. Used to decide whether an entry counts as updated.
-     */
-    private static boolean nbtEquals(NBTBase a, NBTBase b) {
-        if (a == b) return true;
-        if (a == null || b == null) return false;
-        return a.equals(b);
+    private static int fingerprint(NBTTagCompound entry) {
+        return fingerprintTag(entry);
+    }
+
+    private static int fingerprintTag(NBTBase tag) {
+        if (tag == null) return 0;
+
+        int hash = tag.getId();
+
+        if (tag instanceof NBTTagCompound compound) {
+            for (Object keyObject : compound.func_150296_c()) {
+                String key = (String) keyObject;
+                hash = 31 * hash + key.hashCode();
+                hash = 31 * hash + fingerprintTag(compound.getTag(key));
+            }
+
+            return hash;
+        }
+
+        if (tag instanceof NBTTagList list) {
+            for (int i = 0; i < list.tagCount(); i++) {
+                hash = 31 * hash + fingerprintTag(getListElement(list, i));
+            }
+
+            return hash;
+        }
+
+        if (tag instanceof NBTTagString stringTag) {
+            return 31 * hash + stringTag.func_150285_a_()
+                .hashCode();
+        }
+
+        if (tag instanceof NBTTagInt intTag) {
+            return 31 * hash + intTag.func_150287_d();
+        }
+
+        if (tag instanceof NBTTagLong longTag) {
+            long value = longTag.func_150291_c();
+            return 31 * hash + (int) (value ^ (value >>> 32));
+        }
+
+        if (tag instanceof NBTTagShort shortTag) {
+            return 31 * hash + shortTag.func_150289_e();
+        }
+
+        if (tag instanceof NBTTagByte byteTag) {
+            return 31 * hash + byteTag.func_150290_f();
+        }
+
+        if (tag instanceof NBTTagFloat floatTag) {
+            return 31 * hash + Float.floatToIntBits(floatTag.func_150288_h());
+        }
+
+        if (tag instanceof NBTTagDouble doubleTag) {
+            long value = Double.doubleToLongBits(doubleTag.func_150286_g());
+            return 31 * hash + (int) (value ^ (value >>> 32));
+        }
+
+        if (tag instanceof NBTTagByteArray byteArrayTag) {
+            for (byte value : byteArrayTag.func_150292_c()) {
+                hash = 31 * hash + value;
+            }
+
+            return hash;
+        }
+
+        if (tag instanceof NBTTagIntArray intArrayTag) {
+            for (int value : intArrayTag.func_150302_c()) {
+                hash = 31 * hash + value;
+            }
+
+            return hash;
+        }
+
+        return 31 * hash + tag.toString()
+            .hashCode();
+    }
+
+    private static NBTBase getListElement(NBTTagList list, int index) {
+        if (list == null || index < 0 || index >= list.tagCount()) return null;
+
+        int tagType = list.func_150303_d();
+
+        return switch (tagType) {
+            case Constants.NBT.TAG_COMPOUND -> list.getCompoundTagAt(index);
+            case Constants.NBT.TAG_STRING -> new NBTTagString(list.getStringTagAt(index));
+            case Constants.NBT.TAG_INT_ARRAY -> new NBTTagIntArray(list.func_150306_c(index));
+            default -> null;
+        };
     }
 }

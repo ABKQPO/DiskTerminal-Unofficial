@@ -29,6 +29,7 @@ import com.hfstudio.diskterminal.util.PosUtil;
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Settings;
 import appeng.api.config.Upgrades;
+import appeng.api.networking.IGrid;
 import appeng.api.storage.IMEInventoryHandler;
 import appeng.api.storage.StorageName;
 import appeng.api.storage.data.IAEFluidStack;
@@ -60,11 +61,9 @@ public class StorageBusDataHandler {
 
     private static final int MAX_CONTENT_ENTRIES_PER_BUS_PAYLOAD = 1024;
 
-    private record GregTechItemSnapshot(ItemStack[] configs, ItemStack[] extracted, int[] extractedAmounts) {
-    }
+    private record GregTechItemSnapshot(ItemStack[] configs, ItemStack[] extracted, int[] extractedAmounts) {}
 
-    private record GregTechFluidSnapshot(FluidStack[] configs, FluidStack[] extracted, int[] extractedAmounts) {
-    }
+    private record GregTechFluidSnapshot(FluidStack[] configs, FluidStack[] extracted, int[] extractedAmounts) {}
 
     /**
      * Tracker for storage bus instances, keyed by a synthetic bus ID.
@@ -78,13 +77,14 @@ public class StorageBusDataHandler {
         public final StorageType storageType;
         public StorageBusId targetId;
         public StorageBusSource source;
+        public boolean hasConnectedContents;
 
         public StorageBusTracker(long id, Object storageBus, TileEntity hostTile) {
             this(id, storageBus, hostTile, -1, null);
         }
 
         public StorageBusTracker(long id, Object storageBus, TileEntity hostTile, int sideOrdinal,
-                                 StorageType storageType) {
+            StorageType storageType) {
             this.id = id;
             this.storageBus = storageBus;
             this.hostTile = hostTile;
@@ -112,7 +112,7 @@ public class StorageBusDataHandler {
      * @return NBTTagList containing all storage bus data
      */
     public static NBTTagList collectStorageBuses(IGrid grid, Map<Long, StorageBusTracker> trackerMap,
-                                                 int contentLimit) {
+        int contentLimit) {
         NBTTagList storageBusList = new NBTTagList();
 
         if (grid == null) return storageBusList;
@@ -129,8 +129,8 @@ public class StorageBusDataHandler {
         long pos = PosUtil.toLong(hostTile.xCoord, hostTile.yCoord, hostTile.zCoord);
 
         return pos ^ ((long) hostTile.getWorldObj().provider.dimensionId << 48)
-                ^ ((long) sideOrdinal << 40)
-                ^ ((long) typeFlag << 39);
+            ^ ((long) sideOrdinal << 40)
+            ^ ((long) typeFlag << 39);
     }
 
     /**
@@ -148,9 +148,9 @@ public class StorageBusDataHandler {
     }
 
     public static NBTTagCompound createSharedBusData(PartSharedItemBus<?> bus, long busId, StorageType storageType,
-                                                     BusRole busRole, int contentLimit) {
+        BusRole busRole, int contentLimit) {
         TileEntity hostTile = bus.getHost()
-                .getTile();
+            .getTile();
         ForgeDirection side = bus.getSide();
 
         NBTTagCompound busData = new NBTTagCompound();
@@ -180,14 +180,14 @@ public class StorageBusDataHandler {
     }
 
     public static NBTTagCompound createGregTechInputBusData(MTEHatchInputBusME inputBus, long busId,
-                                                            StorageType storageType, BusRole busRole, int contentLimit) {
+        StorageType storageType, BusRole busRole, int contentLimit) {
         NBTTagCompound busData = createGregTechBusBaseData(inputBus, busId, storageType, busRole);
         addGregTechItemBusData(busData, inputBus, contentLimit);
         return busData;
     }
 
     public static NBTTagCompound createGregTechInputHatchData(MTEHatchInputME inputHatch, long busId,
-                                                              StorageType storageType, BusRole busRole, int contentLimit) {
+        StorageType storageType, BusRole busRole, int contentLimit) {
         NBTTagCompound busData = createGregTechBusBaseData(inputHatch, busId, storageType, busRole);
         addGregTechFluidHatchData(busData, inputHatch, contentLimit);
         return busData;
@@ -200,7 +200,7 @@ public class StorageBusDataHandler {
      * one extensible object with typed slots rather than two fake buses.
      */
     public static NBTTagCompound createMixedStockReplenisherData(TileSuperStockReplenisher tile, ItemStack iconStack,
-                                                                 String displayName, long busId) {
+        String displayName, long busId) {
         NBTTagCompound busData = new NBTTagCompound();
         busData.setLong("id", busId);
         busData.setLong("pos", PosUtil.toLong(tile.xCoord, tile.yCoord, tile.zCoord));
@@ -216,10 +216,10 @@ public class StorageBusDataHandler {
         if (displayName != null) busData.setString("displayName", displayName);
 
         int fluidSlots = tile.getConfigFluids() == null ? 0
-                : tile.getConfigFluids()
+            : tile.getConfigFluids()
                 .getSizeInventory();
         int itemSlots = tile.getConfigItems() == null ? 0
-                : tile.getConfigItems()
+            : tile.getConfigItems()
                 .getSizeInventory();
         int totalSlots = fluidSlots + itemSlots;
 
@@ -249,7 +249,7 @@ public class StorageBusDataHandler {
     }
 
     private static void addMixedStockReplenisherPartitionData(NBTTagCompound busData, TileSuperStockReplenisher tile,
-                                                              int fluidSlotCount) {
+        int fluidSlotCount) {
         NBTTagList partitionList = new NBTTagList();
         appendStockReplenisherPartitionGroup(partitionList, tile.getConfigFluids(), 0, "fluid");
         appendStockReplenisherPartitionGroup(partitionList, tile.getConfigItems(), fluidSlotCount, "item");
@@ -257,7 +257,7 @@ public class StorageBusDataHandler {
     }
 
     private static void appendStockReplenisherPartitionGroup(NBTTagList partitionList, IAEStackInventory config,
-                                                             int slotOffset, String stackTypeId) {
+        int slotOffset, String stackTypeId) {
         if (config == null) return;
 
         for (int i = 0; i < config.getSizeInventory(); i++) {
@@ -275,9 +275,9 @@ public class StorageBusDataHandler {
 
         if (tile.getInternalFluid() != null) {
             for (int i = 0; i < tile.getInternalFluid()
-                    .getSlots(); i++) {
+                .getSlots(); i++) {
                 IAEFluidStack fluid = tile.getInternalFluid()
-                        .getFluidInSlot(i);
+                    .getFluidInSlot(i);
                 if (fluid == null) continue;
 
                 NBTTagCompound stackNbt = new NBTTagCompound();
@@ -290,9 +290,9 @@ public class StorageBusDataHandler {
 
         if (tile.getInternalInventory() != null) {
             for (int i = 0; i < tile.getInternalInventory()
-                    .getSizeInventory(); i++) {
+                .getSizeInventory(); i++) {
                 ItemStack stack = tile.getInternalInventory()
-                        .getStackInSlot(i);
+                    .getStackInSlot(i);
                 if (ItemStacks.isEmpty(stack)) continue;
 
                 NBTTagCompound stackNbt = new NBTTagCompound();
@@ -307,9 +307,9 @@ public class StorageBusDataHandler {
     }
 
     private static NBTTagCompound createStorageBusData(PartStorageBus bus, long busId, StorageType storageType,
-                                                       int contentLimit) {
+        int contentLimit) {
         TileEntity hostTile = bus.getHost()
-                .getTile();
+            .getTile();
         ForgeDirection side = bus.getSide();
 
         NBTTagCompound busData = new NBTTagCompound();
@@ -322,7 +322,7 @@ public class StorageBusDataHandler {
         BusRole.STORAGE.writeToNBT(busData);
 
         AccessRestriction access = (AccessRestriction) bus.getConfigManager()
-                .getSetting(Settings.ACCESS);
+            .getSetting(Settings.ACCESS);
         busData.setInteger("access", access.ordinal());
 
         addBusItemIcon(busData, bus.getItemStack());
@@ -339,10 +339,10 @@ public class StorageBusDataHandler {
     }
 
     private static NBTTagCompound createGregTechBusBaseData(MetaTileEntity metaTileEntity, long busId,
-                                                            StorageType storageType, BusRole busRole) {
+        StorageType storageType, BusRole busRole) {
         TileEntity hostTile = (TileEntity) metaTileEntity.getBaseMetaTileEntity();
         ForgeDirection facing = metaTileEntity.getBaseMetaTileEntity()
-                .getFrontFacing();
+            .getFrontFacing();
 
         NBTTagCompound busData = new NBTTagCompound();
         busData.setLong("id", busId);
@@ -405,7 +405,7 @@ public class StorageBusDataHandler {
     }
 
     private static void addGregTechFluidHatchData(NBTTagCompound busData, MTEHatchInputME inputHatch,
-                                                  int contentLimit) {
+        int contentLimit) {
         busData.setString("stackType", "fluid");
         busData.setBoolean("supportsAutoPull", inputHatch.autoPullAvailable);
         busData.setBoolean("autoPullEnabled", inputHatch.isAutoPullFluidList());
@@ -421,9 +421,9 @@ public class StorageBusDataHandler {
                 NBTTagCompound partNbt = new NBTTagCompound();
                 partNbt.setInteger("slot", slotIndex);
                 AEStackUtil.writeStackToNBT(
-                        partNbt,
-                        AEFluidStack.create(configStack)
-                                .setStackSize(1));
+                    partNbt,
+                    AEFluidStack.create(configStack)
+                        .setStackSize(1));
                 partitionList.appendTag(partNbt);
             }
 
@@ -527,7 +527,7 @@ public class StorageBusDataHandler {
     }
 
     private static void addSharedBusPartitionData(NBTTagCompound busData, PartSharedItemBus<?> bus,
-                                                  int capacityUpgrades) {
+        int capacityUpgrades) {
         IAEStackInventory configInv = bus.getAEInventoryByName(StorageName.CONFIG);
         if (configInv == null) return;
 
@@ -554,7 +554,7 @@ public class StorageBusDataHandler {
     }
 
     private static void addContentsData(NBTTagCompound busData, PartStorageBus bus, StorageType storageType,
-                                        int contentLimit) {
+        int contentLimit) {
         IMEInventoryHandler<?> handler = bus.getInternalHandler();
         if (handler == null) return;
 
@@ -579,19 +579,25 @@ public class StorageBusDataHandler {
 
     @SuppressWarnings("unchecked")
     private static <T extends IAEStack<T>> void addContentsForUnknownType(NBTTagCompound busData,
-                                                                          IMEInventoryHandler<?> handler, IAEStackType<?> type, int contentLimit) {
+        IMEInventoryHandler<?> handler, IAEStackType<?> type, int contentLimit) {
         addContentsForType(busData, castHandler(handler), (IAEStackType<T>) type, contentLimit);
     }
 
     private static <T extends IAEStack<T>> void addContentsForType(NBTTagCompound busData,
-                                                                   IMEInventoryHandler<T> handler, IAEStackType<T> type, int contentLimit) {
+        IMEInventoryHandler<T> handler, IAEStackType<T> type, int contentLimit) {
+        int effectiveContentLimit = getEffectiveContentLimit(contentLimit);
+        if (effectiveContentLimit <= 0) {
+            busData.setTag("contents", new NBTTagList());
+            return;
+        }
+
         IItemList<T> list = type.createList();
         handler.getAvailableItems(list, IterationCounter.fetchNewId());
 
         NBTTagList contentsList = new NBTTagList();
         int written = 0;
         for (T stack : list) {
-            if (isContentLimitReached(written, contentLimit)) break;
+            if (written >= effectiveContentLimit) break;
 
             NBTTagCompound stackNbt = new NBTTagCompound();
             AEStackUtil.writeStackToNBT(stackNbt, stack);
@@ -608,6 +614,7 @@ public class StorageBusDataHandler {
     }
 
     private static int getEffectiveContentLimit(int contentLimit) {
+        if (contentLimit == 0) return 0;
         if (contentLimit < 0 || contentLimit == Integer.MAX_VALUE) return MAX_CONTENT_ENTRIES_PER_BUS_PAYLOAD;
 
         return Math.min(contentLimit, MAX_CONTENT_ENTRIES_PER_BUS_PAYLOAD);
@@ -712,6 +719,8 @@ public class StorageBusDataHandler {
      * Check if a storage bus can see at least one stack from its connected inventory.
      */
     public static boolean busHasConnectedInventory(StorageBusTracker tracker) {
+        if (tracker.hasConnectedContents) return true;
+
         if (tracker.storageBus instanceof MTEHatchInputBusME inputBus) {
             return hasGregTechItemContents(createGregTechItemSnapshot(inputBus));
         }
@@ -737,12 +746,12 @@ public class StorageBusDataHandler {
 
     @SuppressWarnings("unchecked")
     private static <T extends IAEStack<T>> boolean hasContentsForUnknownType(IMEInventoryHandler<?> handler,
-                                                                             IAEStackType<?> type) {
+        IAEStackType<?> type) {
         return hasContentsForType(castHandler(handler), (IAEStackType<T>) type);
     }
 
     private static <T extends IAEStack<T>> boolean hasContentsForType(IMEInventoryHandler<T> handler,
-                                                                      IAEStackType<T> type) {
+        IAEStackType<T> type) {
         IItemList<T> contents = type.createList();
         handler.getAvailableItems(contents, IterationCounter.fetchNewId());
 
@@ -751,7 +760,7 @@ public class StorageBusDataHandler {
 
     private static IAEStackInventory getConfigInventory(Object bus) {
         if (bus instanceof PartStorageBus storageBus) return storageBus.getAEInventoryByName(StorageName.CONFIG);
-        if (bus instanceof PartSharedItemBus<?> sharedBus) return sharedBus.getAEInventoryByName(StorageName.CONFIG);
+        if (bus instanceof PartSharedItemBus<?>sharedBus) return sharedBus.getAEInventoryByName(StorageName.CONFIG);
 
         return null;
     }
@@ -761,7 +770,7 @@ public class StorageBusDataHandler {
             return Math.min(config.getSizeInventory(), 18 + storageBus.getInstalledUpgrades(Upgrades.CAPACITY) * 9);
         }
 
-        if (bus instanceof PartSharedItemBus<?> sharedBus) {
+        if (bus instanceof PartSharedItemBus<?>sharedBus) {
             return Math.min(config.getSizeInventory(), 1 + sharedBus.getInstalledUpgrades(Upgrades.CAPACITY) * 4);
         }
 

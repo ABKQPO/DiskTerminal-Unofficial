@@ -101,7 +101,7 @@ public class PacketRenameAction implements IMessage {
             nameable.setCustomName(trimmed.isEmpty() ? null : trimmed);
             tile.markDirty();
 
-            container.requestFullRefresh();
+            container.requestStorageRefresh();
         }
 
         private void handleCellRename(ContainerCellTerminalBase container, long storageId, int cellSlot,
@@ -129,7 +129,7 @@ public class PacketRenameAction implements IMessage {
 
             ((TileEntity) storage).markDirty();
 
-            container.requestFullRefresh();
+            container.requestStorageRefresh();
         }
     }
 }

@@ -338,7 +338,7 @@ public class TempCellActionHandler {
     }
 
     private static void markDirty(ContainerCellTerminalBase container) {
-        container.requestFullRefresh();
+        container.requestTempCellRefresh();
     }
 
     private static InsertResult findAndInsertIntoNetwork(ContainerCellTerminalBase container, ItemStack cellStack) {

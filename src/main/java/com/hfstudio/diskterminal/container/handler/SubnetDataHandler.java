@@ -405,6 +405,8 @@ public class SubnetDataHandler {
 
     private static <T extends IAEStack<T>> void fillFromHandlerForType(IAEStackInventory config,
         IMEInventoryHandler<T> handler, IAEStackType<T> type) {
+        if (config.getSizeInventory() <= 0) return;
+
         IItemList<T> contents = type.createList();
         handler.getAvailableItems(contents, IterationCounter.fetchNewId());
         fillFromList(config, contents);
@@ -418,6 +420,8 @@ public class SubnetDataHandler {
 
     private static <T extends IAEStack<T>> void fillFromMonitorForType(IAEStackInventory config, IMEMonitor<T> monitor,
         IAEStackType<T> type) {
+        if (config.getSizeInventory() <= 0) return;
+
         IItemList<T> contents = type.createList();
         monitor.getAvailableItems(contents, IterationCounter.fetchNewId());
         fillFromList(config, contents);

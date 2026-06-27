@@ -192,6 +192,11 @@ public class CellDataHandler {
 
     private static <T extends IAEStack<T>> void populateGenericContents(NBTTagCompound cellData,
         ICellInventory<T> cellInv, IAEStackType<T> type, int slotLimit) {
+        if (slotLimit <= 0) {
+            cellData.setTag("contents", new NBTTagList());
+            return;
+        }
+
         IItemList<T> contents = cellInv.getAvailableItems(type.createList(), IterationCounter.fetchNewId());
         NBTTagList contentsList = new NBTTagList();
         int count = 0;

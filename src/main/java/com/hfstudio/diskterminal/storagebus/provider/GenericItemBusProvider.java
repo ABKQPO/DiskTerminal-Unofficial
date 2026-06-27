@@ -60,7 +60,7 @@ public class GenericItemBusProvider implements ICapabilityProvider<StorageBusId>
         if (resolved.isEmpty() || !(resolved.get() instanceof AEStorageBusHandle handle)) return Optional.empty();
 
         IPart part = handle.getPart();
-        if (!(part instanceof PartSharedItemBus<?> bus)) return Optional.empty();
+        if (!(part instanceof PartSharedItemBus<?>bus)) return Optional.empty();
 
         if (capabilityType == IRenameCapability.class) {
             return Optional.of((T) new AEStorageBusRenameCapability(part));
@@ -84,7 +84,7 @@ public class GenericItemBusProvider implements ICapabilityProvider<StorageBusId>
             return Collections.emptySet();
         }
 
-        if (!(handle.getPart() instanceof PartSharedItemBus<?> bus)) return Collections.emptySet();
+        if (!(handle.getPart() instanceof PartSharedItemBus<?>bus)) return Collections.emptySet();
 
         Set<ResourceLocation> capabilities = new LinkedHashSet<>();
         capabilities.add(StorageBusCapabilityIds.RENAME);
@@ -103,7 +103,7 @@ public class GenericItemBusProvider implements ICapabilityProvider<StorageBusId>
         FilterType filterType = filterTypeOf(stackType);
 
         return Optional
-                .of(new AEStorageBusFilterCapability(config, stackType, availableSlots, filterType, contentsSupplier(bus)));
+            .of(new AEStorageBusFilterCapability(config, stackType, availableSlots, filterType, contentsSupplier(bus)));
     }
 
     private Supplier<List<IAEStack<?>>> contentsSupplier(PartSharedItemBus<?> bus) {
