@@ -475,7 +475,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         // Search field: positioned after help button
         int searchX = helpButtonX + GuiSearchHelpButton.SIZE + 2;
         int searchY = 4;
-        int availableWidth = 183 - searchX;
+        int availableWidth = 184 - searchX;
 
         String existingSearch = (this.searchField != null) ? this.searchField.getText()
                 : DiskTerminalClientConfig.getInstance()
@@ -903,7 +903,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     private void drawSearchFieldBackground() {
         int x = this.searchField.x;
         int y = this.searchField.y;
-        int width = this.searchField.w - 2;
+        int width = this.searchField.w + 2;
         int height = 12;
         if (dataManager.hasAdvancedSearchError()) {
             drawRect(x - 1, y - 1, x + width + 1, y + height + 1, 0xFFFF0000);
