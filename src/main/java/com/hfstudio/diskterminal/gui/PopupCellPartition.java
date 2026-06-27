@@ -237,6 +237,8 @@ public class PopupCellPartition extends Gui {
         ItemStack draggedStack = NEIIntegration.getDraggedStack();
         if (!ItemStacks.isEmpty(draggedStack)) return draggedStack;
 
+        if (parent instanceof GuiCellTerminalBase gui && gui.isMouseOverBlockingPopup()) return null;
+
         return QuickPartitionHandler.getModIngredientUnderMouse();
     }
 

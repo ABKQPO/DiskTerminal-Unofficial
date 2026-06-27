@@ -125,6 +125,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     protected PopupCellInventory inventoryPopup = null;
     protected PopupCellPartition partitionPopup = null;
     private boolean renderingPopupTooltip = false;
+    private static final int BLOCKED_MOUSE_COORD = Integer.MIN_VALUE;
 
     // Storage bus and temp area selection tracking (for quick-add keybinds)
     protected final Set<Long> selectedStorageBusIds = new HashSet<>();
@@ -748,6 +749,28 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         return false;
     }
 
+    public boolean isMouseOverBlockingPopup() {
+        if (!hasBlockingPopup()) return false;
+
+        ScaledResolution resolution = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
+        int mouseX = Mouse.getX() * resolution.getScaledWidth() / mc.displayWidth;
+        int mouseY = resolution.getScaledHeight() - Mouse.getY() * resolution.getScaledHeight() / mc.displayHeight - 1;
+
+        return isPopupObscuringPoint(mouseX, mouseY);
+    }
+
+    private int getUnobscuredRelativeMouseX(int mouseX, int mouseY) {
+        if (isPopupObscuringPoint(mouseX, mouseY)) return BLOCKED_MOUSE_COORD;
+
+        return mouseX - guiLeft;
+    }
+
+    private int getUnobscuredRelativeMouseY(int mouseX, int mouseY) {
+        if (isPopupObscuringPoint(mouseX, mouseY)) return BLOCKED_MOUSE_COORD;
+
+        return mouseY - guiTop;
+    }
+
     private boolean hasBlockingPopup() {
         return partitionPopup != null || inventoryPopup != null;
     }
@@ -895,9 +918,8 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             GL11.glPopMatrix();
         }
 
-        boolean popupObscuresMouse = isPopupObscuringPoint(mouseX, mouseY);
-        int relMouseX = popupObscuresMouse ? Integer.MIN_VALUE : mouseX - offsetX;
-        int relMouseY = popupObscuresMouse ? Integer.MIN_VALUE : mouseY - offsetY;
+        int relMouseX = getUnobscuredRelativeMouseX(mouseX, mouseY);
+        int relMouseY = getUnobscuredRelativeMouseY(mouseX, mouseY);
         final int currentScroll = this.getScrollBar()
             .getCurrentScroll();
 
@@ -1125,6 +1147,8 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
     @Override
     protected void handleMouseClick(Slot slot, int slotIdx, int mouseButton, int clickType) {
+        if (hasBlockingPopup()) return;
+
         // Intercept shift-clicks on upgrade items in player inventory to insert into
         // the first visible cell/bus. Delegates to the active tab widget for tab-specific logic.
         if (clickType == 1 && slot != null && slot.getHasStack()) {
@@ -1193,6 +1217,8 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             if (partitionPopup.handleClick(mouseX, mouseY, mouseButton)) return;
         }
 
+        if (hadPopupAtStart) return;
+
         // Handle inline rename: clicking outside the rename field saves and closes it
         // (does not consume the click, let it propagate to potentially start a new rename)
         InlineRenameManager.getInstance()
@@ -1233,14 +1259,17 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     protected void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
         if (partitionPopup != null && partitionPopup.handleDrag(mouseX, mouseY, clickedMouseButton)) return;
         if (inventoryPopup != null && inventoryPopup.handleDrag(mouseX, mouseY, clickedMouseButton)) return;
+        if (hasBlockingPopup()) return;
 
         super.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
     }
 
     @Override
     protected void mouseMovedOrUp(int mouseX, int mouseY, int state) {
+        boolean hadPopupAtStart = hasBlockingPopup();
         if (partitionPopup != null) partitionPopup.stopDragging();
         if (inventoryPopup != null) inventoryPopup.stopDragging();
+        if (hadPopupAtStart) return;
 
         super.mouseMovedOrUp(mouseX, mouseY, state);
     }
@@ -1424,6 +1453,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         if (this.searchField != null && this.searchField.textboxKeyTyped(typedChar, keyCode)) return;
 
         if (handleNEIVirtualStackKey(keyCode)) return;
+        if (hasBlockingPopup()) return;
 
         // Delegate key handling to the active tab widget via TabManager
         if (tabManager.handleKey(keyCode)) return;
@@ -1574,6 +1604,8 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
                 return true;
             }
         }
+
+        if (hasBlockingPopup()) return true;
 
         // Fall through to AEBaseGui's SlotFake handler
         return super.handleDragNDrop(gui, mouseX, mouseY, draggedStack, button);
