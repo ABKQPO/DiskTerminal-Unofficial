@@ -167,6 +167,7 @@ public abstract class AbstractWidget implements IWidget {
 
         // Render the item with effects (enchantment glint, etc.)
         itemRender.renderItemAndEffectIntoGUI(mc.fontRenderer, mc.renderEngine, stack, renderX, renderY);
+        itemRender.renderItemOverlayIntoGUI(mc.fontRenderer, mc.renderEngine, stack, renderX, renderY);
 
         // Translate back
         GL11.glTranslatef(0.0F, 0.0F, -32.0F);
