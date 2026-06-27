@@ -7,6 +7,7 @@ import com.hfstudio.diskterminal.client.BlockHighlightRenderer;
 import com.hfstudio.diskterminal.client.KeyBindings;
 import com.hfstudio.diskterminal.client.KeyInputHandler;
 import com.hfstudio.diskterminal.client.UpgradeTooltipHandler;
+import com.hfstudio.diskterminal.integration.NEIIntegration;
 import com.hfstudio.diskterminal.part.PartCellTerminal;
 
 import cpw.mods.fml.common.FMLCommonHandler;
@@ -36,6 +37,7 @@ public class ClientProxy extends CommonProxy {
             .register(new KeyInputHandler());
         MinecraftForge.EVENT_BUS.register(new BlockHighlightRenderer());
         MinecraftForge.EVENT_BUS.register(new UpgradeTooltipHandler());
+        NEIIntegration.registerGuiHandlers();
     }
 
     @Override

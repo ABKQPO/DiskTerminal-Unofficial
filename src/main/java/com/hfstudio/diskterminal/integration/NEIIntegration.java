@@ -24,6 +24,12 @@ public class NEIIntegration {
         return Mods.NotEnoughItems.isModLoaded();
     }
 
+    public static void registerGuiHandlers() {
+        if (!isModLoaded()) return;
+
+        registerGuiHandlersInternal();
+    }
+
     /**
      * Get the stack hovered in the NEI overlay (item list / bookmarks), or null.
      */
@@ -52,6 +58,11 @@ public class NEIIntegration {
         if (!isModLoaded() || stack == null) return false;
 
         return showUsageInternal(stack);
+    }
+
+    @Optional.Method(modid = MOD_ID)
+    private static void registerGuiHandlersInternal() {
+        GuiContainerManager.addObjectHandler(NEIPopupTooltipHandler.INSTANCE);
     }
 
     @Optional.Method(modid = MOD_ID)

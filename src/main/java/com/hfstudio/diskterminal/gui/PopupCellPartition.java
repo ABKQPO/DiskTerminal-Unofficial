@@ -18,7 +18,6 @@ import org.lwjgl.opengl.GL11;
 import com.hfstudio.diskterminal.client.CellInfo;
 import com.hfstudio.diskterminal.gui.handler.GhostIngredientHandler;
 import com.hfstudio.diskterminal.gui.handler.GhostTarget;
-import com.hfstudio.diskterminal.gui.handler.QuickPartitionHandler;
 import com.hfstudio.diskterminal.gui.widget.AbstractWidget;
 import com.hfstudio.diskterminal.integration.NEIIntegration;
 import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
@@ -237,9 +236,7 @@ public class PopupCellPartition extends Gui {
         ItemStack draggedStack = NEIIntegration.getDraggedStack();
         if (!ItemStacks.isEmpty(draggedStack)) return draggedStack;
 
-        if (parent instanceof GuiCellTerminalBase gui && gui.isMouseOverBlockingPopup()) return null;
-
-        return QuickPartitionHandler.getModIngredientUnderMouse();
+        return null;
     }
 
     /**
