@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.entity.RenderItem;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
 
 import org.lwjgl.opengl.GL11;
@@ -115,7 +116,12 @@ public abstract class AbstractWidget implements IWidget {
     }
 
     public static void drawPartitionIndicator(FontRenderer fontRenderer, int slotX, int slotY, int color) {
-        drawOverlayString(fontRenderer, "P", slotX + 1, slotY + 1, color);
+        drawOverlayString(
+            fontRenderer,
+            I18n.format("gui.disk_terminal.partition_indicator"),
+            slotX + 1,
+            slotY + 1,
+            color);
     }
 
     private static void drawOverlayString(FontRenderer fontRenderer, String text, int x, int y, int color) {
