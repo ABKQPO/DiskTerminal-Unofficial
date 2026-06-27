@@ -74,8 +74,8 @@ public class PriorityFieldManager {
             field.updateTarget(target);
         }
 
-        int fieldX = guiLeft + GuiConstants.CONTENT_RIGHT_EDGE - FIELD_WIDTH - RIGHT_MARGIN;
-        int fieldY = guiTop + y + 3;
+        int fieldX = guiLeft + GuiConstants.CONTENT_RIGHT_EDGE - FIELD_WIDTH - RIGHT_MARGIN - 4;
+        int fieldY = guiTop + y + 2;
         field.updatePosition(fieldX, fieldY, contentViewport);
     }
 
@@ -144,7 +144,7 @@ public class PriorityFieldManager {
 
     /**
      * Handle a mouse click.
-     * 
+     *
      * @return true if a field was clicked and handled the event
      */
     public boolean handleClick(int mouseX, int mouseY, int mouseButton) {
@@ -172,7 +172,7 @@ public class PriorityFieldManager {
 
     /**
      * Handle a key typed event.
-     * 
+     *
      * @return true if the event was consumed
      */
     public boolean handleKeyTyped(char typedChar, int keyCode) {
@@ -204,7 +204,7 @@ public class PriorityFieldManager {
 
     /**
      * Check if mouse is over any visible priority field.
-     * 
+     *
      * @return true if mouse is over a priority field
      */
     public boolean isMouseOverField(int mouseX, int mouseY) {

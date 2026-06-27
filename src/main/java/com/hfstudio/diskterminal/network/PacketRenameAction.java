@@ -14,6 +14,8 @@ import com.hfstudio.diskterminal.gui.rename.RenameTargetType;
 import com.hfstudio.diskterminal.util.ItemStacks;
 
 import appeng.api.implementations.tiles.IChestOrDrive;
+import appeng.api.parts.IPart;
+import appeng.api.parts.PartItemStack;
 import appeng.helpers.ICustomNameObject;
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -147,17 +149,38 @@ public class PacketRenameAction implements IMessage {
 
             String trimmed = newName.trim();
 
-            if (!(tracker.storageBus instanceof ICustomNameObject)) {
-                DiskTerminal.LOG.debug("Storage bus {} does not implement ICustomNameObject", storageBusId);
-                return;
-            }
+            if (trimmed.isEmpty()) {
+                if (!clearStorageBusCustomName(tracker, storageBusId)) return;
+            } else {
+                if (!(tracker.storageBus instanceof ICustomNameObject nameable)) {
+                    DiskTerminal.LOG.debug("Storage bus {} does not implement ICustomNameObject", storageBusId);
+                    return;
+                }
 
-            ICustomNameObject nameable = (ICustomNameObject) tracker.storageBus;
-            nameable.setCustomName(trimmed.isEmpty() ? null : trimmed);
+                nameable.setCustomName(trimmed);
+            }
 
             if (tracker.hostTile != null) tracker.hostTile.markDirty();
 
             container.requestStorageBusRefresh();
+        }
+
+        private boolean clearStorageBusCustomName(StorageBusTracker tracker, long storageBusId) {
+            ItemStack partStack = getMutableStorageBusStack(tracker.storageBus);
+            if (ItemStacks.isEmpty(partStack)) {
+                DiskTerminal.LOG
+                    .debug("Storage bus {} does not expose a mutable ItemStack for clearing name", storageBusId);
+                return false;
+            }
+
+            ItemStacks.clearCustomName(partStack);
+            return true;
+        }
+
+        private ItemStack getMutableStorageBusStack(Object storageBus) {
+            if (!(storageBus instanceof IPart part)) return null;
+
+            return part.getItemStack(PartItemStack.World);
         }
     }
 }

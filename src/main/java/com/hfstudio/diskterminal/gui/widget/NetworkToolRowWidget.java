@@ -19,7 +19,7 @@ import com.hfstudio.diskterminal.util.ItemStacks;
  * Self-contained widget representing a single network tool row.
  * <p>
  * Layout (two-line row with separator at bottom):
- * 
+ *
  * <pre>
  *   [?] [icon] countText                    [▶]   <- Line 1
  *     Tool Name                                    <- Line 2
@@ -92,7 +92,7 @@ public class NetworkToolRowWidget extends AbstractWidget {
         Gui.drawRect(x, y, x + width, y + height - 1, bgColor);
 
         // Bottom separator line
-        Gui.drawRect(x, y + height - 1, x + width + 2, y + height, GuiConstants.COLOR_SEPARATOR);
+        GuiConstants.drawTerminalUpperBorderLine(x, y + height - 1, width);
 
         // Get preview from current tool context
         ToolContext ctx = contextSupplier != null ? contextSupplier.get() : null;

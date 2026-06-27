@@ -129,12 +129,10 @@ public class TempAreaHeader extends AbstractHeader {
         headerHovered = false;
 
         // Draw horizontal separator line at the top of the header (between cells)
-        Gui.drawRect(
+        GuiConstants.drawTerminalUpperBorderLine(
             GuiConstants.GUI_INDENT,
             y - 1,
-            GuiConstants.CONTENT_RIGHT_EDGE + GuiConstants.ROW_RIGHT_EXTENSION,
-            y,
-            GuiConstants.COLOR_SEPARATOR);
+            GuiConstants.CONTENT_RIGHT_EDGE - GuiConstants.GUI_INDENT);
 
         // Draw selection background (below everything else)
         boolean isSelected = selectedSupplier != null && selectedSupplier.get();
@@ -142,7 +140,7 @@ public class TempAreaHeader extends AbstractHeader {
             Gui.drawRect(
                 GuiConstants.GUI_INDENT,
                 y,
-                GuiConstants.CONTENT_RIGHT_EDGE + GuiConstants.ROW_RIGHT_EXTENSION,
+                GuiConstants.CONTENT_RIGHT_EDGE,
                 y + GuiConstants.ROW_HEIGHT,
                 GuiConstants.COLOR_SELECTION);
         }

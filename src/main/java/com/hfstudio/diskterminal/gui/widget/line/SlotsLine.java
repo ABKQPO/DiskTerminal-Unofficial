@@ -202,12 +202,8 @@ public class SlotsLine extends AbstractLine {
 
         // Draw horizontal separator at top if requested (before selection background)
         if (drawTopSeparator) {
-            Gui.drawRect(
-                GuiConstants.GUI_INDENT,
-                y - 1,
-                GuiConstants.CONTENT_RIGHT_EDGE + GuiConstants.ROW_RIGHT_EXTENSION + separatorRightOffset,
-                y,
-                GuiConstants.COLOR_SEPARATOR);
+            int separatorWidth = GuiConstants.CONTENT_RIGHT_EDGE - GuiConstants.GUI_INDENT + separatorRightOffset;
+            GuiConstants.drawTerminalUpperBorderLine(GuiConstants.GUI_INDENT + 1, y - 1, separatorWidth);
         }
 
         // Draw selection background first (below everything else)
@@ -216,7 +212,7 @@ public class SlotsLine extends AbstractLine {
             Gui.drawRect(
                 GuiConstants.GUI_INDENT,
                 y,
-                GuiConstants.CONTENT_RIGHT_EDGE + GuiConstants.ROW_RIGHT_EXTENSION,
+                GuiConstants.CONTENT_RIGHT_EDGE,
                 y + rowHeight,
                 GuiConstants.COLOR_SELECTION);
         }

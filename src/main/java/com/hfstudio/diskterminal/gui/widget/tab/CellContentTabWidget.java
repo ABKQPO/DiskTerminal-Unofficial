@@ -105,7 +105,7 @@ public class CellContentTabWidget extends AbstractTabWidget {
 
     @Override
     public boolean showSearchModeButton() {
-        return false;
+        return true;
     }
 
     @Override
