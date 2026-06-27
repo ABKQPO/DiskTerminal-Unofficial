@@ -42,9 +42,7 @@ public class CommonProxy {
         RecipeRegistry.init();
     }
 
-    public void postInit(FMLPostInitializationEvent event) {
-    }
+    public void postInit(FMLPostInitializationEvent event) {}
 
-    public void completeInit(FMLLoadCompleteEvent event) {
-    }
+    public void completeInit(FMLLoadCompleteEvent event) {}
 }

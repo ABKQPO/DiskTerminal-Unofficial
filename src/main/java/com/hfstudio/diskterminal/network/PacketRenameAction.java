@@ -5,18 +5,13 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 
-import com.hfstudio.diskterminal.DiskTerminal;
 import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
 import com.hfstudio.diskterminal.container.handler.CellActionHandler;
 import com.hfstudio.diskterminal.container.handler.CellDataHandler;
-import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler.StorageBusTracker;
-import com.hfstudio.diskterminal.data.StorageBusCustomNameData;
 import com.hfstudio.diskterminal.gui.rename.RenameTargetType;
 import com.hfstudio.diskterminal.util.ItemStacks;
 
 import appeng.api.implementations.tiles.IChestOrDrive;
-import appeng.api.parts.IPart;
-import appeng.api.parts.PartItemStack;
 import appeng.helpers.ICustomNameObject;
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -34,8 +29,7 @@ public class PacketRenameAction implements IMessage {
     private int secondaryId;
     private String newName;
 
-    public PacketRenameAction() {
-    }
+    public PacketRenameAction() {}
 
     public PacketRenameAction(RenameTargetType targetType, long primaryId, int secondaryId, String newName) {
         this.targetType = targetType;
@@ -50,10 +44,6 @@ public class PacketRenameAction implements IMessage {
 
     public static PacketRenameAction renameCell(long storageId, int cellSlot, String newName) {
         return new PacketRenameAction(RenameTargetType.CELL, storageId, cellSlot, newName);
-    }
-
-    public static PacketRenameAction renameStorageBus(long storageBusId, String newName) {
-        return new PacketRenameAction(RenameTargetType.STORAGE_BUS, storageBusId, -1, newName);
     }
 
     @Override
@@ -90,9 +80,6 @@ public class PacketRenameAction implements IMessage {
                     case CELL:
                         handleCellRename(container, message.primaryId, message.secondaryId, message.newName);
                         break;
-                    case STORAGE_BUS:
-                        handleStorageBusRename(container, message.primaryId, message.newName);
-                        break;
                     default:
                         break;
                 }
@@ -118,7 +105,7 @@ public class PacketRenameAction implements IMessage {
         }
 
         private void handleCellRename(ContainerCellTerminalBase container, long storageId, int cellSlot,
-                                      String newName) {
+            String newName) {
             ContainerCellTerminalBase.StorageTracker tracker = container.getStorageTracker(storageId);
             if (tracker == null) return;
 
@@ -143,57 +130,6 @@ public class PacketRenameAction implements IMessage {
             ((TileEntity) storage).markDirty();
 
             container.requestFullRefresh();
-        }
-
-        private void handleStorageBusRename(ContainerCellTerminalBase container, long storageBusId, String newName) {
-            StorageBusTracker tracker = container.getStorageBusTracker(storageBusId);
-            if (tracker == null) return;
-
-            String trimmed = newName.trim();
-
-            if (tracker.hostTile != null && StorageBusCustomNameData.get(tracker.hostTile.getWorldObj()) != null
-                    && !(tracker.storageBus instanceof ICustomNameObject)) {
-                StorageBusCustomNameData.get(tracker.hostTile.getWorldObj())
-                        .setCustomName(storageBusId, trimmed.isEmpty() ? null : trimmed);
-            } else {
-                if (trimmed.isEmpty()) {
-                    if (!clearStorageBusCustomName(tracker, storageBusId)) return;
-                } else {
-                    if (!(tracker.storageBus instanceof ICustomNameObject nameable)) {
-                        DiskTerminal.LOG.debug("Storage bus {} does not implement ICustomNameObject", storageBusId);
-                        return;
-                    }
-
-                    nameable.setCustomName(trimmed);
-                }
-            }
-
-            if (tracker.hostTile != null) tracker.hostTile.markDirty();
-
-            container.requestStorageBusRefresh();
-        }
-
-        private boolean clearStorageBusCustomName(StorageBusTracker tracker, long storageBusId) {
-            if (tracker.storageBus instanceof ICustomNameObject nameable) {
-                nameable.setCustomName(null);
-                return true;
-            }
-
-            ItemStack partStack = getMutableStorageBusStack(tracker.storageBus);
-            if (ItemStacks.isEmpty(partStack)) {
-                DiskTerminal.LOG
-                        .debug("Storage bus {} does not expose a mutable ItemStack for clearing name", storageBusId);
-                return false;
-            }
-
-            ItemStacks.clearCustomName(partStack);
-            return true;
-        }
-
-        private ItemStack getMutableStorageBusStack(Object storageBus) {
-            if (!(storageBus instanceof IPart part)) return null;
-
-            return part.getItemStack(PartItemStack.World);
         }
     }
 }

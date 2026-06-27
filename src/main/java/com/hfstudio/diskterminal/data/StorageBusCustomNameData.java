@@ -22,7 +22,7 @@ public class StorageBusCustomNameData extends WorldSavedData {
         if (world == null || world.mapStorage == null) return null;
 
         StorageBusCustomNameData data = (StorageBusCustomNameData) world.mapStorage
-                .loadData(StorageBusCustomNameData.class, DATA_NAME);
+            .loadData(StorageBusCustomNameData.class, DATA_NAME);
         if (data == null) {
             data = new StorageBusCustomNameData();
             world.mapStorage.setData(DATA_NAME, data);
@@ -42,7 +42,8 @@ public class StorageBusCustomNameData extends WorldSavedData {
 
     public void setCustomName(long busId, String customName) {
         String key = Long.toString(busId);
-        if (customName == null || customName.trim().isEmpty()) {
+        if (customName == null || customName.trim()
+            .isEmpty()) {
             if (names.hasKey(key)) {
                 names.removeTag(key);
                 markDirty();
@@ -59,7 +60,8 @@ public class StorageBusCustomNameData extends WorldSavedData {
 
     @Override
     public void readFromNBT(NBTTagCompound nbt) {
-        for (Object keyObject : names.func_150296_c().toArray()) {
+        for (Object keyObject : names.func_150296_c()
+            .toArray()) {
             names.removeTag((String) keyObject);
         }
         NBTTagCompound storedNames = nbt.getCompoundTag("names");

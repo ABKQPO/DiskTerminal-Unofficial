@@ -53,7 +53,7 @@ public enum Mods implements IMod, ITargetMod {
         this.resourceDomain = modid != null ? modid.toLowerCase(Locale.ENGLISH) : null;
         this.supplier = supplier;
         this.targetBuilder = new TargetModBuilder().setModId(modid)
-                .setCoreModClass(coreModClass);
+            .setCoreModClass(coreModClass);
     }
 
     @NotNull

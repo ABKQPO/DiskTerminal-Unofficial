@@ -10,6 +10,8 @@ import com.hfstudio.diskterminal.client.BusRole;
 import com.hfstudio.diskterminal.client.StorageType;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler.StorageBusTracker;
+import com.hfstudio.diskterminal.storagebus.model.StorageBusId;
+import com.hfstudio.diskterminal.storagebus.runtime.StorageBusSource;
 
 import appeng.parts.automation.PartSharedItemBus;
 
@@ -36,7 +38,7 @@ public abstract class AbstractStorageBusScanner implements IStorageBusScanner {
      * Apply capability flags to the provided NBT payload.
      */
     protected void applyCapabilities(NBTTagCompound nbt, boolean supportsPriority, boolean supportsIOMode,
-                                     boolean supportsRename) {
+        boolean supportsRename) {
         nbt.setBoolean("supportsPriority", supportsPriority);
         nbt.setBoolean("supportsIOMode", supportsIOMode);
         nbt.setBoolean("supportsRename", supportsRename);
@@ -74,44 +76,50 @@ public abstract class AbstractStorageBusScanner implements IStorageBusScanner {
      * Apply slot limit parameters to the provided NBT payload.
      */
     protected void applySlotParameters(NBTTagCompound nbt, int baseConfigSlots, int slotsPerUpgrade,
-                                       int maxConfigSlots) {
+        int maxConfigSlots) {
         nbt.setInteger("baseConfigSlots", baseConfigSlots);
         nbt.setInteger("slotsPerUpgrade", slotsPerUpgrade);
         nbt.setInteger("maxConfigSlots", maxConfigSlots);
     }
 
     protected void appendSharedBus(PartSharedItemBus<?> bus, BusRole role, NBTTagList out, int contentLimit,
-                                   Map<Long, StorageBusTracker> trackerMap) {
+        Map<Long, StorageBusTracker> trackerMap) {
         TileEntity hostTile = bus.getHost()
-                .getTile();
+            .getTile();
         if (hostTile == null) return;
 
         StorageType storageType = storageTypeFrom(bus);
         int typeFlag = storageType.ordinal() + role.ordinal() * 16;
         long busId = StorageBusDataHandler.createBusId(
-                hostTile,
-                bus.getSide()
-                        .ordinal(),
-                typeFlag);
+            hostTile,
+            bus.getSide()
+                .ordinal(),
+            typeFlag);
 
         NBTTagCompound nbt = StorageBusDataHandler.createSharedBusData(bus, busId, storageType, role, contentLimit);
         applyCapabilities(nbt, false, false);
         applySlotParameters(nbt, 1, 4, 9);
         out.appendTag(nbt);
+        StorageBusId targetId = StorageBusId.of(
+            hostTile,
+            bus.getSide()
+                .ordinal(),
+            role,
+            storageType);
         trackerMap.put(
+            busId,
+            new StorageBusTracker(
                 busId,
-                new StorageBusTracker(
-                        busId,
-                        bus,
-                        hostTile,
-                        bus.getSide()
-                                .ordinal(),
-                        storageType));
+                bus,
+                hostTile,
+                bus.getSide()
+                    .ordinal(),
+                storageType).withTarget(targetId, StorageBusSource.AE_SHARED_BUS));
     }
 
     protected StorageType storageTypeFrom(PartSharedItemBus<?> bus) {
         String typeId = bus.getStackType() == null ? ""
-                : bus.getStackType()
+            : bus.getStackType()
                 .getId();
         if ("fluid".equals(typeId)) return StorageType.FLUID;
         if ("essentia".equals(typeId)) return StorageType.ESSENTIA;

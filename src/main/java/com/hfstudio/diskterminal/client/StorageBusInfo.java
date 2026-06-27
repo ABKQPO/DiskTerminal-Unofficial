@@ -1,7 +1,9 @@
 package com.hfstudio.diskterminal.client;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
@@ -13,6 +15,8 @@ import net.minecraftforge.common.util.Constants;
 import com.gtnewhorizon.gtnhlib.blockpos.BlockPos;
 import com.hfstudio.diskterminal.gui.rename.RenameTargetType;
 import com.hfstudio.diskterminal.gui.rename.Renameable;
+import com.hfstudio.diskterminal.storagebus.model.StorageBusId;
+import com.hfstudio.diskterminal.storagebus.runtime.StorageBusCapabilityIds;
 import com.hfstudio.diskterminal.util.AEStackUtil;
 import com.hfstudio.diskterminal.util.ItemStacks;
 import com.hfstudio.diskterminal.util.PosUtil;
@@ -37,6 +41,9 @@ public class StorageBusInfo implements Renameable, Prioritizable {
      * Base number of config slots without any capacity upgrades.
      */
     public static final int BASE_CONFIG_SLOTS = 18;
+
+    private static final String CAPABILITY_RENAME = StorageBusCapabilityIds.RENAME.toString();
+    private static final String CAPABILITY_PRIORITY = StorageBusCapabilityIds.PRIORITY.toString();
 
     /**
      * Additional config slots per capacity upgrade.
@@ -87,6 +94,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     private final boolean supportsAutoPullFlag;
     private final boolean autoPullEnabledFlag;
     private final int upgradeSlotCount;
+    private final Set<String> availableCapabilities = new HashSet<>();
 
     public StorageBusInfo(NBTTagCompound nbt) {
         this.id = nbt.getLong("id");
@@ -102,7 +110,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         // Per-implementation slot parameters (optional; default to AE2 values)
         this.baseConfigSlots = nbt.hasKey("baseConfigSlots") ? nbt.getInteger("baseConfigSlots") : BASE_CONFIG_SLOTS;
         this.slotsPerUpgrade = nbt.hasKey("slotsPerUpgrade") ? nbt.getInteger("slotsPerUpgrade")
-                : SLOTS_PER_CAPACITY_UPGRADE;
+            : SLOTS_PER_CAPACITY_UPGRADE;
         this.maxConfigSlots = nbt.hasKey("maxConfigSlots") ? nbt.getInteger("maxConfigSlots") : MAX_CONFIG_SLOTS;
 
         // Capability flags provided by scanners
@@ -111,6 +119,15 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         this.supportsRenameFlag = !nbt.hasKey("supportsRename") || nbt.getBoolean("supportsRename");
         this.supportsAutoPullFlag = nbt.getBoolean("supportsAutoPull");
         this.autoPullEnabledFlag = nbt.getBoolean("autoPullEnabled");
+
+        // Formal capability metadata: the authoritative set of capability ids the server can resolve
+        // for this bus. Drives button visibility without inspecting concrete bus types.
+        if (nbt.hasKey("availableCapabilities")) {
+            NBTTagList capabilityList = nbt.getTagList("availableCapabilities", Constants.NBT.TAG_STRING);
+            for (int i = 0; i < capabilityList.tagCount(); i++) {
+                availableCapabilities.add(capabilityList.getStringTagAt(i));
+            }
+        }
 
         // Upgrade slot count from server; fallback to 5 if not provided
         this.upgradeSlotCount = nbt.hasKey("upgradeSlotCount") ? nbt.getInteger("upgradeSlotCount") : 5;
@@ -126,7 +143,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         this.connectedIcon = nbt.hasKey("connectedIcon") ? ItemStacks.load(nbt.getCompoundTag("connectedIcon")) : null;
         this.connectedIconIsTarget = nbt.getBoolean("connectedIconIsTarget");
         this.busIcon = nbt.hasKey("busIcon") ? ItemStacks.load(nbt.getCompoundTag("busIcon"))
-                : connectedIconIsTarget ? null : connectedIcon;
+            : connectedIconIsTarget ? null : connectedIcon;
 
         // Parse upgrade items for display
         if (nbt.hasKey("upgrades")) {
@@ -197,6 +214,14 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     @Override
     public long getId() {
         return id;
+    }
+
+    /**
+     * Build the stable capability target identity for this bus from its location, side, role and
+     * storage type. Used by the GUI to address unified capability actions.
+     */
+    public StorageBusId toTargetId() {
+        return new StorageBusId(dimension, pos, side.ordinal(), busRole, storageType);
     }
 
     public BlockPos getPos() {
@@ -282,6 +307,8 @@ public class StorageBusInfo implements Renameable, Prioritizable {
      */
     @Override
     public boolean supportsPriority() {
+        if (!availableCapabilities.isEmpty()) return availableCapabilities.contains(CAPABILITY_PRIORITY);
+
         return supportsPriorityFlag;
     }
 
@@ -487,6 +514,8 @@ public class StorageBusInfo implements Renameable, Prioritizable {
 
     @Override
     public boolean isRenameable() {
+        if (!availableCapabilities.isEmpty()) return availableCapabilities.contains(CAPABILITY_RENAME);
+
         return supportsRenameFlag;
     }
 

@@ -11,6 +11,8 @@ import com.hfstudio.diskterminal.client.StorageType;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler.StorageBusTracker;
 import com.hfstudio.diskterminal.integration.GregTechIntegration;
+import com.hfstudio.diskterminal.storagebus.model.StorageBusId;
+import com.hfstudio.diskterminal.storagebus.runtime.StorageBusSource;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
@@ -23,8 +25,7 @@ public class GregTechMEInputBusScanner extends AbstractStorageBusScanner {
 
     public static final GregTechMEInputBusScanner INSTANCE = new GregTechMEInputBusScanner();
 
-    private GregTechMEInputBusScanner() {
-    }
+    private GregTechMEInputBusScanner() {}
 
     @Override
     public String getId() {
@@ -38,7 +39,7 @@ public class GregTechMEInputBusScanner extends AbstractStorageBusScanner {
 
     @Override
     public void scanStorageBuses(IGrid grid, NBTTagList out, Map<Long, StorageBusTracker> trackerMap,
-                                 int contentLimit) {
+        int contentLimit) {
         if (grid == null) return;
 
         scanInputBusMachines(grid, out, trackerMap, contentLimit);
@@ -46,7 +47,7 @@ public class GregTechMEInputBusScanner extends AbstractStorageBusScanner {
     }
 
     private void scanInputBusMachines(IGrid grid, NBTTagList out, Map<Long, StorageBusTracker> trackerMap,
-                                      int contentLimit) {
+        int contentLimit) {
         for (IGridNode node : grid.getMachines(MTEHatchInputBusME.class)) {
             if (!node.isActive()) continue;
 
@@ -58,29 +59,35 @@ public class GregTechMEInputBusScanner extends AbstractStorageBusScanner {
             if (hostTile == null) continue;
 
             long busId = StorageBusDataHandler.createBusId(
-                    hostTile,
-                    baseTile.getFrontFacing()
-                            .ordinal(),
-                    StorageType.ITEM.ordinal() + BusRole.IMPORT.ordinal() * 16);
+                hostTile,
+                baseTile.getFrontFacing()
+                    .ordinal(),
+                StorageType.ITEM.ordinal() + BusRole.IMPORT.ordinal() * 16);
             NBTTagCompound busData = StorageBusDataHandler
-                    .createGregTechInputBusData(inputBus, busId, StorageType.ITEM, BusRole.IMPORT, contentLimit);
+                .createGregTechInputBusData(inputBus, busId, StorageType.ITEM, BusRole.IMPORT, contentLimit);
             applyCapabilities(busData, false, false, true);
             applySlotParameters(busData, MTEHatchInputBusME.SLOT_COUNT, 0, MTEHatchInputBusME.SLOT_COUNT);
             out.appendTag(busData);
+            StorageBusId targetId = StorageBusId.of(
+                hostTile,
+                baseTile.getFrontFacing()
+                    .ordinal(),
+                BusRole.IMPORT,
+                StorageType.ITEM);
             trackerMap.put(
+                busId,
+                new StorageBusTracker(
                     busId,
-                    new StorageBusTracker(
-                            busId,
-                            inputBus,
-                            hostTile,
-                            baseTile.getFrontFacing()
-                                    .ordinal(),
-                            StorageType.ITEM));
+                    inputBus,
+                    hostTile,
+                    baseTile.getFrontFacing()
+                        .ordinal(),
+                    StorageType.ITEM).withTarget(targetId, StorageBusSource.GREGTECH));
         }
     }
 
     private void scanInputHatchMachines(IGrid grid, NBTTagList out, Map<Long, StorageBusTracker> trackerMap,
-                                        int contentLimit) {
+        int contentLimit) {
         for (IGridNode node : grid.getMachines(MTEHatchInputME.class)) {
             if (!node.isActive()) continue;
 
@@ -92,24 +99,30 @@ public class GregTechMEInputBusScanner extends AbstractStorageBusScanner {
             if (hostTile == null) continue;
 
             long busId = StorageBusDataHandler.createBusId(
-                    hostTile,
-                    baseTile.getFrontFacing()
-                            .ordinal(),
-                    StorageType.FLUID.ordinal() + BusRole.IMPORT.ordinal() * 16);
+                hostTile,
+                baseTile.getFrontFacing()
+                    .ordinal(),
+                StorageType.FLUID.ordinal() + BusRole.IMPORT.ordinal() * 16);
             NBTTagCompound busData = StorageBusDataHandler
-                    .createGregTechInputHatchData(inputHatch, busId, StorageType.FLUID, BusRole.IMPORT, contentLimit);
+                .createGregTechInputHatchData(inputHatch, busId, StorageType.FLUID, BusRole.IMPORT, contentLimit);
             applyCapabilities(busData, false, false, true);
             applySlotParameters(busData, MTEHatchInputME.SLOT_COUNT, 0, MTEHatchInputME.SLOT_COUNT);
             out.appendTag(busData);
+            StorageBusId targetId = StorageBusId.of(
+                hostTile,
+                baseTile.getFrontFacing()
+                    .ordinal(),
+                BusRole.IMPORT,
+                StorageType.FLUID);
             trackerMap.put(
+                busId,
+                new StorageBusTracker(
                     busId,
-                    new StorageBusTracker(
-                            busId,
-                            inputHatch,
-                            hostTile,
-                            baseTile.getFrontFacing()
-                                    .ordinal(),
-                            StorageType.FLUID));
+                    inputHatch,
+                    hostTile,
+                    baseTile.getFrontFacing()
+                        .ordinal(),
+                    StorageType.FLUID).withTarget(targetId, StorageBusSource.GREGTECH));
         }
     }
 

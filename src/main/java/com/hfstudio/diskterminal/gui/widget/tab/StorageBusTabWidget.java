@@ -40,9 +40,9 @@ import com.hfstudio.diskterminal.gui.widget.line.ContinuationLine;
 import com.hfstudio.diskterminal.gui.widget.line.SlotsLine;
 import com.hfstudio.diskterminal.integration.ThaumicEnergisticsIntegration;
 import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
+import com.hfstudio.diskterminal.network.PacketCapabilityAction;
 import com.hfstudio.diskterminal.network.PacketExtractUpgrade;
 import com.hfstudio.diskterminal.network.PacketStorageBusIOMode;
-import com.hfstudio.diskterminal.network.PacketStorageBusPartitionAction;
 import com.hfstudio.diskterminal.network.PacketUpgradeStorageBus;
 import com.hfstudio.diskterminal.util.FluidStacks;
 import com.hfstudio.diskterminal.util.ItemStacks;
@@ -120,9 +120,9 @@ public class StorageBusTabWidget extends AbstractTabWidget {
 
         if (isPartitionMode) {
             lines.add(
-                    I18n.format(
-                            "gui.disk_terminal.controls.storage_bus_add_key",
-                            KeyBindings.ADD_TO_STORAGE_BUS.getDisplayName()));
+                I18n.format(
+                    "gui.disk_terminal.controls.storage_bus_add_key",
+                    KeyBindings.ADD_TO_STORAGE_BUS.getDisplayName()));
             lines.add(I18n.format("gui.disk_terminal.controls.storage_bus_capacity"));
             lines.add("");
             lines.add(I18n.format("gui.disk_terminal.controls.nei_drag"));
@@ -142,11 +142,11 @@ public class StorageBusTabWidget extends AbstractTabWidget {
     public ItemStack getTabIcon() {
         // Returns the base storage bus icon; composite overlay is handled by TabRenderingHandler
         return AEApi.instance()
-                .definitions()
-                .parts()
-                .storageBus()
-                .maybeStack(1)
-                .orNull();
+            .definitions()
+            .parts()
+            .storageBus()
+            .maybeStack(1)
+            .orNull();
     }
 
     @Override
@@ -164,10 +164,10 @@ public class StorageBusTabWidget extends AbstractTabWidget {
         if (!KeyBindings.ADD_TO_STORAGE_BUS.isActiveAndMatches(keyCode)) return false;
 
         return handleAddToStorageBusKeybind(
-                guiContext.getSelectedStorageBusIds(),
-                guiContext.getSlotUnderMouse(),
-                guiContext.getDataManager()
-                        .getStorageBusMap());
+            guiContext.getSelectedStorageBusIds(),
+            guiContext.getSlotUnderMouse(),
+            guiContext.getDataManager()
+                .getStorageBusMap());
     }
 
     @Override
@@ -221,6 +221,8 @@ public class StorageBusTabWidget extends AbstractTabWidget {
             if (!(data instanceof StorageBusContentRow)) continue;
 
             StorageBusInfo bus = ((StorageBusContentRow) data).getStorageBus();
+            // Auto-pull manages the partition; do not offer ghost-drop targets for those buses.
+            if (bus.isAutoPullEnabled()) continue;
             for (SlotsLine.PartitionSlotTarget slot : slotTargets) {
                 Rectangle targetArea = clipTargetToContentViewport(slot);
                 if (targetArea == null) continue;
@@ -235,14 +237,9 @@ public class StorageBusTabWidget extends AbstractTabWidget {
                     @Override
                     public void accept(Object ing) {
                         ItemStack stack = GhostIngredientHandler
-                                .convertIngredientForType(ing, bus.getStackTypeId(), true);
+                            .convertIngredientForType(ing, bus.getStackTypeId(), true);
                         if (!ItemStacks.isEmpty(stack)) {
-                            guiContext.sendPacket(
-                                    new PacketStorageBusPartitionAction(
-                                            bus.getId(),
-                                            PacketStorageBusPartitionAction.Action.ADD_ITEM,
-                                            slot.absoluteIndex,
-                                            stack));
+                            guiContext.sendPacket(PacketCapabilityAction.filterSetSlot(bus, slot.absoluteIndex, stack));
                         }
                     }
                 });
@@ -281,10 +278,10 @@ public class StorageBusTabWidget extends AbstractTabWidget {
         header.setHasCustomNameSupplier(bus::hasCustomName);
         // Use TabStateManager for expand/collapse state (persists across rebuilds)
         TabStateManager.TabType tabType = isPartitionMode ? TabStateManager.TabType.STORAGE_BUS_PARTITION
-                : TabStateManager.TabType.STORAGE_BUS_INVENTORY;
+            : TabStateManager.TabType.STORAGE_BUS_INVENTORY;
         header.setExpandedSupplier(
-                () -> TabStateManager.getInstance()
-                        .isBusExpanded(tabType, bus.getId()));
+            () -> TabStateManager.getInstance()
+                .isBusExpanded(tabType, bus.getId()));
         header.setLocationSupplier(bus::getLocationString);
         header.setAccessModeSupplier(bus::getAccessRestriction);
         header.setSupportsIOModeSupplier(bus::supportsIOMode);
@@ -300,11 +297,11 @@ public class StorageBusTabWidget extends AbstractTabWidget {
             header.setRenameInfo(bus, GuiConstants.GUI_INDENT + 20 - 2, 0, getBusRenameRightEdge(bus));
         }
         header.setOnNameDoubleClick(
-                () -> guiContext.highlightInWorld(bus.getPos(), bus.getDimension(), bus.getLocalizedName()),
-                DoubleClickTracker.storageBusTargetId(bus.getId()));
+            () -> guiContext.highlightInWorld(bus.getPos(), bus.getDimension(), bus.getLocalizedName()),
+            DoubleClickTracker.storageBusTargetId(bus.getId()));
         header.setOnExpandToggle(() -> {
             TabStateManager.getInstance()
-                    .toggleBusExpanded(tabType, bus.getId());
+                .toggleBusExpanded(tabType, bus.getId());
             guiContext.rebuildAndUpdateScrollbar();
         });
         header.setOnIOModeClick(() -> guiContext.sendPacket(new PacketStorageBusIOMode(bus.getId())));
@@ -321,8 +318,8 @@ public class StorageBusTabWidget extends AbstractTabWidget {
                 }
             });
             header.setSelectedSupplier(
-                    () -> guiContext.getSelectedStorageBusIds()
-                            .contains(bus.getId()));
+                () -> guiContext.getSelectedStorageBusIds()
+                    .contains(bus.getId()));
         }
 
         // Priority field: header registers its own field with the singleton during draw
@@ -337,8 +334,8 @@ public class StorageBusTabWidget extends AbstractTabWidget {
 
         if (bus.supportsPriority()) {
             rightEdge = GuiConstants.CONTENT_RIGHT_EDGE - PriorityFieldManager.FIELD_WIDTH
-                    - PriorityFieldManager.RIGHT_MARGIN
-                    - 4;
+                - PriorityFieldManager.RIGHT_MARGIN
+                - 4;
         }
 
         if (bus.hasHeaderModeButton()) {
@@ -363,26 +360,25 @@ public class StorageBusTabWidget extends AbstractTabWidget {
      */
     private SlotsLine createFirstRow(StorageBusInfo bus, int startIndex, int y) {
         SlotsLine line = new SlotsLine(
-                y,
-                SLOTS_PER_ROW,
-                SLOTS_X_OFFSET,
-                slotMode,
-                startIndex,
-                fontRenderer,
-                itemRender);
+            y,
+            SLOTS_PER_ROW,
+            SLOTS_X_OFFSET,
+            slotMode,
+            startIndex,
+            fontRenderer,
+            itemRender);
 
         configureSlotData(line, bus);
 
         // Tree junction button
         SmallButton treeBtn = new SmallButton(0, 0, treeButtonType, () -> {
+            // Auto-pull manages the partition; clearing and fill-from-contents are both disabled then.
+            if (bus.isAutoPullEnabled()) return;
+
             if (isPartitionMode) {
-                guiContext.sendPacket(
-                        new PacketStorageBusPartitionAction(bus.getId(), PacketStorageBusPartitionAction.Action.CLEAR_ALL));
+                guiContext.sendPacket(PacketCapabilityAction.filterClearAll(bus));
             } else {
-                guiContext.sendPacket(
-                        new PacketStorageBusPartitionAction(
-                                bus.getId(),
-                                PacketStorageBusPartitionAction.Action.SET_ALL_FROM_CONTENTS));
+                guiContext.sendPacket(PacketCapabilityAction.filterFillFromPreview(bus));
             }
         });
         line.setTreeButton(treeBtn);
@@ -395,8 +391,8 @@ public class StorageBusTabWidget extends AbstractTabWidget {
         // Selection highlight (partition mode only)
         if (isPartitionMode) {
             line.setSelectedSupplier(
-                    () -> guiContext.getSelectedStorageBusIds()
-                            .contains(bus.getId()));
+                () -> guiContext.getSelectedStorageBusIds()
+                    .contains(bus.getId()));
         }
 
         return line;
@@ -407,13 +403,13 @@ public class StorageBusTabWidget extends AbstractTabWidget {
      */
     private ContinuationLine createContinuationRow(StorageBusInfo bus, int startIndex, int y) {
         ContinuationLine line = new ContinuationLine(
-                y,
-                SLOTS_PER_ROW,
-                SLOTS_X_OFFSET,
-                slotMode,
-                startIndex,
-                fontRenderer,
-                itemRender);
+            y,
+            SLOTS_PER_ROW,
+            SLOTS_X_OFFSET,
+            slotMode,
+            startIndex,
+            fontRenderer,
+            itemRender);
 
         configureSlotData(line, bus);
         line.setRowHeight(SLOT_ROW_HEIGHT);
@@ -423,8 +419,8 @@ public class StorageBusTabWidget extends AbstractTabWidget {
         // Selection highlight (partition mode only)
         if (isPartitionMode) {
             line.setSelectedSupplier(
-                    () -> guiContext.getSelectedStorageBusIds()
-                            .contains(bus.getId()));
+                () -> guiContext.getSelectedStorageBusIds()
+                    .contains(bus.getId()));
         }
 
         return line;
@@ -449,6 +445,10 @@ public class StorageBusTabWidget extends AbstractTabWidget {
             // Defensive: verify slotIndex is within the currently available config slots.
             if (slotIndex < 0 || slotIndex >= bus.getAvailableConfigSlots()) return;
 
+            // While auto-pull manages the partition the slots are network-driven and not editable.
+            // This applies to both partition-mode editing and content-mode toggling.
+            if (bus.isAutoPullEnabled()) return;
+
             if (isPartitionMode) {
                 ItemStack heldStack = guiContext.getHeldStack();
                 List<ItemStack> partition = bus.getPartition();
@@ -458,31 +458,18 @@ public class StorageBusTabWidget extends AbstractTabWidget {
                     // Use the storage-bus NEI conversion rules for held inventory items so
                     // fluid and essentia clicks get normalization and user feedback.
                     ItemStack stackToSend = GhostIngredientHandler
-                            .convertIngredientForType(heldStack, bus.getStackTypeId(), true);
+                        .convertIngredientForType(heldStack, bus.getStackTypeId(), true);
                     if (ItemStacks.isEmpty(stackToSend)) return;
 
-                    guiContext.sendPacket(
-                            new PacketStorageBusPartitionAction(
-                                    bus.getId(),
-                                    PacketStorageBusPartitionAction.Action.ADD_ITEM,
-                                    slotIndex,
-                                    stackToSend));
+                    guiContext.sendPacket(PacketCapabilityAction.filterSetSlot(bus, slotIndex, stackToSend));
                 } else if (slotOccupied) {
-                    guiContext.sendPacket(
-                            new PacketStorageBusPartitionAction(
-                                    bus.getId(),
-                                    PacketStorageBusPartitionAction.Action.REMOVE_ITEM,
-                                    slotIndex));
+                    guiContext.sendPacket(PacketCapabilityAction.filterClearSlot(bus, slotIndex));
                 }
             } else {
                 // Content mode: toggle partition for content item
                 List<ItemStack> contents = bus.getContents();
                 if (slotIndex < contents.size() && !ItemStacks.isEmpty(contents.get(slotIndex))) {
-                    guiContext.sendPacket(
-                            new PacketStorageBusPartitionAction(
-                                    bus.getId(),
-                                    PacketStorageBusPartitionAction.Action.TOGGLE_ITEM,
-                                    contents.get(slotIndex)));
+                    guiContext.sendPacket(PacketCapabilityAction.filterToggle(bus, contents.get(slotIndex)));
                 }
             }
         });
@@ -499,7 +486,7 @@ public class StorageBusTabWidget extends AbstractTabWidget {
      * @return true if the keybind was handled
      */
     private static boolean handleAddToStorageBusKeybind(Set<Long> selectedBusIds, Slot hoveredSlot,
-                                                        Map<Long, StorageBusInfo> storageBusMap) {
+        Map<Long, StorageBusInfo> storageBusMap) {
         if (selectedBusIds.isEmpty()) {
             if (Minecraft.getMinecraft().thePlayer != null) {
                 MessageHelper.warning("disk_terminal.storage_bus.no_selection");
@@ -537,6 +524,8 @@ public class StorageBusTabWidget extends AbstractTabWidget {
         for (Long busId : selectedBusIds) {
             StorageBusInfo storageBus = storageBusMap.get(busId);
             if (storageBus == null) continue;
+            // Auto-pull manages the partition; skip those buses in batch marking.
+            if (storageBus.isAutoPullEnabled()) continue;
 
             // Convert the item for non-item bus types first to check validity
             ItemStack stackToSend = stack;
@@ -579,12 +568,8 @@ public class StorageBusTabWidget extends AbstractTabWidget {
                 continue;
             }
 
-            DiskTerminalNetwork.INSTANCE.sendToServer(
-                    new PacketStorageBusPartitionAction(
-                            busId,
-                            PacketStorageBusPartitionAction.Action.ADD_ITEM,
-                            targetSlot,
-                            stackToSend));
+            DiskTerminalNetwork.INSTANCE
+                .sendToServer(PacketCapabilityAction.filterSetSlot(storageBus, targetSlot, stackToSend));
             successCount++;
         }
 
@@ -623,11 +608,11 @@ public class StorageBusTabWidget extends AbstractTabWidget {
         ItemStack[] slotStacks = new ItemStack[slotCount];
         Arrays.fill(slotStacks, null);
         for (int i = 0; i < bus.getUpgrades()
-                .size(); i++) {
+            .size(); i++) {
             int slotIdx = bus.getUpgradeSlotIndex(i);
             if (slotIdx >= 0 && slotIdx < slotCount) {
                 slotStacks[slotIdx] = bus.getUpgrades()
-                        .get(i);
+                    .get(i);
             }
         }
 
@@ -640,7 +625,7 @@ public class StorageBusTabWidget extends AbstractTabWidget {
 
     private void handleBusCardClick(StorageBusInfo bus, int upgradeSlotIndex) {
         if (DiskTerminalServerConfig.isInitialized() && !DiskTerminalServerConfig.getInstance()
-                .isUpgradeExtractEnabled()) {
+            .isUpgradeExtractEnabled()) {
             guiContext.showError("disk_terminal.error.upgrade_extract_disabled");
             return;
         }

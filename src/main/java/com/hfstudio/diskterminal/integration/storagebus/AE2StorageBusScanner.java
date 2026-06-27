@@ -10,6 +10,8 @@ import com.hfstudio.diskterminal.client.BusRole;
 import com.hfstudio.diskterminal.client.StorageType;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler.StorageBusTracker;
+import com.hfstudio.diskterminal.storagebus.model.StorageBusId;
+import com.hfstudio.diskterminal.storagebus.runtime.StorageBusSource;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
@@ -58,6 +60,12 @@ public class AE2StorageBusScanner extends AbstractStorageBusScanner {
             applyCapabilities(nbt);
             applySlotParameters(nbt);
             out.appendTag(nbt);
+            StorageBusId targetId = StorageBusId.of(
+                hostTile,
+                bus.getSide()
+                    .ordinal(),
+                BusRole.STORAGE,
+                StorageType.ITEM);
             trackerMap.put(
                 busId,
                 new StorageBusTracker(
@@ -66,7 +74,7 @@ public class AE2StorageBusScanner extends AbstractStorageBusScanner {
                     hostTile,
                     bus.getSide()
                         .ordinal(),
-                    StorageType.ITEM));
+                    StorageType.ITEM).withTarget(targetId, StorageBusSource.AE_STORAGE_BUS));
         }
 
         for (IGridNode gn : grid.getMachines(PartImportBus.class)) {

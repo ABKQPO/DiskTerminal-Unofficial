@@ -8,8 +8,7 @@ import cpw.mods.fml.common.Optional;
 
 public class GregTechIntegration {
 
-    private GregTechIntegration() {
-    }
+    private GregTechIntegration() {}
 
     public static void registerStorageBusScanner() {
         if (!isEnabled()) return;
@@ -19,8 +18,7 @@ public class GregTechIntegration {
 
     public static boolean isEnabled() {
         return Mods.GregTech.isModLoaded()
-                && (!DiskTerminalServerConfig.isInitialized()
-                || DiskTerminalServerConfig.getInstance()
+            && (!DiskTerminalServerConfig.isInitialized() || DiskTerminalServerConfig.getInstance()
                 .isIntegrationGregTechEnabled());
     }
 

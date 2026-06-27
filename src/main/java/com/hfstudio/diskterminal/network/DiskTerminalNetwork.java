@@ -33,11 +33,6 @@ public class DiskTerminalNetwork {
         INSTANCE.registerMessage(PacketUpgradeCell.Handler.class, PacketUpgradeCell.class, packetId++, Side.SERVER);
         INSTANCE.registerMessage(PacketTabChange.Handler.class, PacketTabChange.class, packetId++, Side.SERVER);
         INSTANCE.registerMessage(
-            PacketStorageBusPartitionAction.Handler.class,
-            PacketStorageBusPartitionAction.class,
-            packetId++,
-            Side.SERVER);
-        INSTANCE.registerMessage(
             PacketStorageBusIOMode.Handler.class,
             PacketStorageBusIOMode.class,
             packetId++,
@@ -94,5 +89,12 @@ public class DiskTerminalNetwork {
             PacketHighlightBlockClient.class,
             packetId++,
             Side.CLIENT);
+
+        // Unified storage bus capability action (C2S): rename, priority, filter
+        INSTANCE.registerMessage(
+            PacketCapabilityAction.Handler.class,
+            PacketCapabilityAction.class,
+            packetId++,
+            Side.SERVER);
     }
 }

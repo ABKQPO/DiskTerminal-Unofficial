@@ -20,6 +20,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.IChatComponent;
+import net.minecraft.util.ResourceLocation;
 
 import com.hfstudio.diskterminal.DiskTerminal;
 import com.hfstudio.diskterminal.api.IUpgradeable;
@@ -31,22 +32,27 @@ import com.hfstudio.diskterminal.container.handler.DeltaSnapshot;
 import com.hfstudio.diskterminal.container.handler.NetworkToolActionHandler;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler.StorageBusTracker;
-import com.hfstudio.diskterminal.data.StorageBusCustomNameData;
 import com.hfstudio.diskterminal.container.handler.SubnetDataHandler;
 import com.hfstudio.diskterminal.container.handler.SubnetDataHandler.SubnetTracker;
 import com.hfstudio.diskterminal.container.handler.TempCellActionHandler;
+import com.hfstudio.diskterminal.data.StorageBusCustomNameData;
 import com.hfstudio.diskterminal.gui.GuiConstants;
 import com.hfstudio.diskterminal.integration.CellsIntegration;
 import com.hfstudio.diskterminal.integration.storage.StorageScannerRegistry;
 import com.hfstudio.diskterminal.network.PacketExtractUpgrade;
 import com.hfstudio.diskterminal.network.PacketPartitionAction;
-import com.hfstudio.diskterminal.network.PacketStorageBusPartitionAction;
 import com.hfstudio.diskterminal.network.PacketSubnetPartitionAction;
 import com.hfstudio.diskterminal.network.PacketTempCellAction;
 import com.hfstudio.diskterminal.network.PacketTempCellPartitionAction;
 import com.hfstudio.diskterminal.network.chunked.ChunkedNBTSender;
 import com.hfstudio.diskterminal.network.chunked.PayloadMode;
 import com.hfstudio.diskterminal.network.chunked.TerminalChannels;
+import com.hfstudio.diskterminal.storagebus.model.StorageBusId;
+import com.hfstudio.diskterminal.storagebus.runtime.StorageBusActionExecutor;
+import com.hfstudio.diskterminal.storagebus.runtime.StorageBusCapabilityIds;
+import com.hfstudio.diskterminal.storagebus.runtime.StorageBusCapabilityProviderRegistry;
+import com.hfstudio.diskterminal.storagebus.scanner.StorageBusScanCollector;
+import com.hfstudio.diskterminal.storagebus.scanner.StorageBusSnapshotAssembler;
 import com.hfstudio.diskterminal.util.InventoryHelper;
 import com.hfstudio.diskterminal.util.ItemStacks;
 import com.hfstudio.diskterminal.util.PlayerMessageHelper;
@@ -85,6 +91,10 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     protected final Map<Long, StorageTracker> byId = new LinkedHashMap<>();
     protected final Map<Long, StorageBusTracker> storageBusById = new LinkedHashMap<>();
     protected final Map<Long, SubnetTracker> subnetById = new LinkedHashMap<>();
+    protected final StorageBusCapabilityProviderRegistry storageBusProviders = new StorageBusCapabilityProviderRegistry();
+    protected final StorageBusScanCollector storageBusCollector = new StorageBusScanCollector();
+    protected final StorageBusSnapshotAssembler storageBusAssembler = new StorageBusSnapshotAssembler();
+    protected final StorageBusActionExecutor storageBusActionExecutor = new StorageBusActionExecutor();
     protected IGrid grid;
     protected boolean needsFullRefresh = true;
     protected boolean needsStorageBusRefresh = false;
@@ -142,20 +152,20 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
         if (toolbox != null) {
             IGridNode node = this.getActionHost()
-                    .getActionableNode();
+                .getActionableNode();
             IGridHost host = node != null ? node.getMachine() : null;
             this.toolboxInventory = new NetworkToolViewer(toolbox, host, 9);
 
             for (int v = 0; v < 3; v++) {
                 for (int u = 0; u < 3; u++) {
                     this.addSlotToContainer(
-                            new SlotRestrictedInput(
-                                    SlotRestrictedInput.PlacableItemType.UPGRADES,
-                                    this.toolboxInventory,
-                                    u + v * 3,
-                                    8 + 9 * 18 + 14 + 18 + 1 + u * 18,
-                                    v * 18,
-                                    this.getInventoryPlayer()).setPlayerSide());
+                        new SlotRestrictedInput(
+                            SlotRestrictedInput.PlacableItemType.UPGRADES,
+                            this.toolboxInventory,
+                            u + v * 3,
+                            8 + 9 * 18 + 14 + 18 + 1 + u * 18,
+                            v * 18,
+                            this.getInventoryPlayer()).setPlayerSide());
                 }
             }
         }
@@ -175,9 +185,9 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         this.tickCounter++;
 
         int minInterval = DiskTerminalServerConfig.getInstance()
-                .getMinRefreshIntervalTicks();
+            .getMinRefreshIntervalTicks();
         boolean throttleSatisfied = !firstFullRefreshDone
-                || (this.tickCounter - this.lastFullRefreshTick) >= minInterval;
+            || (this.tickCounter - this.lastFullRefreshTick) >= minInterval;
 
         if (needsFullRefresh && throttleSatisfied) {
             sendMeta();
@@ -220,7 +230,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         if (!hasToolbox()) return;
 
         final ItemStack currentItem = this.getPlayerInv()
-                .getStackInSlot(this.toolboxSlot);
+            .getStackInSlot(this.toolboxSlot);
 
         if (currentItem == this.toolboxInventory.getItemStack()) return;
 
@@ -231,7 +241,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
         if (currentItem.isItemEqual(this.toolboxInventory.getItemStack())) {
             this.getPlayerInv()
-                    .setInventorySlotContents(this.toolboxSlot, this.toolboxInventory.getItemStack());
+                .setInventorySlotContents(this.toolboxSlot, this.toolboxInventory.getItemStack());
         } else {
             this.setValidContainer(false);
         }
@@ -239,7 +249,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
     protected void handleStorageBusPolling() {
         boolean isOnStorageBusTab = (activeTab == GuiConstants.TAB_STORAGE_BUS_INVENTORY
-                || activeTab == GuiConstants.TAB_STORAGE_BUS_PARTITION);
+            || activeTab == GuiConstants.TAB_STORAGE_BUS_PARTITION);
 
         if (!isOnStorageBusTab && !needsStorageBusRefresh) return;
 
@@ -265,7 +275,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
     public void setActiveTab(int tab) {
         boolean isOnStorageBusTab = (tab == GuiConstants.TAB_STORAGE_BUS_INVENTORY
-                || tab == GuiConstants.TAB_STORAGE_BUS_PARTITION);
+            || tab == GuiConstants.TAB_STORAGE_BUS_PARTITION);
 
         this.activeTab = tab;
 
@@ -330,10 +340,12 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     protected void regenStorageBusList() {
         this.storageBusById.clear();
 
+        NBTTagList busList = storageBusCollector
+            .collect(getEffectiveGrid(), this.storageBusById, this.storageBusProviders, busSlotLimit);
+        storageBusAssembler.writeCapabilityMetadata(busList, this.storageBusById, this.storageBusProviders);
+
         NBTTagCompound data = new NBTTagCompound();
-        data.setTag(
-                "storageBuses",
-                StorageBusDataHandler.collectStorageBuses(getEffectiveGrid(), this.storageBusById, busSlotLimit));
+        data.setTag("storageBuses", busList);
         sendChunked(TerminalChannels.BUSES, data, "storageBuses", "id");
     }
 
@@ -392,7 +404,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         fullPayload.setLong("networkId", this.currentNetworkId);
 
         boolean deltaEnabled = DiskTerminalServerConfig.getInstance()
-                .isDeltaUpdatesEnabled();
+            .isDeltaUpdatesEnabled();
         DeltaSnapshot.DeltaResult result;
 
         if (deltaEnabled) {
@@ -429,9 +441,9 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     }
 
     public void handlePartitionAction(long storageId, int cellSlot, PacketPartitionAction.Action action,
-                                      int partitionSlot, NBTTagCompound stackData) {
+        int partitionSlot, NBTTagCompound stackData) {
         if (!DiskTerminalServerConfig.getInstance()
-                .isPartitionEditEnabled()) {
+            .isPartitionEditEnabled()) {
             PlayerMessageHelper.error(this.getPlayerInv().player, "disk_terminal.error.partition_edit_disabled");
 
             return;
@@ -441,31 +453,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         if (tracker == null) return;
 
         if (CellActionHandler
-                .handlePartitionAction(tracker.storage, tracker.tile, cellSlot, action, partitionSlot, stackData)) {
+            .handlePartitionAction(tracker.storage, tracker.tile, cellSlot, action, partitionSlot, stackData)) {
             requestFullRefresh();
-        }
-    }
-
-    public void handleStorageBusPartitionAction(long storageBusId, PacketStorageBusPartitionAction.Action action,
-                                                int partitionSlot, NBTTagCompound stackData) {
-        if (!DiskTerminalServerConfig.getInstance()
-                .isPartitionEditEnabled()) {
-            PlayerMessageHelper.error(this.getPlayerInv().player, "disk_terminal.error.partition_edit_disabled");
-
-            return;
-        }
-
-        StorageBusTracker tracker = this.storageBusById.get(storageBusId);
-        if (tracker == null) return;
-
-        if (StorageBusDataHandler.isDuplicateFilterAdd(tracker, action, partitionSlot, stackData)) {
-            PlayerMessageHelper.error(this.getPlayerInv().player, "disk_terminal.error.duplicate_filter");
-
-            return;
-        }
-
-        if (StorageBusDataHandler.handlePartitionAction(tracker, action, partitionSlot, stackData)) {
-            requestStorageBusRefresh();
         }
     }
 
@@ -476,9 +465,46 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         if (StorageBusDataHandler.toggleIOMode(tracker)) requestStorageBusRefresh();
     }
 
+    /**
+     * Execute a unified capability action against a storage bus. The behavior chain resolves the
+     * provider by identity and dispatches to the capability without inspecting concrete bus types.
+     * Edit gates mirror the legacy per-capability config checks.
+     */
+    public void handleCapabilityAction(StorageBusId targetId, ResourceLocation capability, ResourceLocation action,
+        NBTTagCompound payload) {
+        if (!isCapabilityEditEnabled(capability)) return;
+
+        if (storageBusActionExecutor.execute(this.storageBusProviders, targetId, capability, action, payload)) {
+            requestStorageBusRefresh();
+        }
+    }
+
+    private boolean isCapabilityEditEnabled(ResourceLocation capability) {
+        DiskTerminalServerConfig config = DiskTerminalServerConfig.getInstance();
+        EntityPlayer player = this.getPlayerInv().player;
+
+        if (StorageBusCapabilityIds.PRIORITY.equals(capability)) {
+            if (config.isPriorityEditEnabled()) return true;
+
+            PlayerMessageHelper.error(player, "disk_terminal.error.priority_edit_disabled");
+
+            return false;
+        }
+
+        if (StorageBusCapabilityIds.FILTER.equals(capability)) {
+            if (config.isPartitionEditEnabled()) return true;
+
+            PlayerMessageHelper.error(player, "disk_terminal.error.partition_edit_disabled");
+
+            return false;
+        }
+
+        return true;
+    }
+
     public void handleEjectCell(long storageId, int cellSlot, EntityPlayer player) {
         if (!DiskTerminalServerConfig.getInstance()
-                .isCellEjectEnabled()) {
+            .isCellEjectEnabled()) {
             PlayerMessageHelper.error(player, "disk_terminal.error.cell_eject_disabled");
 
             return;
@@ -492,7 +518,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
     public void handleSetPriority(long storageId, int priority) {
         if (!DiskTerminalServerConfig.getInstance()
-                .isPriorityEditEnabled()) {
+            .isPriorityEditEnabled()) {
             PlayerMessageHelper.error(this.getPlayerInv().player, "disk_terminal.error.priority_edit_disabled");
 
             return;
@@ -505,29 +531,19 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
                 tracker.tile.markDirty();
                 requestFullRefresh();
             }
-
-            return;
-        }
-
-        StorageBusTracker busTracker = this.storageBusById.get(storageId);
-        if (busTracker != null) {
-            if (busTracker.storageBus instanceof IPriorityHost) {
-                ((IPriorityHost) busTracker.storageBus).setPriority(priority);
-                requestStorageBusRefresh();
-            }
         }
     }
 
     public void handleUpgradeCell(EntityPlayer player, long storageId, int cellSlot, boolean shiftClick, int fromSlot) {
         if (!DiskTerminalServerConfig.getInstance()
-                .isUpgradeInsertEnabled()) {
+            .isUpgradeInsertEnabled()) {
             PlayerMessageHelper.error(player, "disk_terminal.error.upgrade_insert_disabled");
 
             return;
         }
 
         ItemStack upgradeStack = fromSlot >= 0 ? player.inventory.getStackInSlot(fromSlot)
-                : player.inventory.getItemStack();
+            : player.inventory.getItemStack();
 
         if (shiftClick) {
             StorageTracker targetTracker = this.byId.get(storageId);
@@ -536,12 +552,12 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
                 if (cellInventory != null) {
                     for (int slot = 0; slot < targetTracker.storage.getCellCount(); slot++) {
                         if (CellActionHandler.upgradeCell(
-                                targetTracker.storage,
-                                targetTracker.tile,
-                                slot,
-                                upgradeStack,
-                                player,
-                                fromSlot)) {
+                            targetTracker.storage,
+                            targetTracker.tile,
+                            slot,
+                            upgradeStack,
+                            player,
+                            fromSlot)) {
                             requestFullRefresh();
 
                             return;
@@ -564,7 +580,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
                 for (int slot = 0; slot < tracker.storage.getCellCount(); slot++) {
                     if (CellActionHandler
-                            .upgradeCell(tracker.storage, tracker.tile, slot, upgradeStack, player, fromSlot)) {
+                        .upgradeCell(tracker.storage, tracker.tile, slot, upgradeStack, player, fromSlot)) {
                         requestFullRefresh();
 
                         return;
@@ -591,14 +607,14 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
     public void handleUpgradeStorageBus(EntityPlayer player, long storageBusId, boolean shiftClick, int fromSlot) {
         if (!DiskTerminalServerConfig.getInstance()
-                .isUpgradeInsertEnabled()) {
+            .isUpgradeInsertEnabled()) {
             PlayerMessageHelper.error(player, "disk_terminal.error.upgrade_insert_disabled");
 
             return;
         }
 
         ItemStack upgradeStack = fromSlot >= 0 ? player.inventory.getStackInSlot(fromSlot)
-                : player.inventory.getItemStack();
+            : player.inventory.getItemStack();
 
         if (ItemStacks.isEmpty(upgradeStack)) return;
         if (!(upgradeStack.getItem() instanceof IUpgradeModule)) return;
@@ -649,7 +665,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     }
 
     private boolean tryInsertUpgradeIntoStorageBus(StorageBusTracker tracker, ItemStack upgradeStack,
-                                                   EntityPlayer player, int fromSlot) {
+        EntityPlayer player, int fromSlot) {
         IInventory upgradesInv = getStorageBusUpgradeInventory(tracker);
         if (upgradesInv == null) return false;
 
@@ -699,7 +715,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     private void warnUpgradeInsertFailure(EntityPlayer player, IChatComponent targetName) {
         if (targetName != null) {
             PlayerMessageHelper
-                    .warning(player, "disk_terminal.warning.upgrade_insert_failed", targetName.getUnformattedText());
+                .warning(player, "disk_terminal.warning.upgrade_insert_failed", targetName.getUnformattedText());
 
             return;
         }
@@ -719,9 +735,9 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         }
 
         return tracker.tile == null ? null
-                : new ChatComponentText(
+            : new ChatComponentText(
                 tracker.tile.getClass()
-                        .getSimpleName());
+                    .getSimpleName());
     }
 
     private IChatComponent getCellDisplayName(StorageTracker tracker, int cellSlot) {
@@ -751,7 +767,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
             return new ChatComponentText(metaTileEntity.getLocalName());
         }
 
-        if (tracker.storageBus instanceof PartSharedItemBus<?> bus) {
+        if (tracker.storageBus instanceof PartSharedItemBus<?>bus) {
             ItemStack busStack = bus.getItemStack();
             if (!ItemStacks.isEmpty(busStack)) return new ChatComponentText(busStack.getDisplayName());
         }
@@ -762,8 +778,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         }
 
         IChatComponent baseName = ItemStacks.isEmpty(busDisplay)
-                ? new ChatComponentTranslation("gui.disk_terminal.storage_bus.name")
-                : new ChatComponentText(busDisplay.getDisplayName());
+            ? new ChatComponentTranslation("gui.disk_terminal.storage_bus.name")
+            : new ChatComponentText(busDisplay.getDisplayName());
 
         return baseName;
     }
@@ -792,9 +808,9 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     }
 
     public void handleExtractUpgrade(EntityPlayer player, PacketExtractUpgrade.TargetType targetType, long targetId,
-                                     int cellSlot, int upgradeIndex, boolean toInventory) {
+        int cellSlot, int upgradeIndex, boolean toInventory) {
         if (!DiskTerminalServerConfig.getInstance()
-                .isUpgradeExtractEnabled()) {
+            .isUpgradeExtractEnabled()) {
             PlayerMessageHelper.error(player, "disk_terminal.error.upgrade_extract_disabled");
 
             return;
@@ -857,13 +873,13 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
                 ((EntityPlayerMP) player).updateHeldItem();
                 success = true;
             } else if (heldStack.isItemEqual(upgradeStack) && ItemStack.areItemStackTagsEqual(heldStack, upgradeStack)
-                    && heldStack.stackSize < heldStack.getMaxStackSize()) {
-                heldStack.stackSize++;
-                ((EntityPlayerMP) player).updateHeldItem();
-                success = true;
-            } else {
-                success = false;
-            }
+                && heldStack.stackSize < heldStack.getMaxStackSize()) {
+                    heldStack.stackSize++;
+                    ((EntityPlayerMP) player).updateHeldItem();
+                    success = true;
+                } else {
+                    success = false;
+                }
         }
 
         if (!success) {
@@ -936,7 +952,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
     public void handleInsertCell(long storageId, int targetSlot, EntityPlayer player) {
         if (!DiskTerminalServerConfig.getInstance()
-                .isCellInsertEnabled()) {
+            .isCellInsertEnabled()) {
             PlayerMessageHelper.error(player, "disk_terminal.error.cell_insert_disabled");
 
             return;
@@ -958,9 +974,9 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         ItemStack stack = slot.getStack();
 
         if (AEApi.instance()
-                .registries()
-                .cell()
-                .getHandler(stack) == null) {
+            .registries()
+            .cell()
+            .getHandler(stack) == null) {
             return super.transferStackInSlot(player, slotIndex);
         }
 
@@ -991,7 +1007,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         if (!canShiftInsertCellsOnActiveTab()) return super.transferStackInSlot(player, slotIndex);
 
         if (!DiskTerminalServerConfig.getInstance()
-                .isCellInsertEnabled()) {
+            .isCellInsertEnabled()) {
             PlayerMessageHelper.error(player, "disk_terminal.error.cell_insert_disabled");
 
             return null;
@@ -1029,8 +1045,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
     private boolean canShiftInsertCellsOnActiveTab() {
         return activeTab != GuiConstants.TAB_STORAGE_BUS_INVENTORY
-                && activeTab != GuiConstants.TAB_STORAGE_BUS_PARTITION
-                && activeTab != GuiConstants.TAB_NETWORK_TOOLS;
+            && activeTab != GuiConstants.TAB_STORAGE_BUS_PARTITION
+            && activeTab != GuiConstants.TAB_NETWORK_TOOLS;
     }
 
     protected int getTerminalDimension() {
@@ -1096,9 +1112,9 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     }
 
     public void handleTempCellAction(PacketTempCellAction.Action action, int tempSlotIndex, int playerSlotIndex,
-                                     boolean toInventory) {
+        boolean toInventory) {
         if (!DiskTerminalServerConfig.getInstance()
-                .isTabTempAreaEnabled()) {
+            .isTabTempAreaEnabled()) {
             PlayerMessageHelper.error(this.getPlayerInv().player, "disk_terminal.error.temp_area_disabled");
 
             return;
@@ -1109,16 +1125,16 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     }
 
     public void handleTempCellPartitionAction(int tempSlotIndex, PacketTempCellPartitionAction.Action action,
-                                              int partitionSlot, NBTTagCompound stackData) {
+        int partitionSlot, NBTTagCompound stackData) {
         if (!DiskTerminalServerConfig.getInstance()
-                .isPartitionEditEnabled()) {
+            .isPartitionEditEnabled()) {
             PlayerMessageHelper.error(this.getPlayerInv().player, "disk_terminal.error.partition_edit_disabled");
 
             return;
         }
 
         if (!DiskTerminalServerConfig.getInstance()
-                .isTabTempAreaEnabled()) {
+            .isTabTempAreaEnabled()) {
             PlayerMessageHelper.error(this.getPlayerInv().player, "disk_terminal.error.temp_area_disabled");
 
             return;
@@ -1145,8 +1161,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         int playerId = this.getPlayerInv().player.getEntityId();
         NBTTagCompound data = new NBTTagCompound();
         data.setTag(
-                "subnets",
-                SubnetDataHandler.collectSubnets(this.grid, this.subnetById, playerId, this.subnetSlotLimit));
+            "subnets",
+            SubnetDataHandler.collectSubnets(this.grid, this.subnetById, playerId, this.subnetSlotLimit));
 
         sendChunked(TerminalChannels.SUBNETS, data, "subnets", "id");
     }
@@ -1164,9 +1180,9 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     }
 
     public void handleSubnetPartitionAction(long subnetId, long pos, int side,
-                                            PacketSubnetPartitionAction.Action action, int partitionSlot, NBTTagCompound stackData) {
+        PacketSubnetPartitionAction.Action action, int partitionSlot, NBTTagCompound stackData) {
         if (!DiskTerminalServerConfig.getInstance()
-                .isPartitionEditEnabled()) {
+            .isPartitionEditEnabled()) {
             PlayerMessageHelper.error(this.getPlayerInv().player, "disk_terminal.error.partition_edit_disabled");
 
             return;
@@ -1179,7 +1195,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         }
 
         if (SubnetDataHandler
-                .handleSubnetPartitionAction(this.subnetById, subnetId, pos, side, action, partitionSlot, stackData)) {
+            .handleSubnetPartitionAction(this.subnetById, subnetId, pos, side, action, partitionSlot, stackData)) {
             this.needsSubnetRefresh = true;
         }
     }
@@ -1232,10 +1248,10 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
             if (tile != null) {
                 return new ChatComponentTranslation(
-                        "gui.disk_terminal.subnet.default_name",
-                        tile.xCoord,
-                        tile.yCoord,
-                        tile.zCoord);
+                    "gui.disk_terminal.subnet.default_name",
+                    tile.xCoord,
+                    tile.yCoord,
+                    tile.zCoord);
             }
         }
 

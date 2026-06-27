@@ -10,13 +10,18 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.nbt.NBTTagCompound;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
 import com.hfstudio.diskterminal.client.Prioritizable;
+import com.hfstudio.diskterminal.client.StorageBusInfo;
 import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
+import com.hfstudio.diskterminal.network.PacketCapabilityAction;
 import com.hfstudio.diskterminal.network.PacketSetPriority;
+import com.hfstudio.diskterminal.storagebus.runtime.StorageBusActionIds;
+import com.hfstudio.diskterminal.storagebus.runtime.StorageBusCapabilityIds;
 
 /**
  * Singleton manager for inline priority text fields in the Cell Terminal GUI.
@@ -372,7 +377,18 @@ public class PriorityFieldManager {
                         .trim());
 
                 if (newPriority != target.getPriority()) {
-                    DiskTerminalNetwork.INSTANCE.sendToServer(new PacketSetPriority(target.getId(), newPriority));
+                    if (target instanceof StorageBusInfo bus) {
+                        NBTTagCompound payload = new NBTTagCompound();
+                        payload.setInteger("priority", newPriority);
+                        DiskTerminalNetwork.INSTANCE.sendToServer(
+                            new PacketCapabilityAction(
+                                bus.toTargetId(),
+                                StorageBusCapabilityIds.PRIORITY,
+                                StorageBusActionIds.PRIORITY_SET_VALUE,
+                                payload));
+                    } else {
+                        DiskTerminalNetwork.INSTANCE.sendToServer(new PacketSetPriority(target.getId(), newPriority));
+                    }
                     lastKnownPriority = newPriority;
                 }
             } catch (NumberFormatException e) {

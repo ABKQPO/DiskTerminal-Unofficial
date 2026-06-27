@@ -69,12 +69,10 @@ public class StorageBusHeader extends StorageHeader {
         // IO mode button: type is updated each frame from accessModeSupplier.
         // Default to READ_WRITE since it will be overwritten before drawing.
         this.ioModeButton = new SmallButton(
-                GuiConstants.BUTTON_IO_MODE_X,
-                y,
-                ButtonType.READ_WRITE,
-                () -> {
-                    if (onIOModeClick != null) onIOModeClick.run();
-                });
+            GuiConstants.BUTTON_IO_MODE_X,
+            y,
+            ButtonType.READ_WRITE,
+            () -> { if (onIOModeClick != null) onIOModeClick.run(); });
     }
 
     public void setAccessModeSupplier(Supplier<Integer> supplier) {
@@ -124,7 +122,7 @@ public class StorageBusHeader extends StorageHeader {
         // Register priority field with the singleton (positions it for this frame)
         if (prioritizable != null && prioritizable.supportsPriority()) {
             PriorityFieldManager.getInstance()
-                    .registerField(prioritizable, y, guiLeft, guiTop, fontRenderer);
+                .registerField(prioritizable, y, guiLeft, guiTop, fontRenderer);
         }
 
         // Return the hover right bound (up to mode button area when present)
@@ -136,8 +134,8 @@ public class StorageBusHeader extends StorageHeader {
 
         if (prioritizable != null && prioritizable.supportsPriority()) {
             rightEdge = GuiConstants.CONTENT_RIGHT_EDGE - PriorityFieldManager.FIELD_WIDTH
-                    - PriorityFieldManager.RIGHT_MARGIN
-                    - 4;
+                - PriorityFieldManager.RIGHT_MARGIN
+                - 4;
         }
 
         if (hasModeButton()) {
@@ -155,7 +153,7 @@ public class StorageBusHeader extends StorageHeader {
         if (!hasModeButton()) return;
 
         HeaderModeButtonKind kind = modeButtonKindSupplier != null ? modeButtonKindSupplier.get()
-                : HeaderModeButtonKind.NONE;
+            : HeaderModeButtonKind.NONE;
 
         if (kind == HeaderModeButtonKind.AUTO_PULL) {
             boolean autoPullEnabled = autoPullEnabledSupplier != null && autoPullEnabledSupplier.get();

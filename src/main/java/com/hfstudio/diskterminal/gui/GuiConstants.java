@@ -23,23 +23,22 @@ import org.lwjgl.opengl.GL11;
  */
 public class GuiConstants {
 
-    private GuiConstants() {
-    }
+    private GuiConstants() {}
 
     /** Atlas texture resource location, shared across all GUI components. */
     public static final ResourceLocation ATLAS_TEXTURE = new ResourceLocation(
-            "disk_terminal",
-            "textures/guis/atlas.png");
+        "disk_terminal",
+        "textures/guis/atlas.png");
 
     /** Main terminal texture resource location. */
     public static final ResourceLocation TERMINAL_TEXTURE = new ResourceLocation(
-            "disk_terminal",
-            "textures/guis/disk_terminal.png");
+        "disk_terminal",
+        "textures/guis/disk_terminal.png");
 
     /** Child window texture resource location. */
     public static final ResourceLocation CHILD_TEXTURE = new ResourceLocation(
-            "disk_terminal",
-            "textures/guis/child.png");
+        "disk_terminal",
+        "textures/guis/child.png");
 
     /**
      * Bind the atlas texture and draw a sprite from it.
@@ -54,8 +53,8 @@ public class GuiConstants {
      */
     public static void drawAtlasSprite(int x, int y, int texX, int texY, int w, int h) {
         Minecraft.getMinecraft()
-                .getTextureManager()
-                .bindTexture(ATLAS_TEXTURE);
+            .getTextureManager()
+            .bindTexture(ATLAS_TEXTURE);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         GL11.glEnable(GL11.GL_BLEND);
         drawScaledCustomSizeModalRect(x, y, texX, texY, w, h, w, h, ATLAS_WIDTH, ATLAS_HEIGHT);
@@ -67,8 +66,8 @@ public class GuiConstants {
         int scaledH = (int) (h * scale);
 
         Minecraft.getMinecraft()
-                .getTextureManager()
-                .bindTexture(ATLAS_TEXTURE);
+            .getTextureManager()
+            .bindTexture(ATLAS_TEXTURE);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         GL11.glEnable(GL11.GL_BLEND);
         drawScaledCustomSizeModalRect(x, y, texX, texY, w, h, scaledW, scaledH, ATLAS_WIDTH, ATLAS_HEIGHT);
@@ -83,17 +82,17 @@ public class GuiConstants {
     }
 
     public static void drawTerminalSlice(int x, int y, int texX, int texY, int sourceWidth, int sourceHeight, int width,
-                                         int height) {
+        int height) {
         Minecraft.getMinecraft()
-                .getTextureManager()
-                .bindTexture(TERMINAL_TEXTURE);
+            .getTextureManager()
+            .bindTexture(TERMINAL_TEXTURE);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         GL11.glEnable(GL11.GL_BLEND);
         drawScaledCustomSizeModalRect(x, y, texX, texY, sourceWidth, sourceHeight, width, height, 256, 256);
     }
 
     public static void drawHorizontalSlicedTerminalSprite(int x, int y, int texX, int texY, int sourceWidth,
-                                                          int sourceHeight, int width, int height, int edgeWidth) {
+        int sourceHeight, int width, int height, int edgeWidth) {
         if (width <= 0 || height <= 0) return;
         if (width <= edgeWidth * 2) {
             drawTerminalSlice(x, y, texX, texY, sourceWidth, sourceHeight, width, height);
@@ -102,27 +101,27 @@ public class GuiConstants {
 
         drawTerminalSlice(x, y, texX, texY, edgeWidth, sourceHeight, edgeWidth, height);
         drawTerminalSlice(
-                x + edgeWidth,
-                y,
-                texX + edgeWidth,
-                texY,
-                sourceWidth - edgeWidth * 2,
-                sourceHeight,
-                width - edgeWidth * 2,
-                height);
+            x + edgeWidth,
+            y,
+            texX + edgeWidth,
+            texY,
+            sourceWidth - edgeWidth * 2,
+            sourceHeight,
+            width - edgeWidth * 2,
+            height);
         drawTerminalSlice(
-                x + width - edgeWidth,
-                y,
-                texX + sourceWidth - edgeWidth,
-                texY,
-                edgeWidth,
-                sourceHeight,
-                edgeWidth,
-                height);
+            x + width - edgeWidth,
+            y,
+            texX + sourceWidth - edgeWidth,
+            texY,
+            edgeWidth,
+            sourceHeight,
+            edgeWidth,
+            height);
     }
 
     public static void drawHorizontalTiledTerminalSprite(int x, int y, int texX, int texY, int sourceWidth,
-                                                         int sourceHeight, int width, int height, int edgeWidth) {
+        int sourceHeight, int width, int height, int edgeWidth) {
         if (width <= 0 || height <= 0) return;
         if (width <= edgeWidth * 2) {
             drawTerminalSlice(x, y, texX, texY, sourceWidth, sourceHeight, width, height);
@@ -137,26 +136,26 @@ public class GuiConstants {
         while (drawnCenterWidth < centerDrawWidth) {
             int segmentWidth = Math.min(centerSourceWidth, centerDrawWidth - drawnCenterWidth);
             drawTerminalSlice(
-                    x + edgeWidth + drawnCenterWidth,
-                    y,
-                    texX + edgeWidth,
-                    texY,
-                    segmentWidth,
-                    sourceHeight,
-                    segmentWidth,
-                    height);
+                x + edgeWidth + drawnCenterWidth,
+                y,
+                texX + edgeWidth,
+                texY,
+                segmentWidth,
+                sourceHeight,
+                segmentWidth,
+                height);
             drawnCenterWidth += segmentWidth;
         }
 
         drawTerminalSlice(
-                x + width - edgeWidth,
-                y,
-                texX + sourceWidth - edgeWidth,
-                texY,
-                edgeWidth,
-                sourceHeight,
-                edgeWidth,
-                height);
+            x + width - edgeWidth,
+            y,
+            texX + sourceWidth - edgeWidth,
+            texY,
+            edgeWidth,
+            sourceHeight,
+            edgeWidth,
+            height);
     }
 
     public static void drawTerminalUpperBorderLine(int x, int y, int width) {
@@ -176,15 +175,15 @@ public class GuiConstants {
     }
 
     public static void drawNineSlicedTexture(ResourceLocation texture, int x, int y, int texX, int texY,
-                                             int sourceWidth, int sourceHeight, int width, int height, int edgeSize, int textureWidth, int textureHeight) {
+        int sourceWidth, int sourceHeight, int width, int height, int edgeSize, int textureWidth, int textureHeight) {
         if (width <= 0 || height <= 0) return;
 
         int horizontalEdge = Math.min(edgeSize, width / 2);
         int verticalEdge = Math.min(edgeSize, height / 2);
 
         Minecraft.getMinecraft()
-                .getTextureManager()
-                .bindTexture(texture);
+            .getTextureManager()
+            .bindTexture(texture);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         GL11.glEnable(GL11.GL_BLEND);
 
@@ -196,112 +195,112 @@ public class GuiConstants {
         int bottomSourceY = texY + sourceHeight - edgeSize;
 
         drawScaledCustomSizeModalRect(
-                x,
-                y,
-                texX,
-                texY,
-                horizontalEdge,
-                verticalEdge,
-                horizontalEdge,
-                verticalEdge,
-                textureWidth,
-                textureHeight);
+            x,
+            y,
+            texX,
+            texY,
+            horizontalEdge,
+            verticalEdge,
+            horizontalEdge,
+            verticalEdge,
+            textureWidth,
+            textureHeight);
         drawScaledCustomSizeModalRect(
-                x + width - horizontalEdge,
-                y,
-                rightSourceX,
-                texY,
-                horizontalEdge,
-                verticalEdge,
-                horizontalEdge,
-                verticalEdge,
-                textureWidth,
-                textureHeight);
+            x + width - horizontalEdge,
+            y,
+            rightSourceX,
+            texY,
+            horizontalEdge,
+            verticalEdge,
+            horizontalEdge,
+            verticalEdge,
+            textureWidth,
+            textureHeight);
         drawScaledCustomSizeModalRect(
-                x,
-                y + height - verticalEdge,
-                texX,
-                bottomSourceY,
-                horizontalEdge,
-                verticalEdge,
-                horizontalEdge,
-                verticalEdge,
-                textureWidth,
-                textureHeight);
+            x,
+            y + height - verticalEdge,
+            texX,
+            bottomSourceY,
+            horizontalEdge,
+            verticalEdge,
+            horizontalEdge,
+            verticalEdge,
+            textureWidth,
+            textureHeight);
         drawScaledCustomSizeModalRect(
-                x + width - horizontalEdge,
-                y + height - verticalEdge,
-                rightSourceX,
-                bottomSourceY,
-                horizontalEdge,
-                verticalEdge,
-                horizontalEdge,
-                verticalEdge,
-                textureWidth,
-                textureHeight);
+            x + width - horizontalEdge,
+            y + height - verticalEdge,
+            rightSourceX,
+            bottomSourceY,
+            horizontalEdge,
+            verticalEdge,
+            horizontalEdge,
+            verticalEdge,
+            textureWidth,
+            textureHeight);
 
         if (centerWidth > 0) {
             drawScaledCustomSizeModalRect(
-                    x + horizontalEdge,
-                    y,
-                    texX + edgeSize,
-                    texY,
-                    centerSourceWidth,
-                    verticalEdge,
-                    centerWidth,
-                    verticalEdge,
-                    textureWidth,
-                    textureHeight);
+                x + horizontalEdge,
+                y,
+                texX + edgeSize,
+                texY,
+                centerSourceWidth,
+                verticalEdge,
+                centerWidth,
+                verticalEdge,
+                textureWidth,
+                textureHeight);
             drawScaledCustomSizeModalRect(
-                    x + horizontalEdge,
-                    y + height - verticalEdge,
-                    texX + edgeSize,
-                    bottomSourceY,
-                    centerSourceWidth,
-                    verticalEdge,
-                    centerWidth,
-                    verticalEdge,
-                    textureWidth,
-                    textureHeight);
+                x + horizontalEdge,
+                y + height - verticalEdge,
+                texX + edgeSize,
+                bottomSourceY,
+                centerSourceWidth,
+                verticalEdge,
+                centerWidth,
+                verticalEdge,
+                textureWidth,
+                textureHeight);
         }
 
         if (centerHeight > 0) {
             drawScaledCustomSizeModalRect(
-                    x,
-                    y + verticalEdge,
-                    texX,
-                    texY + edgeSize,
-                    horizontalEdge,
-                    centerSourceHeight,
-                    horizontalEdge,
-                    centerHeight,
-                    textureWidth,
-                    textureHeight);
+                x,
+                y + verticalEdge,
+                texX,
+                texY + edgeSize,
+                horizontalEdge,
+                centerSourceHeight,
+                horizontalEdge,
+                centerHeight,
+                textureWidth,
+                textureHeight);
             drawScaledCustomSizeModalRect(
-                    x + width - horizontalEdge,
-                    y + verticalEdge,
-                    rightSourceX,
-                    texY + edgeSize,
-                    horizontalEdge,
-                    centerSourceHeight,
-                    horizontalEdge,
-                    centerHeight,
-                    textureWidth,
-                    textureHeight);
+                x + width - horizontalEdge,
+                y + verticalEdge,
+                rightSourceX,
+                texY + edgeSize,
+                horizontalEdge,
+                centerSourceHeight,
+                horizontalEdge,
+                centerHeight,
+                textureWidth,
+                textureHeight);
         }
 
         if (centerWidth > 0 && centerHeight > 0) {
             drawScaledCustomSizeModalRect(
-                    x + horizontalEdge,
-                    y + verticalEdge,
-                    texX + edgeSize,
-                    texY + edgeSize,
-                    centerSourceWidth,
-                    centerSourceHeight,
-                    centerWidth,
-                    centerHeight,
-                    textureWidth,
-                    textureHeight);
+                x + horizontalEdge,
+                y + verticalEdge,
+                texX + edgeSize,
+                texY + edgeSize,
+                centerSourceWidth,
+                centerSourceHeight,
+                centerWidth,
+                centerHeight,
+                textureWidth,
+                textureHeight);
         }
     }
 
@@ -311,7 +310,7 @@ public class GuiConstants {
      * {@code tileHeight} atlas) into a screen rectangle of {@code width} by {@code height}.
      */
     public static void drawScaledCustomSizeModalRect(int x, int y, float u, float v, int uWidth, int vHeight, int width,
-                                                     int height, float tileWidth, float tileHeight) {
+        int height, float tileWidth, float tileHeight) {
         float uScale = 1.0F / tileWidth;
         float vScale = 1.0F / tileHeight;
         Tessellator tessellator = Tessellator.instance;

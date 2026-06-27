@@ -2,13 +2,19 @@ package com.hfstudio.diskterminal.gui.rename;
 
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.ResourceLocation;
 
 import org.lwjgl.input.Keyboard;
 
+import com.hfstudio.diskterminal.client.StorageBusInfo;
 import com.hfstudio.diskterminal.gui.GuiConstants;
 import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
+import com.hfstudio.diskterminal.network.PacketCapabilityAction;
 import com.hfstudio.diskterminal.network.PacketRenameAction;
 import com.hfstudio.diskterminal.network.PacketSubnetAction;
+import com.hfstudio.diskterminal.storagebus.runtime.StorageBusActionIds;
+import com.hfstudio.diskterminal.storagebus.runtime.StorageBusCapabilityIds;
 
 /**
  * Singleton manager for inline rename editing in the Cell Terminal GUI.
@@ -113,8 +119,9 @@ public class InlineRenameManager {
                     PacketRenameAction.renameCell(target.getRenameId(), target.getRenameSecondaryId(), newName));
                 break;
             case STORAGE_BUS:
-                DiskTerminalNetwork.INSTANCE
-                    .sendToServer(PacketRenameAction.renameStorageBus(target.getRenameId(), newName));
+                if (target instanceof StorageBusInfo bus) {
+                    DiskTerminalNetwork.INSTANCE.sendToServer(buildBusRenamePacket(bus, newName));
+                }
                 break;
             case SUBNET:
                 DiskTerminalNetwork.INSTANCE.sendToServer(PacketSubnetAction.rename(target.getRenameId(), newName));
@@ -125,6 +132,19 @@ public class InlineRenameManager {
 
         // Update local name immediately for responsiveness
         target.setCustomName(newName.isEmpty() ? null : newName);
+    }
+
+    private PacketCapabilityAction buildBusRenamePacket(StorageBusInfo bus, String newName) {
+        NBTTagCompound payload = new NBTTagCompound();
+        ResourceLocation action;
+        if (newName.isEmpty()) {
+            action = StorageBusActionIds.RENAME_CLEAR_NAME;
+        } else {
+            action = StorageBusActionIds.RENAME_SET_NAME;
+            payload.setString("name", newName);
+        }
+
+        return new PacketCapabilityAction(bus.toTargetId(), StorageBusCapabilityIds.RENAME, action, payload);
     }
 
     /**

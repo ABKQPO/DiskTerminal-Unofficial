@@ -14,6 +14,7 @@ import net.minecraft.nbt.NBTTagCompound;
 
 import com.hfstudio.diskterminal.DiskTerminal;
 import com.hfstudio.diskterminal.api.IItemCompactingCell;
+import com.hfstudio.diskterminal.api.capability.IFilterCapability;
 import com.hfstudio.diskterminal.client.CellFilter;
 import com.hfstudio.diskterminal.client.StorageType;
 import com.hfstudio.diskterminal.container.ContainerCellTerminalBase.StorageTracker;
@@ -22,7 +23,7 @@ import com.hfstudio.diskterminal.gui.networktools.AttributeUniqueTool;
 import com.hfstudio.diskterminal.gui.networktools.MassPartitionBusTool;
 import com.hfstudio.diskterminal.gui.networktools.MassPartitionCellTool;
 import com.hfstudio.diskterminal.network.PacketPartitionAction;
-import com.hfstudio.diskterminal.network.PacketStorageBusPartitionAction.Action;
+import com.hfstudio.diskterminal.storagebus.runtime.StorageBusProviderFactory;
 import com.hfstudio.diskterminal.util.AEStackUtil;
 import com.hfstudio.diskterminal.util.ItemStacks;
 import com.hfstudio.diskterminal.util.PlayerMessageHelper;
@@ -90,10 +91,16 @@ public class NetworkToolActionHandler {
 
     private static void handleMassPartitionBuses(Map<CellFilter, CellFilter.State> activeFilters,
         Map<Long, StorageBusTracker> storageBusById) {
+        StorageBusProviderFactory providerFactory = new StorageBusProviderFactory();
+
         for (StorageBusTracker tracker : storageBusById.values()) {
             if (!matchesBusFilters(tracker, activeFilters)) continue;
+            if (tracker.targetId == null || tracker.source == null) continue;
 
-            StorageBusDataHandler.handlePartitionAction(tracker, Action.SET_ALL_FROM_CONTENTS, -1, null);
+            providerFactory.create(tracker.targetId, tracker.source)
+                .findCapability(IFilterCapability.class)
+                .filter(IFilterCapability::supportsPreviewFill)
+                .ifPresent(filter -> { if (filter.fillFromPreview()) tracker.hostTile.markDirty(); });
         }
     }
 

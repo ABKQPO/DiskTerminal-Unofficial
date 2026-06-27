@@ -14,6 +14,8 @@ import com.hfstudio.diskterminal.client.StorageType;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler.StorageBusTracker;
 import com.hfstudio.diskterminal.integration.Mods;
+import com.hfstudio.diskterminal.storagebus.model.StorageBusId;
+import com.hfstudio.diskterminal.storagebus.runtime.StorageBusSource;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
@@ -55,6 +57,12 @@ public class AE2FluidCraftStorageBusScanner extends AbstractStorageBusScanner {
             applyCapabilities(nbt);
             applySlotParameters(nbt);
             out.appendTag(nbt);
+            StorageBusId targetId = StorageBusId.of(
+                hostTile,
+                bus.getSide()
+                    .ordinal(),
+                BusRole.STORAGE,
+                StorageType.FLUID);
             trackerMap.put(
                 busId,
                 new StorageBusTracker(
@@ -63,7 +71,7 @@ public class AE2FluidCraftStorageBusScanner extends AbstractStorageBusScanner {
                     hostTile,
                     bus.getSide()
                         .ordinal(),
-                    StorageType.FLUID));
+                    StorageType.FLUID).withTarget(targetId, StorageBusSource.AE_STORAGE_BUS));
         }
 
         for (IGridNode gn : grid.getMachines(PartFluidImportBus.class)) {
