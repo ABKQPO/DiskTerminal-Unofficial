@@ -69,10 +69,10 @@ public class PopupCellInventory extends Gui {
         this.cellSlot = cell.getSlot();
 
         int contentRows = Math.min(
-            MAX_ROWS,
-            (cell.getContents()
-                .size() + SLOTS_PER_ROW
-                - 1) / SLOTS_PER_ROW);
+                MAX_ROWS,
+                (cell.getContents()
+                        .size() + SLOTS_PER_ROW
+                        - 1) / SLOTS_PER_ROW);
         if (contentRows == 0) contentRows = 1;
 
         // Calculate width based on title or slots, whichever is wider
@@ -118,15 +118,7 @@ public class PopupCellInventory extends Gui {
         GL11.glEnable(GL11.GL_ALPHA_TEST);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
-        // Draw popup background (similar to vanilla container style)
-        drawRect(x - 1, y - 1, x + width + 1, y + height + 1, 0xFF000000);
-        drawGradientRect(x, y, x + width, y + height, 0xFFC6C6C6, 0xFFC6C6C6);
-
-        // Draw border highlights
-        drawRect(x, y, x + width, y + 1, 0xFFFFFFFF);
-        drawRect(x, y, x + 1, y + height, 0xFFFFFFFF);
-        drawRect(x, y + height - 1, x + width, y + height, 0xFF555555);
-        drawRect(x + width - 1, y, x + width, y + height, 0xFF555555);
+        GuiConstants.drawChildWindowBackground(x, y, width, height);
 
         // Draw title
         String contentsSuffix = I18n.format("gui.disk_terminal.popup.contents_suffix");
@@ -135,48 +127,30 @@ public class PopupCellInventory extends Gui {
 
         // Draw partition all button
         partitionAllHovered = mouseX >= partitionButtonX && mouseX < partitionButtonX + partitionButtonWidth
-            && mouseY >= partitionButtonY
-            && mouseY < partitionButtonY + BUTTON_HEIGHT;
+                && mouseY >= partitionButtonY
+                && mouseY < partitionButtonY + BUTTON_HEIGHT;
 
-        int buttonColor = partitionAllHovered ? 0xFF707070 : 0xFF8B8B8B;
-        drawRect(
-            partitionButtonX,
-            partitionButtonY,
-            partitionButtonX + partitionButtonWidth,
-            partitionButtonY + BUTTON_HEIGHT,
-            buttonColor);
-        drawRect(
-            partitionButtonX,
-            partitionButtonY,
-            partitionButtonX + partitionButtonWidth,
-            partitionButtonY + 1,
-            0xFFFFFFFF);
-        drawRect(
-            partitionButtonX,
-            partitionButtonY,
-            partitionButtonX + 1,
-            partitionButtonY + BUTTON_HEIGHT,
-            0xFFFFFFFF);
-        drawRect(
-            partitionButtonX,
-            partitionButtonY + BUTTON_HEIGHT - 1,
-            partitionButtonX + partitionButtonWidth,
-            partitionButtonY + BUTTON_HEIGHT,
-            0xFF555555);
-        drawRect(
-            partitionButtonX + partitionButtonWidth - 1,
-            partitionButtonY,
-            partitionButtonX + partitionButtonWidth,
-            partitionButtonY + BUTTON_HEIGHT,
-            0xFF555555);
+        if (partitionAllHovered) {
+            GuiConstants.drawChildWindowButtonHover(
+                partitionButtonX,
+                partitionButtonY,
+                partitionButtonWidth,
+                BUTTON_HEIGHT);
+        } else {
+            GuiConstants.drawChildWindowButton(
+                partitionButtonX,
+                partitionButtonY,
+                partitionButtonWidth,
+                BUTTON_HEIGHT);
+        }
 
         String buttonText = I18n.format("gui.disk_terminal.set_all_partition");
         int textWidth = fr.getStringWidth(buttonText);
         fr.drawString(
-            buttonText,
-            partitionButtonX + (partitionButtonWidth - textWidth) / 2,
-            partitionButtonY + 3,
-            0x404040);
+                buttonText,
+                partitionButtonX + (partitionButtonWidth - textWidth) / 2,
+                partitionButtonY + 3,
+                0x404040);
 
         // Draw item slots
         int slotStartY = y + HEADER_HEIGHT + BUTTON_HEIGHT + 4;
@@ -197,8 +171,8 @@ public class PopupCellInventory extends Gui {
 
             // Check hover
             boolean slotHovered = mouseX >= slotX && mouseX < slotX + SLOT_SIZE
-                && mouseY >= slotY
-                && mouseY < slotY + SLOT_SIZE;
+                    && mouseY >= slotY
+                    && mouseY < slotY + SLOT_SIZE;
 
             // Draw item
             if (!ItemStacks.isEmpty(stack)) {
@@ -261,10 +235,10 @@ public class PopupCellInventory extends Gui {
         // Check partition all button click
         if (partitionAllHovered) {
             DiskTerminalNetwork.INSTANCE.sendToServer(
-                new PacketPartitionAction(
-                    cell.getParentStorageId(),
-                    cell.getSlot(),
-                    PacketPartitionAction.Action.SET_ALL_FROM_CONTENTS));
+                    new PacketPartitionAction(
+                            cell.getParentStorageId(),
+                            cell.getSlot(),
+                            PacketPartitionAction.Action.SET_ALL_FROM_CONTENTS));
 
             return true;
         }
@@ -287,17 +261,17 @@ public class PopupCellInventory extends Gui {
             int slotIndex = slotRow * SLOTS_PER_ROW + slotCol;
 
             if (slotIndex < cell.getContents()
-                .size()) {
+                    .size()) {
                 ItemStack clickedStack = cell.getContents()
-                    .get(slotIndex);
+                        .get(slotIndex);
 
                 if (!ItemStacks.isEmpty(clickedStack)) {
                     DiskTerminalNetwork.INSTANCE.sendToServer(
-                        new PacketPartitionAction(
-                            cell.getParentStorageId(),
-                            cell.getSlot(),
-                            PacketPartitionAction.Action.TOGGLE_ITEM,
-                            clickedStack));
+                            new PacketPartitionAction(
+                                    cell.getParentStorageId(),
+                                    cell.getSlot(),
+                                    PacketPartitionAction.Action.TOGGLE_ITEM,
+                                    clickedStack));
                 }
 
                 return true;
@@ -348,7 +322,7 @@ public class PopupCellInventory extends Gui {
 
         GuiCellTerminalBase gui = (GuiCellTerminalBase) parent;
         StorageInfo storage = gui.getStorageMap()
-            .get(storageId);
+                .get(storageId);
 
         if (storage == null) return cell.getPartition();
 
@@ -391,11 +365,11 @@ public class PopupCellInventory extends Gui {
 
     private void drawSlotHoverHighlight(int slotX, int slotY) {
         Gui.drawRect(
-            slotX + 1,
-            slotY + 1,
-            slotX + SLOT_SIZE - 1,
-            slotY + SLOT_SIZE - 1,
-            GuiConstants.COLOR_HOVER_HIGHLIGHT);
+                slotX + 1,
+                slotY + 1,
+                slotX + SLOT_SIZE - 1,
+                slotY + SLOT_SIZE - 1,
+                GuiConstants.COLOR_HOVER_HIGHLIGHT);
     }
 
     private void drawItemCount(long count, int slotX, int slotY, FontRenderer fr) {

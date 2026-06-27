@@ -106,15 +106,7 @@ public class PopupCellPartition extends Gui {
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
-        // Draw popup background (similar to vanilla container style)
-        drawRect(x - 1, y - 1, x + width + 1, y + height + 1, 0xFF000000);
-        drawGradientRect(x, y, x + width, y + height, 0xFFC6C6C6, 0xFFC6C6C6);
-
-        // Draw border highlights
-        drawRect(x, y, x + width, y + 1, 0xFFFFFFFF);
-        drawRect(x, y, x + 1, y + height, 0xFFFFFFFF);
-        drawRect(x, y + height - 1, x + width, y + height, 0xFF555555);
-        drawRect(x + width - 1, y, x + width, y + height, 0xFF555555);
+        GuiConstants.drawChildWindowBackground(x, y, width, height);
 
         // Draw title
         String partitionSuffix = I18n.format("gui.disk_terminal.popup.partition_suffix");
