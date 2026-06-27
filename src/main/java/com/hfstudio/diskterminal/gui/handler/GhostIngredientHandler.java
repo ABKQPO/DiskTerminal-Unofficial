@@ -30,8 +30,8 @@ public class GhostIngredientHandler {
     }
 
     public static ItemStack convertIngredientForType(Object ingredient, String stackTypeId, boolean bus) {
-        if (ingredient instanceof ItemStack) {
-            ItemStack stack = convertItemForType((ItemStack) ingredient, stackTypeId);
+        if (ingredient instanceof ItemStack itemStack) {
+            ItemStack stack = convertItemForType(itemStack, stackTypeId);
             if (!ItemStacks.isEmpty(stack)) return stack;
         }
 

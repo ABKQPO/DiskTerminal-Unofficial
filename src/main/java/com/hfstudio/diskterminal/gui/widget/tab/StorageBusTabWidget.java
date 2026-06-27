@@ -236,8 +236,7 @@ public class StorageBusTabWidget extends AbstractTabWidget {
 
                     @Override
                     public void accept(Object ing) {
-                        ItemStack stack = GhostIngredientHandler
-                            .convertIngredientForType(ing, bus.getStackTypeId(), true);
+                        ItemStack stack = convertPartitionInput(ing, bus);
                         if (!ItemStacks.isEmpty(stack)) {
                             guiContext.sendPacket(PacketCapabilityAction.filterSetSlot(bus, slot.absoluteIndex, stack));
                         }
@@ -455,10 +454,7 @@ public class StorageBusTabWidget extends AbstractTabWidget {
                 boolean slotOccupied = slotIndex < partition.size() && !ItemStacks.isEmpty(partition.get(slotIndex));
 
                 if (!ItemStacks.isEmpty(heldStack)) {
-                    // Use the storage-bus NEI conversion rules for held inventory items so
-                    // fluid and essentia clicks get normalization and user feedback.
-                    ItemStack stackToSend = GhostIngredientHandler
-                        .convertIngredientForType(heldStack, bus.getStackTypeId(), true);
+                    ItemStack stackToSend = convertPartitionInput(heldStack, bus);
                     if (ItemStacks.isEmpty(stackToSend)) return;
 
                     guiContext.sendPacket(PacketCapabilityAction.filterSetSlot(bus, slotIndex, stackToSend));
@@ -473,6 +469,16 @@ public class StorageBusTabWidget extends AbstractTabWidget {
                 }
             }
         });
+    }
+
+    private static ItemStack convertPartitionInput(Object ingredient, StorageBusInfo bus) {
+        if (ingredient instanceof ItemStack itemStack && bus.isFluid() && FluidStacks.extract(itemStack) != null) {
+            ItemStack single = itemStack.copy();
+            single.stackSize = 1;
+            return single;
+        }
+
+        return GhostIngredientHandler.convertIngredientForType(ingredient, bus.getStackTypeId(), true);
     }
 
     /**

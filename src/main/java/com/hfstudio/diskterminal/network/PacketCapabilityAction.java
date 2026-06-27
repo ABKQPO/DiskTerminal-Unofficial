@@ -4,6 +4,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fluids.FluidStack;
 
 import com.hfstudio.diskterminal.client.StorageBusInfo;
 import com.hfstudio.diskterminal.container.ContainerCellTerminalBase;
@@ -11,7 +12,9 @@ import com.hfstudio.diskterminal.storagebus.model.StorageBusId;
 import com.hfstudio.diskterminal.storagebus.runtime.StorageBusActionIds;
 import com.hfstudio.diskterminal.storagebus.runtime.StorageBusCapabilityIds;
 import com.hfstudio.diskterminal.util.AEStackUtil;
+import com.hfstudio.diskterminal.util.FluidStacks;
 
+import appeng.util.item.AEFluidStack;
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -104,7 +107,7 @@ public class PacketCapabilityAction implements IMessage {
 
     private static NBTTagCompound filterPayload(StorageBusInfo bus, ItemStack stack) {
         NBTTagCompound payload = new NBTTagCompound();
-        NBTTagCompound filterData = AEStackUtil.writeItemLikePartitionStack(stack);
+        NBTTagCompound filterData = createFilterData(bus, stack);
         if (filterData != null) payload.setTag("filter", filterData);
         payload.setInteger(
             "filterType",
@@ -112,6 +115,29 @@ public class PacketCapabilityAction implements IMessage {
                 .ordinal());
 
         return payload;
+    }
+
+    private static NBTTagCompound createFilterData(StorageBusInfo bus, ItemStack stack) {
+        if (bus.isFluid()) {
+            FluidStack fluid = FluidStacks.extract(stack);
+            if (fluid != null) {
+                fluid = fluid.copy();
+                fluid.amount = 1;
+
+                NBTTagCompound data = new NBTTagCompound();
+                AEStackUtil.writeStackToNBT(data, AEFluidStack.create(fluid));
+
+                ItemStack displayStack = stack.copy();
+                displayStack.stackSize = 1;
+                NBTTagCompound displayData = new NBTTagCompound();
+                displayStack.writeToNBT(displayData);
+                data.setTag("display", displayData);
+
+                return data;
+            }
+        }
+
+        return AEStackUtil.writeItemLikePartitionStack(stack);
     }
 
     @Override

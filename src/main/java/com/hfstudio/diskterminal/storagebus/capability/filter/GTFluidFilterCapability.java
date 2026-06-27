@@ -18,6 +18,7 @@ import com.hfstudio.diskterminal.util.ItemStacks;
 
 import appeng.api.storage.data.IAEStack;
 import appeng.util.item.AEFluidStack;
+import gregtech.api.util.GTUtility;
 import gregtech.common.tileentities.machines.MTEHatchInputME;
 
 /**
@@ -138,16 +139,17 @@ public class GTFluidFilterCapability implements IFilterCapability {
     }
 
     private FluidStack sanitize(FilterSnapshot filter) {
-        // The client sends either an AE2FC fluid drop or a raw fluid container as the display stack.
-        // Extract the fluid directly from that stack; fall back to the AE generic representation only
-        // when no display stack is present.
+        // Match the GT hatch GUI flow first: it resolves fluids from the held item through GTUtility,
+        // which supports GT and IFluidContainerItem containers. Fall back to the broader DiskTerminal
+        // extraction path so AE2FC fluid drops and other existing inputs keep working.
         ItemStack display = AEStackUtil.readDisplayStack(filter.getData());
         if (ItemStacks.isEmpty(display)) {
             IAEStack<?> stack = AEStackUtil.readPartitionStack(filter.getData(), null);
             display = AEStackUtil.getDisplayStack(stack);
         }
 
-        FluidStack fluid = FluidStacks.extract(display);
+        FluidStack fluid = GTUtility.getFluidForFilledItem(display, true);
+        if (fluid == null) fluid = FluidStacks.extract(display);
         if (fluid == null) return null;
 
         fluid.amount = 1;
