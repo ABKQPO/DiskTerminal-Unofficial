@@ -10,6 +10,7 @@ import net.minecraft.item.ItemStack;
 
 import org.lwjgl.opengl.GL11;
 
+import com.hfstudio.diskterminal.client.StorageBusInfo.HeaderModeButtonKind;
 import com.hfstudio.diskterminal.gui.GuiConstants;
 import com.hfstudio.diskterminal.gui.PriorityFieldManager;
 import com.hfstudio.diskterminal.gui.widget.AbstractWidget;
@@ -45,6 +46,12 @@ public class StorageBusHeader extends StorageHeader {
     /** Whether IO mode switching is supported */
     private Supplier<Boolean> supportsIOModeSupplier;
 
+    /** Which semantic the mode button currently uses */
+    private Supplier<HeaderModeButtonKind> modeButtonKindSupplier;
+
+    /** GT5 auto pull enabled flag */
+    private Supplier<Boolean> autoPullEnabledSupplier;
+
     /** Supplier for the target block icon shown as an overlay on bus icons */
     private Supplier<ItemStack> overlayIconSupplier;
 
@@ -62,10 +69,12 @@ public class StorageBusHeader extends StorageHeader {
         // IO mode button: type is updated each frame from accessModeSupplier.
         // Default to READ_WRITE since it will be overwritten before drawing.
         this.ioModeButton = new SmallButton(
-            GuiConstants.BUTTON_IO_MODE_X,
-            y,
-            ButtonType.READ_WRITE,
-            () -> { if (onIOModeClick != null) onIOModeClick.run(); });
+                GuiConstants.BUTTON_IO_MODE_X,
+                y,
+                ButtonType.READ_WRITE,
+                () -> {
+                    if (onIOModeClick != null) onIOModeClick.run();
+                });
     }
 
     public void setAccessModeSupplier(Supplier<Integer> supplier) {
@@ -74,6 +83,14 @@ public class StorageBusHeader extends StorageHeader {
 
     public void setSupportsIOModeSupplier(Supplier<Boolean> supplier) {
         this.supportsIOModeSupplier = supplier;
+    }
+
+    public void setModeButtonKindSupplier(Supplier<HeaderModeButtonKind> supplier) {
+        this.modeButtonKindSupplier = supplier;
+    }
+
+    public void setAutoPullEnabledSupplier(Supplier<Boolean> supplier) {
+        this.autoPullEnabledSupplier = supplier;
     }
 
     public void setOverlayIconSupplier(Supplier<ItemStack> supplier) {
@@ -107,12 +124,11 @@ public class StorageBusHeader extends StorageHeader {
         // Register priority field with the singleton (positions it for this frame)
         if (prioritizable != null && prioritizable.supportsPriority()) {
             PriorityFieldManager.getInstance()
-                .registerField(prioritizable, y, guiLeft, guiTop, fontRenderer);
+                    .registerField(prioritizable, y, guiLeft, guiTop, fontRenderer);
         }
 
-        // Return the hover right bound (up to IO mode button area)
-        return supportsIOModeSupplier != null && supportsIOModeSupplier.get() ? GuiConstants.BUTTON_IO_MODE_X
-            : GuiConstants.EXPAND_ICON_X;
+        // Return the hover right bound (up to mode button area when present)
+        return hasModeButton() ? GuiConstants.BUTTON_IO_MODE_X : GuiConstants.EXPAND_ICON_X;
     }
 
     private int getNameMaxWidth() {
@@ -120,11 +136,11 @@ public class StorageBusHeader extends StorageHeader {
 
         if (prioritizable != null && prioritizable.supportsPriority()) {
             rightEdge = GuiConstants.CONTENT_RIGHT_EDGE - PriorityFieldManager.FIELD_WIDTH
-                - PriorityFieldManager.RIGHT_MARGIN
-                - 4;
+                    - PriorityFieldManager.RIGHT_MARGIN
+                    - 4;
         }
 
-        if (supportsIOModeSupplier != null && supportsIOModeSupplier.get()) {
+        if (hasModeButton()) {
             rightEdge = GuiConstants.BUTTON_IO_MODE_X - 4;
         }
 
@@ -132,26 +148,31 @@ public class StorageBusHeader extends StorageHeader {
     }
 
     /**
-     * Draw the IO mode button using textured SmallButton.
-     * Updates the button type each frame based on the current access restriction.
+     * Draw the shared header mode button using textured SmallButton.
+     * AE buses use access restriction states, while GT5 buses use auto pull on/off.
      */
     private void drawIOModeButton(int mouseX, int mouseY) {
-        boolean supportsIOMode = supportsIOModeSupplier != null && supportsIOModeSupplier.get();
-        if (!supportsIOMode) return;
+        if (!hasModeButton()) return;
 
-        int accessMode = accessModeSupplier != null ? accessModeSupplier.get() : 3;
+        HeaderModeButtonKind kind = modeButtonKindSupplier != null ? modeButtonKindSupplier.get()
+                : HeaderModeButtonKind.NONE;
 
-        // Map access restriction to button type
-        switch (accessMode) {
-            case 1:
-                ioModeButton.setType(ButtonType.READ_ONLY);
-                break;
-            case 2:
-                ioModeButton.setType(ButtonType.WRITE_ONLY);
-                break;
-            default:
-                ioModeButton.setType(ButtonType.READ_WRITE);
-                break;
+        if (kind == HeaderModeButtonKind.AUTO_PULL) {
+            boolean autoPullEnabled = autoPullEnabledSupplier != null && autoPullEnabledSupplier.get();
+            ioModeButton.setType(autoPullEnabled ? ButtonType.AUTO_PULL_ON : ButtonType.AUTO_PULL_OFF);
+        } else {
+            int accessMode = accessModeSupplier != null ? accessModeSupplier.get() : 3;
+            switch (accessMode) {
+                case 1:
+                    ioModeButton.setType(ButtonType.READ_ONLY);
+                    break;
+                case 2:
+                    ioModeButton.setType(ButtonType.WRITE_ONLY);
+                    break;
+                default:
+                    ioModeButton.setType(ButtonType.READ_WRITE);
+                    break;
+            }
         }
 
         // Position at current header Y (since header Y can change per frame)
@@ -186,8 +207,7 @@ public class StorageBusHeader extends StorageHeader {
         // Left-click only for IO mode and expand/collapse
         if (button == 0) {
             // IO mode button click (delegated to SmallButton)
-            boolean supportsIOMode = supportsIOModeSupplier != null && supportsIOModeSupplier.get();
-            if (supportsIOMode && ioModeButton.handleClick(mouseX, mouseY, button)) {
+            if (hasModeButton() && ioModeButton.handleClick(mouseX, mouseY, button)) {
                 return true;
             }
 
@@ -207,12 +227,17 @@ public class StorageBusHeader extends StorageHeader {
         if (!visible || !isHovered(mouseX, mouseY)) return Collections.emptyList();
 
         // IO mode button tooltip
-        boolean supportsIOMode = supportsIOModeSupplier != null && supportsIOModeSupplier.get();
-        if (supportsIOMode && ioModeButton.isHovered(mouseX, mouseY)) {
+        if (hasModeButton() && ioModeButton.isHovered(mouseX, mouseY)) {
             return ioModeButton.getTooltip(mouseX, mouseY);
         }
 
         // Cards tooltip (from base)
         return super.getTooltip(mouseX, mouseY);
+    }
+
+    private boolean hasModeButton() {
+        if (supportsIOModeSupplier != null && supportsIOModeSupplier.get()) return true;
+
+        return modeButtonKindSupplier != null && modeButtonKindSupplier.get() == HeaderModeButtonKind.AUTO_PULL;
     }
 }

@@ -166,7 +166,6 @@ config.disk_terminal.config.server.tabs.temp_area.tooltip=Enable the Temp Area t
 
 
 
-
 config.disk_terminal.config.server.integration.enable_thaumicenergistics=Thaumic Energistics Integration
 config.disk_terminal.config.server.integration.enable_thaumicenergistics.tooltip=Enable integration with Thaumic Energistics (essentia cells). Set to false to disable Thaumic Energistics-specific behavior.
 
@@ -292,6 +291,8 @@ gui.disk_terminal.button.clear_partition=Clear Partition
 gui.disk_terminal.button.read_only=Extract Only
 gui.disk_terminal.button.write_only=Insert Only
 gui.disk_terminal.button.read_write=Extract/Insert
+gui.disk_terminal.button.auto_pull_on=Auto Pull: On
+gui.disk_terminal.button.auto_pull_off=Auto Pull: Off
 
 # Controls help (bottom left widget)
 gui.disk_terminal.controls.nei_drag=Drag from NEI to add.

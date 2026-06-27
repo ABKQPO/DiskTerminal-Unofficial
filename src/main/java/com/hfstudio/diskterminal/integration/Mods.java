@@ -18,6 +18,7 @@ public enum Mods implements IMod, ITargetMod {
     NotEnoughItems("NotEnoughItems"),
     AE2FluidCraft("ae2fc"),
     ThaumicEnergistics("thaumicenergistics"),
+    GregTech("gregtech"),
     Baubles("Baubles", () -> Loader.isModLoaded("Baubles") || Loader.isModLoaded("Baubles|Expanded"), null),
     WirelessCraftingTerminal("ae2wct"),
     Thaumcraft("thaumcraft"),
@@ -52,7 +53,7 @@ public enum Mods implements IMod, ITargetMod {
         this.resourceDomain = modid != null ? modid.toLowerCase(Locale.ENGLISH) : null;
         this.supplier = supplier;
         this.targetBuilder = new TargetModBuilder().setModId(modid)
-            .setCoreModClass(coreModClass);
+                .setCoreModClass(coreModClass);
     }
 
     @NotNull

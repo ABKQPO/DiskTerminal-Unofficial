@@ -27,6 +27,12 @@ import appeng.api.storage.data.IAEStack;
  */
 public class StorageBusInfo implements Renameable, Prioritizable {
 
+    public enum HeaderModeButtonKind {
+        NONE,
+        IO_ACCESS,
+        AUTO_PULL
+    }
+
     /**
      * Base number of config slots without any capacity upgrades.
      */
@@ -63,11 +69,13 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     private final String stackTypeId;
     private final int accessRestriction; // 0=NO_ACCESS, 1=READ, 2=WRITE, 3=READ_WRITE
     private final String customName; // Storage bus custom name (takes priority over connectedName)
+    private final String displayName;
     private final String namePrefixKey; // Optional translated prefix prepended to the resolved display name
     private final String connectedName;
     private final ItemStack connectedIcon;
     private final ItemStack busIcon;
     private final boolean connectedIconIsTarget;
+    private final boolean preferDisplayName;
     private final List<ItemStack> partition = new ArrayList<>();
     private final List<ItemStack> contents = new ArrayList<>();
     private final List<Long> contentCounts = new ArrayList<>();
@@ -75,6 +83,9 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     private final List<Integer> upgradeSlotIndices = new ArrayList<>();
     private final boolean supportsPriorityFlag;
     private final boolean supportsIOModeFlag;
+    private final boolean supportsRenameFlag;
+    private final boolean supportsAutoPullFlag;
+    private final boolean autoPullEnabledFlag;
     private final int upgradeSlotCount;
 
     public StorageBusInfo(NBTTagCompound nbt) {
@@ -91,26 +102,31 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         // Per-implementation slot parameters (optional; default to AE2 values)
         this.baseConfigSlots = nbt.hasKey("baseConfigSlots") ? nbt.getInteger("baseConfigSlots") : BASE_CONFIG_SLOTS;
         this.slotsPerUpgrade = nbt.hasKey("slotsPerUpgrade") ? nbt.getInteger("slotsPerUpgrade")
-            : SLOTS_PER_CAPACITY_UPGRADE;
+                : SLOTS_PER_CAPACITY_UPGRADE;
         this.maxConfigSlots = nbt.hasKey("maxConfigSlots") ? nbt.getInteger("maxConfigSlots") : MAX_CONFIG_SLOTS;
 
         // Capability flags provided by scanners
         this.supportsPriorityFlag = nbt.getBoolean("supportsPriority");
         this.supportsIOModeFlag = nbt.getBoolean("supportsIOMode");
+        this.supportsRenameFlag = !nbt.hasKey("supportsRename") || nbt.getBoolean("supportsRename");
+        this.supportsAutoPullFlag = nbt.getBoolean("supportsAutoPull");
+        this.autoPullEnabledFlag = nbt.getBoolean("autoPullEnabled");
 
         // Upgrade slot count from server; fallback to 5 if not provided
         this.upgradeSlotCount = nbt.hasKey("upgradeSlotCount") ? nbt.getInteger("upgradeSlotCount") : 5;
 
         // Storage bus custom name (takes priority over connected block name)
         this.customName = nbt.hasKey("customName") ? nbt.getString("customName") : null;
+        this.displayName = nbt.hasKey("displayName") ? nbt.getString("displayName") : null;
         this.namePrefixKey = nbt.hasKey("namePrefixKey") ? nbt.getString("namePrefixKey") : null;
+        this.preferDisplayName = nbt.getBoolean("preferDisplayName");
 
         // Connected inventory info
         this.connectedName = nbt.hasKey("connectedName") ? nbt.getString("connectedName") : null;
         this.connectedIcon = nbt.hasKey("connectedIcon") ? ItemStacks.load(nbt.getCompoundTag("connectedIcon")) : null;
         this.connectedIconIsTarget = nbt.getBoolean("connectedIconIsTarget");
         this.busIcon = nbt.hasKey("busIcon") ? ItemStacks.load(nbt.getCompoundTag("busIcon"))
-            : connectedIconIsTarget ? null : connectedIcon;
+                : connectedIconIsTarget ? null : connectedIcon;
 
         // Parse upgrade items for display
         if (nbt.hasKey("upgrades")) {
@@ -242,6 +258,25 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         return supportsIOModeFlag;
     }
 
+    public boolean supportsAutoPull() {
+        return supportsAutoPullFlag;
+    }
+
+    public boolean isAutoPullEnabled() {
+        return autoPullEnabledFlag;
+    }
+
+    public boolean hasHeaderModeButton() {
+        return getHeaderModeButtonKind() != HeaderModeButtonKind.NONE;
+    }
+
+    public HeaderModeButtonKind getHeaderModeButtonKind() {
+        if (supportsIOModeFlag) return HeaderModeButtonKind.IO_ACCESS;
+        if (supportsAutoPullFlag) return HeaderModeButtonKind.AUTO_PULL;
+
+        return HeaderModeButtonKind.NONE;
+    }
+
     /**
      * Check if this storage bus supports priority editing.
      */
@@ -294,6 +329,8 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     }
 
     public String getDisplayName() {
+        if (displayName != null && !displayName.isEmpty()) return displayName;
+
         return I18n.format(busRole.getNameKey());
     }
 
@@ -312,22 +349,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
      * Priority: custom name &gt; connected inventory name &gt; bus role name.
      */
     public String getLocalizedName() {
-        String baseName;
-
-        // Custom name takes highest priority
-        if (customName != null && !customName.isEmpty()) {
-            baseName = customName;
-
-            // Fall back to connected inventory name
-        } else if (!ItemStacks.isEmpty(connectedIcon)) {
-            baseName = connectedIcon.getDisplayName();
-
-        } else if (connectedName != null && !connectedName.isEmpty()) {
-            baseName = connectedName;
-
-        } else {
-            baseName = getDisplayName();
-        }
+        String baseName = getResolvedDisplayName();
 
         String prefixKey = getResolvedPrefixKey();
         if (prefixKey == null || prefixKey.isEmpty()) return baseName;
@@ -409,6 +431,8 @@ public class StorageBusInfo implements Renameable, Prioritizable {
      * Storage buses have 5 upgrade slots.
      */
     public boolean hasUpgradeSpace() {
+        if (upgradeSlotCount <= 0) return false;
+
         return upgrades.size() < getUpgradeSlotCount();
     }
 
@@ -450,6 +474,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
      * @return true if the upgrade might be insertable
      */
     public boolean canAcceptUpgrade(ItemStack upgradeStack) {
+        if (upgradeSlotCount <= 0) return false;
         if (ItemStacks.isEmpty(upgradeStack)) return false;
         if (!(upgradeStack.getItem() instanceof IUpgradeModule)) return false;
 
@@ -462,7 +487,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
 
     @Override
     public boolean isRenameable() {
-        return true;
+        return supportsRenameFlag;
     }
 
     @Override
@@ -495,6 +520,27 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         if (storageType.isEssentia()) return "essentia";
 
         return "item";
+    }
+
+    private String getResolvedDisplayName() {
+        if (customName != null && !customName.isEmpty()) return customName;
+
+        if (preferDisplayName) {
+            String ownDisplayName = getDisplayName();
+            if (ownDisplayName != null && !ownDisplayName.isEmpty()) return ownDisplayName;
+        }
+
+        String connectedDisplayName = getConnectedDisplayName();
+        if (connectedDisplayName != null && !connectedDisplayName.isEmpty()) return connectedDisplayName;
+
+        return getDisplayName();
+    }
+
+    private String getConnectedDisplayName() {
+        if (!ItemStacks.isEmpty(connectedIcon)) return connectedIcon.getDisplayName();
+        if (connectedName != null && !connectedName.isEmpty()) return connectedName;
+
+        return null;
     }
 
     private String getResolvedPrefixKey() {

@@ -25,7 +25,13 @@ public enum ButtonType {
     WRITE_ONLY(3, "gui.disk_terminal.button.write_only"),
 
     /** IO mode: read-write (bidirectional) */
-    READ_WRITE(4, "gui.disk_terminal.button.read_write");
+    READ_WRITE(4, "gui.disk_terminal.button.read_write"),
+
+    /** GT5 stocking pull is enabled */
+    AUTO_PULL_ON(2, "gui.disk_terminal.button.auto_pull_on"),
+
+    /** GT5 stocking pull is disabled */
+    AUTO_PULL_OFF(3, "gui.disk_terminal.button.auto_pull_off");
 
     private final int textureX;
     private final String tooltipKey;
