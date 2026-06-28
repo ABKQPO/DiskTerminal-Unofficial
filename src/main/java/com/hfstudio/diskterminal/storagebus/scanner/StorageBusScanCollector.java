@@ -3,11 +3,13 @@ package com.hfstudio.diskterminal.storagebus.scanner;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 
+import com.hfstudio.diskterminal.api.capability.ICapabilityProvider;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler.StorageBusTracker;
 import com.hfstudio.diskterminal.storagebus.model.StorageBusId;
@@ -38,13 +40,15 @@ public class StorageBusScanCollector {
             if (tracker.targetId == null || tracker.source == null) continue;
 
             activeIds.add(tracker.targetId);
-            if (registry.find(tracker.targetId)
-                .isEmpty()) {
-                registry.register(providerFactory.create(tracker.targetId, tracker.source));
+            Optional<ICapabilityProvider<?>> provider = registry.find(tracker.targetId);
+            if (provider.isEmpty()) {
+                ICapabilityProvider<StorageBusId> created = providerFactory.create(tracker.targetId, tracker.source);
+                registry.register(created);
+                provider = Optional.of(created);
             }
 
-            tracker.availableCapabilities = registry.find(tracker.targetId)
-                .map(provider -> provider.availableCapabilities())
+            tracker.availableCapabilities = provider
+                .map(capabilityProvider -> capabilityProvider.availableCapabilities())
                 .orElseGet(Collections::emptySet);
         }
         registry.retainOnly(activeIds);

@@ -1337,10 +1337,9 @@ public class StorageBusDataHandler {
                 && isSuperItemVariant) {
             int filterSlotCount = GTMachineReflectionHelper.invokeInt(tracker.storageBus, "getFilterSlotCountForGui")
                 .orElse(0);
-            return hasItemContents(
-                GTMachineReflectionHelper.readItemStackArrayField(tracker.storageBus, "mInventory")
-                    .map(inv -> slice(inv, filterSlotCount))
-                    .orElse(null));
+            return GTMachineReflectionHelper.readItemStackArrayField(tracker.storageBus, "mInventory")
+                .map(inv -> hasItemContents(inv, 0, filterSlotCount))
+                .orElse(false);
         }
 
         if (tracker.storageBus instanceof MTEHatchInputBusME inputBus) {
@@ -1389,10 +1388,9 @@ public class StorageBusDataHandler {
         if (GTMachineReflectionHelper.hasClassName(tracker.storageBus, GTMachineClassNames.SUPER_INPUT_BUS_ME)) {
             int filterSlotCount = GTMachineReflectionHelper.invokeInt(tracker.storageBus, "getFilterSlotCountForGui")
                 .orElse(0);
-            return hasItemContents(
-                GTMachineReflectionHelper.readItemStackArrayField(tracker.storageBus, "mInventory")
-                    .map(inv -> sliceFrom(inv, filterSlotCount, filterSlotCount))
-                    .orElse(null));
+            return GTMachineReflectionHelper.readItemStackArrayField(tracker.storageBus, "mInventory")
+                .map(inv -> hasItemContents(inv, filterSlotCount, filterSlotCount))
+                .orElse(false);
         }
 
         if (GTMachineReflectionHelper
@@ -1504,12 +1502,18 @@ public class StorageBusDataHandler {
     }
 
     private static boolean hasItemContents(ItemStack[] stacks) {
+        return hasItemContents(stacks, 0, stacks == null ? 0 : stacks.length);
+    }
+
+    private static boolean hasItemContents(ItemStack[] stacks, int offset, int length) {
         if (stacks == null) {
             return false;
         }
 
-        for (ItemStack stack : stacks) {
-            if (!ItemStacks.isEmpty(stack)) {
+        int start = Math.max(0, offset);
+        int end = Math.min(stacks.length, start + Math.max(0, length));
+        for (int i = start; i < end; i++) {
+            if (!ItemStacks.isEmpty(stacks[i])) {
                 return true;
             }
         }
@@ -1561,27 +1565,6 @@ public class StorageBusDataHandler {
         }
 
         return values[index];
-    }
-
-    private static ItemStack[] slice(ItemStack[] values, int length) {
-        if (values == null || length <= 0) {
-            return new ItemStack[0];
-        }
-
-        ItemStack[] copy = new ItemStack[Math.min(length, values.length)];
-        System.arraycopy(values, 0, copy, 0, copy.length);
-        return copy;
-    }
-
-    private static ItemStack[] sliceFrom(ItemStack[] values, int offset, int length) {
-        if (values == null || offset < 0 || length <= 0 || offset >= values.length) {
-            return new ItemStack[0];
-        }
-
-        int actualLength = Math.min(length, values.length - offset);
-        ItemStack[] copy = new ItemStack[actualLength];
-        System.arraycopy(values, offset, copy, 0, actualLength);
-        return copy;
     }
 
     private static GregTechItemSnapshot createGregTechItemSnapshot(MTEHatchInputBusME inputBus) {
