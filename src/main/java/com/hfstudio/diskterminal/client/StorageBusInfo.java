@@ -26,9 +26,9 @@ import com.hfstudio.diskterminal.util.PosUtil;
 
 import appeng.api.config.Upgrades;
 import appeng.api.implementations.items.IUpgradeModule;
+import appeng.api.storage.data.AEStackTypeRegistry;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IAEStackType;
-import appeng.api.storage.data.AEStackTypeRegistry;
 
 /**
  * Client-side data holder for storage bus information received from server.
@@ -102,7 +102,15 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     private final boolean supportsAutoPullFlag;
     private final boolean autoPullEnabledFlag;
     private final int upgradeSlotCount;
+    private final int installedCapacityUpgrades;
+    private final int availableConfigSlots;
+    private final boolean supportsItemStackType;
+    private final boolean supportsFluidStackType;
+    private final boolean supportsEssentiaStackType;
+    private final boolean hasMixedPartitionSlotTypes;
+    private final long totalItemCount;
     private final Set<String> availableCapabilities = new HashSet<>();
+    private int partitionCount;
 
     public StorageBusInfo(NBTTagCompound nbt) {
         this.id = nbt.getLong("id");
@@ -149,9 +157,10 @@ public class StorageBusInfo implements Renameable, Prioritizable {
 
         // Connected inventory info
         this.connectedName = nbt.hasKey("connectedName") ? nbt.getString("connectedName") : null;
-        this.connectedIcon = nbt.hasKey("connectedIcon") ? ItemStacks.load(nbt.getCompoundTag("connectedIcon")) : null;
+        this.connectedIcon = nbt.hasKey("connectedIcon") ? ItemStacks.loadDisplay(nbt.getCompoundTag("connectedIcon"))
+            : null;
         this.connectedIconIsTarget = nbt.getBoolean("connectedIconIsTarget");
-        this.busIcon = nbt.hasKey("busIcon") ? ItemStacks.load(nbt.getCompoundTag("busIcon"))
+        this.busIcon = nbt.hasKey("busIcon") ? ItemStacks.loadDisplay(nbt.getCompoundTag("busIcon"))
             : connectedIconIsTarget ? null : connectedIcon;
 
         // Parse upgrade items for display
@@ -169,7 +178,11 @@ public class StorageBusInfo implements Renameable, Prioritizable {
             }
         }
 
-        fillPartitionSlotTypeIds(getAvailableConfigSlots());
+        this.installedCapacityUpgrades = countInstalledUpgrades(Upgrades.CAPACITY);
+        this.availableConfigSlots = Math
+            .min(baseConfigSlots + slotsPerUpgrade * Math.max(0, installedCapacityUpgrades), maxConfigSlots);
+
+        fillPartitionSlotTypeIds(availableConfigSlots);
         if (nbt.hasKey("slotTypes")) {
             NBTTagList slotTypes = nbt.getTagList("slotTypes", Constants.NBT.TAG_STRING);
             for (int i = 0; i < slotTypes.tagCount(); i++) {
@@ -178,7 +191,12 @@ public class StorageBusInfo implements Renameable, Prioritizable {
             }
         }
 
-        fillPartitionSlots(getAvailableConfigSlots());
+        this.supportsItemStackType = containsStackType("item");
+        this.supportsFluidStackType = containsStackType("fluid");
+        this.supportsEssentiaStackType = containsStackType("essentia");
+        this.hasMixedPartitionSlotTypes = detectMixedPartitionSlotTypes();
+
+        fillPartitionSlots(availableConfigSlots);
 
         // Parse partition (config inventory)
         if (nbt.hasKey("partition")) {
@@ -193,10 +211,9 @@ public class StorageBusInfo implements Renameable, Prioritizable {
 
                 IAEStack<?> aeStack = AEStackUtil.readStackFromNBT(partNbt);
                 ItemStack stack = readClientDisplayStack(partNbt, aeStack, partTypeId);
-                if (ItemStacks.isEmpty(stack) && partNbt.hasKey("id")) stack = ItemStacks.load(partNbt);
+                if (ItemStacks.isEmpty(stack) && partNbt.hasKey("id")) stack = ItemStacks.loadDisplay(partNbt);
                 if (!ItemStacks.isEmpty(stack)) {
-                    fillPartitionSlots(slot + 1);
-                    this.partition.set(slot, stack);
+                    setPartitionSlot(slot, stack);
                     fillPartitionSlotTypeIds(slot + 1);
                     this.partitionSlotTypeIds.set(slot, partTypeId);
                 }
@@ -204,6 +221,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         }
 
         // Parse contents (inventory preview)
+        long contentTotal = 0;
         if (nbt.hasKey("contents")) {
             NBTTagList contentList = nbt.getTagList("contents", Constants.NBT.TAG_COMPOUND);
             for (int i = 0; i < contentList.tagCount(); i++) {
@@ -212,7 +230,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
                     stackNbt.hasKey("stackTypeId") ? stackNbt.getString("stackTypeId") : this.stackTypeId);
                 IAEStack<?> aeStack = AEStackUtil.readStackFromNBT(stackNbt);
                 ItemStack stack = readClientDisplayStack(stackNbt, aeStack, contentTypeId);
-                if (ItemStacks.isEmpty(stack)) stack = ItemStacks.load(stackNbt);
+                if (ItemStacks.isEmpty(stack)) stack = ItemStacks.loadDisplay(stackNbt);
 
                 long count;
                 if (stackNbt.hasKey("Cnt")) {
@@ -224,12 +242,15 @@ public class StorageBusInfo implements Renameable, Prioritizable {
                 this.contents.add(stack);
                 this.contentCounts.add(count);
                 this.contentTypeIds.add(contentTypeId);
+                contentTotal += count;
             }
         }
 
         while (this.contentTypeIds.size() < this.contents.size()) {
             this.contentTypeIds.add(this.stackTypeId);
         }
+
+        this.totalItemCount = contentTotal;
     }
 
     public void setParentStorageId(long parentStorageId) {
@@ -280,9 +301,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
      * Essentia buses always have 63 slots (they don't use capacity upgrades).
      */
     public int getAvailableConfigSlots() {
-        int raw = baseConfigSlots + slotsPerUpgrade * Math.max(0, getInstalledUpgrades(Upgrades.CAPACITY));
-
-        return Math.min(raw, maxConfigSlots);
+        return availableConfigSlots;
     }
 
     public StorageType getStorageType() {
@@ -298,15 +317,15 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     }
 
     public boolean isFluid() {
-        return supportsStackType("fluid");
+        return supportsFluidStackType;
     }
 
     public boolean isEssentia() {
-        return supportsStackType("essentia");
+        return supportsEssentiaStackType;
     }
 
     public boolean isItem() {
-        return supportsStackType("item");
+        return supportsItemStackType;
     }
 
     /**
@@ -359,14 +378,13 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     }
 
     public boolean applyOptimisticFilterSet(int slot, ItemStack stack, String stackTypeId) {
-        if (slot < 0 || slot >= getAvailableConfigSlots() || ItemStacks.isEmpty(stack)) return false;
+        if (slot < 0 || slot >= availableConfigSlots || ItemStacks.isEmpty(stack)) return false;
 
         String normalizedType = normalizeStackTypeId(stackTypeId);
         if (!normalizedType.equals(getPartitionSlotTypeId(slot))) return false;
 
-        fillPartitionSlots(slot + 1);
         ItemStack displayStack = createOptimisticFilterDisplayStack(stack, normalizedType);
-        this.partition.set(slot, displayStack);
+        setPartitionSlot(slot, displayStack);
         return true;
     }
 
@@ -374,20 +392,20 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         if (slot < 0 || slot >= this.partition.size()) return false;
         if (ItemStacks.isEmpty(this.partition.get(slot))) return false;
 
-        this.partition.set(slot, null);
+        setPartitionSlot(slot, null);
         return true;
     }
 
     public boolean applyOptimisticFilterClearAll() {
-        boolean changed = false;
+        if (partitionCount <= 0) return false;
+
         for (int i = 0; i < this.partition.size(); i++) {
             if (ItemStacks.isEmpty(this.partition.get(i))) continue;
 
-            this.partition.set(i, null);
-            changed = true;
+            setPartitionSlot(i, null);
         }
 
-        return changed;
+        return true;
     }
 
     public boolean applyOptimisticFilterToggle(ItemStack stack, String stackTypeId) {
@@ -396,7 +414,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
         String normalizedType = normalizeStackTypeId(stackTypeId);
         int existingSlot = findPartitionSlot(stack, normalizedType);
         if (existingSlot >= 0) {
-            this.partition.set(existingSlot, null);
+            setPartitionSlot(existingSlot, null);
             return true;
         }
 
@@ -437,28 +455,16 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     }
 
     public boolean hasMixedPartitionSlotTypes() {
-        String first = null;
-        for (String slotTypeId : partitionSlotTypeIds) {
-            if (first == null) {
-                first = slotTypeId;
-                continue;
-            }
-
-            if (!first.equals(slotTypeId)) return true;
-        }
-
-        return false;
+        return hasMixedPartitionSlotTypes;
     }
 
     public boolean supportsStackType(String typeId) {
         String normalized = normalizeStackTypeId(typeId);
-        for (String slotTypeId : partitionSlotTypeIds) {
-            if (normalized.equals(slotTypeId)) return true;
-        }
-
-        if (!partitionSlotTypeIds.isEmpty()) return false;
-
-        return normalized.equals(stackTypeId);
+        return switch (normalized) {
+            case "fluid" -> supportsFluidStackType;
+            case "essentia" -> supportsEssentiaStackType;
+            default -> supportsItemStackType;
+        };
     }
 
     public String resolvePreferredStackTypeId(ItemStack stack) {
@@ -591,23 +597,14 @@ public class StorageBusInfo implements Renameable, Prioritizable {
      * Check if this storage bus has any partition configured.
      */
     public boolean hasPartition() {
-        for (ItemStack stack : partition) {
-            if (!ItemStacks.isEmpty(stack)) return true;
-        }
-
-        return false;
+        return partitionCount > 0;
     }
 
     /**
      * Get count of non-empty partition slots.
      */
     public int getPartitionCount() {
-        int count = 0;
-        for (ItemStack stack : partition) {
-            if (!ItemStacks.isEmpty(stack)) count++;
-        }
-
-        return count;
+        return partitionCount;
     }
 
     /**
@@ -621,10 +618,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
      * Get total item count in the connected inventory.
      */
     public long getTotalItemCount() {
-        long total = 0;
-        for (Long count : contentCounts) total += count;
-
-        return total;
+        return totalItemCount;
     }
 
     /**
@@ -655,16 +649,9 @@ public class StorageBusInfo implements Renameable, Prioritizable {
      */
     public int getInstalledUpgrades(Upgrades upgradeType) {
         if (upgradeType == null) return 0;
+        if (upgradeType == Upgrades.CAPACITY) return installedCapacityUpgrades;
 
-        int count = 0;
-        for (ItemStack upgrade : upgrades) {
-            if (upgrade.getItem() instanceof IUpgradeModule) {
-                Upgrades type = ((IUpgradeModule) upgrade.getItem()).getType(upgrade);
-                if (type == upgradeType) count++;
-            }
-        }
-
-        return count;
+        return countInstalledUpgrades(upgradeType);
     }
 
     /**
@@ -774,13 +761,61 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     }
 
     private int findFirstEmptyPartitionSlot(String stackTypeId) {
-        int availableSlots = getAvailableConfigSlots();
-        for (int i = 0; i < availableSlots; i++) {
+        for (int i = 0; i < availableConfigSlots; i++) {
             if (!stackTypeId.equals(getPartitionSlotTypeId(i))) continue;
             if (i >= this.partition.size() || ItemStacks.isEmpty(this.partition.get(i))) return i;
         }
 
         return -1;
+    }
+
+    private int countInstalledUpgrades(Upgrades upgradeType) {
+        int count = 0;
+        for (ItemStack upgrade : upgrades) {
+            if (!(upgrade.getItem() instanceof IUpgradeModule)) continue;
+
+            Upgrades type = ((IUpgradeModule) upgrade.getItem()).getType(upgrade);
+            if (type == upgradeType) count++;
+        }
+
+        return count;
+    }
+
+    private boolean containsStackType(String typeId) {
+        String normalizedType = normalizeStackTypeId(typeId);
+        for (String slotTypeId : partitionSlotTypeIds) {
+            if (normalizedType.equals(slotTypeId)) return true;
+        }
+
+        return partitionSlotTypeIds.isEmpty() && normalizedType.equals(stackTypeId);
+    }
+
+    private boolean detectMixedPartitionSlotTypes() {
+        String first = null;
+        for (String slotTypeId : partitionSlotTypeIds) {
+            if (first == null) {
+                first = slotTypeId;
+                continue;
+            }
+
+            if (!first.equals(slotTypeId)) return true;
+        }
+
+        return false;
+    }
+
+    private void setPartitionSlot(int slot, ItemStack stack) {
+        fillPartitionSlots(slot + 1);
+
+        boolean wasEmpty = ItemStacks.isEmpty(this.partition.get(slot));
+        boolean isEmpty = ItemStacks.isEmpty(stack);
+        this.partition.set(slot, stack);
+
+        if (wasEmpty && !isEmpty) {
+            partitionCount++;
+        } else if (!wasEmpty && isEmpty) {
+            partitionCount--;
+        }
     }
 
 }

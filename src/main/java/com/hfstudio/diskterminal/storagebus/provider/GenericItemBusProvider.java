@@ -15,8 +15,9 @@ import com.hfstudio.diskterminal.api.capability.IFilterCapability;
 import com.hfstudio.diskterminal.api.capability.IRefreshCapability;
 import com.hfstudio.diskterminal.api.capability.IRenameCapability;
 import com.hfstudio.diskterminal.api.snapshot.FilterType;
+import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler;
 import com.hfstudio.diskterminal.storagebus.capability.filter.AEStorageBusFilterCapability;
-import com.hfstudio.diskterminal.storagebus.capability.refresh.TileRefreshCapability;
+import com.hfstudio.diskterminal.storagebus.capability.refresh.AEPartRefreshCapability;
 import com.hfstudio.diskterminal.storagebus.capability.rename.AEStorageBusRenameCapability;
 import com.hfstudio.diskterminal.storagebus.model.StorageBusId;
 import com.hfstudio.diskterminal.storagebus.runtime.AEStorageBusHandle;
@@ -26,6 +27,7 @@ import com.hfstudio.diskterminal.storagebus.runtime.StorageBusResolver;
 
 import appeng.api.config.Upgrades;
 import appeng.api.parts.IPart;
+import appeng.api.parts.IPartHost;
 import appeng.api.storage.StorageName;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IAEStackType;
@@ -60,6 +62,7 @@ public class GenericItemBusProvider implements ICapabilityProvider<StorageBusId>
         if (resolved.isEmpty() || !(resolved.get() instanceof AEStorageBusHandle handle)) return Optional.empty();
 
         IPart part = handle.getPart();
+        IPartHost host = handle.getHost();
         if (!(part instanceof PartSharedItemBus<?>bus)) return Optional.empty();
 
         if (capabilityType == IRenameCapability.class) {
@@ -67,7 +70,7 @@ public class GenericItemBusProvider implements ICapabilityProvider<StorageBusId>
         }
 
         if (capabilityType == IRefreshCapability.class) {
-            return Optional.of((T) new TileRefreshCapability(handle.getHostTile()));
+            return Optional.of((T) new AEPartRefreshCapability(part, host));
         }
 
         if (capabilityType == IFilterCapability.class) {
@@ -111,7 +114,7 @@ public class GenericItemBusProvider implements ICapabilityProvider<StorageBusId>
     }
 
     private List<IAEStack<?>> collectContents(PartSharedItemBus<?> bus) {
-        return Collections.emptyList();
+        return StorageBusDataHandler.collectSharedBusPreviewContents(bus, Integer.MAX_VALUE);
     }
 
     private FilterType filterTypeOf(IAEStackType<?> stackType) {

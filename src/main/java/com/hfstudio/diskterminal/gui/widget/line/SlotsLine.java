@@ -304,13 +304,13 @@ public class SlotsLine extends AbstractLine {
 
             renderItemStack(stack, slotX, y);
 
-            if (contentTypeProvider != null && ComparisonUtils.isInPartition(
-                stack,
-                contentTypeProvider.apply(absIndex),
-                partition,
-                slotTypeProvider != null ? slotTypeProvider::apply : ignored -> "item")) {
-                drawPartitionIndicators[i] = true;
-            }
+            drawPartitionIndicators[i] = contentTypeProvider != null
+                ? ComparisonUtils.isInPartition(
+                    stack,
+                    contentTypeProvider.apply(absIndex),
+                    partition,
+                    slotTypeProvider != null ? slotTypeProvider : ignored -> "item")
+                : ComparisonUtils.isInPartition(stack, partition);
 
             if (mouseX >= slotX && mouseX < slotX + SIZE && mouseY >= y && mouseY < y + SIZE) {
                 hoveredLocalIndex = i;

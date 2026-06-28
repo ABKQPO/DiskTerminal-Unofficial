@@ -12,6 +12,7 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import thaumicenergistics.common.parts.PartEssentiaExportBus;
 import thaumicenergistics.common.parts.PartEssentiaImportBus;
+import thaumicenergistics.common.parts.PartEssentiaStorageBus;
 
 public class ThaumicEnergisticsBusScanner extends AbstractStorageBusScanner {
 
@@ -33,6 +34,17 @@ public class ThaumicEnergisticsBusScanner extends AbstractStorageBusScanner {
     public void scanStorageBuses(IGrid grid, NBTTagList out, Map<Long, StorageBusTracker> trackerMap,
         int contentLimit) {
         if (grid == null) return;
+
+        for (IGridNode node : grid.getMachines(PartEssentiaStorageBus.class)) {
+            if (!node.isActive()) continue;
+
+            appendStorageBus(
+                (PartEssentiaStorageBus) node.getMachine(),
+                BusRole.STORAGE,
+                out,
+                contentLimit,
+                trackerMap);
+        }
 
         for (IGridNode node : grid.getMachines(PartEssentiaImportBus.class)) {
             if (!node.isActive()) continue;

@@ -31,6 +31,6 @@ public class AEStorageBusResolver implements StorageBusResolver {
         IPart part = host.getPart(side);
         if (part == null) return Optional.empty();
 
-        return Optional.of(new AEStorageBusHandle(id, part, tile));
+        return Optional.of(new AEStorageBusHandle(id, part, host, tile));
     }
 }

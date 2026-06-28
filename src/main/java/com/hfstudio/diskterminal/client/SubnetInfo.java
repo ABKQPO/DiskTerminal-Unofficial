@@ -57,8 +57,9 @@ public class SubnetInfo implements Renameable {
             this.dimension = nbt.getInteger("dim");
             this.side = EnumFacing.getFront(nbt.getInteger("side"));
             this.isOutbound = nbt.getBoolean("outbound");
-            this.localIcon = nbt.hasKey("localIcon") ? ItemStacks.load(nbt.getCompoundTag("localIcon")) : null;
-            this.remoteIcon = nbt.hasKey("remoteIcon") ? ItemStacks.load(nbt.getCompoundTag("remoteIcon")) : null;
+            this.localIcon = nbt.hasKey("localIcon") ? ItemStacks.loadDisplay(nbt.getCompoundTag("localIcon")) : null;
+            this.remoteIcon = nbt.hasKey("remoteIcon") ? ItemStacks.loadDisplay(nbt.getCompoundTag("remoteIcon"))
+                : null;
             this.stackTypeId = nbt.hasKey("stackType") ? nbt.getString("stackType") : "item";
 
             this.hasContentKey = nbt.hasKey("content");
@@ -524,7 +525,7 @@ public class SubnetInfo implements Renameable {
     private static ItemStack readDisplayStack(NBTTagCompound stackNbt) {
         IAEStack<?> aeStack = AEStackUtil.readStackFromNBT(stackNbt);
         ItemStack stack = AEStackUtil.getDisplayStack(aeStack);
-        if (ItemStacks.isEmpty(stack)) stack = ItemStacks.load(stackNbt);
+        if (ItemStacks.isEmpty(stack)) stack = ItemStacks.loadDisplay(stackNbt);
 
         return stack;
     }

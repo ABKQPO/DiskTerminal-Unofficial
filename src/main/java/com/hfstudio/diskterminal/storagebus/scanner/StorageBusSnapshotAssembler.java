@@ -1,7 +1,6 @@
 package com.hfstudio.diskterminal.storagebus.scanner;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -12,7 +11,6 @@ import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.util.ForgeDirection;
 
-import com.hfstudio.diskterminal.api.capability.ICapabilityProvider;
 import com.hfstudio.diskterminal.api.snapshot.FilterSnapshot;
 import com.hfstudio.diskterminal.api.snapshot.FilterType;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler.StorageBusTracker;
@@ -51,7 +49,7 @@ public class StorageBusSnapshotAssembler {
         StorageBusId id = tracker.targetId;
         if (id == null) return null;
 
-        Set<ResourceLocation> capabilities = resolveCapabilities(id, registry);
+        Set<ResourceLocation> capabilities = tracker.availableCapabilities;
         writeCapabilities(busData, capabilities);
 
         StorageBusDescriptor descriptor = new SimpleStorageBusDescriptor(
@@ -74,12 +72,6 @@ public class StorageBusSnapshotAssembler {
             new SimpleCapabilityMetadata(capabilities));
 
         return new StorageBusScanEntry(descriptor, snapshot);
-    }
-
-    private Set<ResourceLocation> resolveCapabilities(StorageBusId id, StorageBusCapabilityProviderRegistry registry) {
-        return registry.find(id)
-            .map(ICapabilityProvider::availableCapabilities)
-            .orElseGet(Collections::emptySet);
     }
 
     private ItemStack readIcon(NBTTagCompound busData) {

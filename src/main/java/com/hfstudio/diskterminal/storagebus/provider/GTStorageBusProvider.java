@@ -15,7 +15,7 @@ import com.hfstudio.diskterminal.api.capability.IRefreshCapability;
 import com.hfstudio.diskterminal.api.capability.IRenameCapability;
 import com.hfstudio.diskterminal.storagebus.capability.filter.GTFluidFilterCapability;
 import com.hfstudio.diskterminal.storagebus.capability.filter.GTItemFilterCapability;
-import com.hfstudio.diskterminal.storagebus.capability.refresh.TileRefreshCapability;
+import com.hfstudio.diskterminal.storagebus.capability.refresh.GTMachineRefreshCapability;
 import com.hfstudio.diskterminal.storagebus.capability.rename.GTRenameCapability;
 import com.hfstudio.diskterminal.storagebus.model.StorageBusId;
 import com.hfstudio.diskterminal.storagebus.runtime.GTStorageBusHandle;
@@ -61,7 +61,7 @@ public class GTStorageBusProvider implements ICapabilityProvider<StorageBusId> {
         }
 
         if (capabilityType == IRefreshCapability.class) {
-            return Optional.of((T) new TileRefreshCapability(hostTile));
+            return Optional.of((T) new GTMachineRefreshCapability(meta, hostTile));
         }
 
         if (capabilityType == IFilterCapability.class) {

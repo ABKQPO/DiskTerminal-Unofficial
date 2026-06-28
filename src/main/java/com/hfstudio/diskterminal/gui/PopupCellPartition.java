@@ -26,13 +26,12 @@ import com.hfstudio.diskterminal.util.ItemStacks;
 
 /**
  * Popup overlay for editing cell partition.
- * Shows 63 slots, click to remove, NEI drag to add.
+ * Shows the cell's actual editable partition slots, click to remove, NEI drag to add.
  */
 public class PopupCellPartition extends Gui {
 
     private static final int SLOTS_PER_ROW = GuiConstants.POPUP_SLOTS_PER_ROW;
     private static final int MAX_PARTITION_SLOTS = 63;
-    private static final int MAX_ROWS = (MAX_PARTITION_SLOTS + SLOTS_PER_ROW - 1) / SLOTS_PER_ROW;
     private static final int SLOT_SIZE = GuiConstants.SLOT_SIZE;
     private static final int PADDING = GuiConstants.PADDING;
     private static final int HEADER_HEIGHT = GuiConstants.POPUP_HEADER_HEIGHT;
@@ -45,6 +44,8 @@ public class PopupCellPartition extends Gui {
     private final int width;
     private final int height;
     private final int slotOffsetX;
+    private final int editableSlotCount;
+    private final int visibleRowCount;
     private final int screenWidth;
     private final int screenHeight;
 
@@ -61,10 +62,12 @@ public class PopupCellPartition extends Gui {
     public PopupCellPartition(GuiScreen parent, CellInfo cell, int mouseX, int mouseY) {
         this.parent = parent;
         this.cell = cell;
+        this.editableSlotCount = Math.max(0, Math.min(MAX_PARTITION_SLOTS, cell.getConfigSlotCount()));
+        this.visibleRowCount = Math.max(1, (this.editableSlotCount + SLOTS_PER_ROW - 1) / SLOTS_PER_ROW);
 
         // Copy partition for editing
         this.editablePartition = new ArrayList<>(cell.getPartition());
-        while (editablePartition.size() < MAX_PARTITION_SLOTS) editablePartition.add(null);
+        while (editablePartition.size() < editableSlotCount) editablePartition.add(null);
 
         // Calculate width based on title, slots, or hint, whichever is wider
         Minecraft mc = Minecraft.getMinecraft();
@@ -75,7 +78,7 @@ public class PopupCellPartition extends Gui {
         int hintWidth = mc.fontRenderer.getStringWidth(hint) + PADDING * 2;
         int slotsWidth = SLOTS_PER_ROW * SLOT_SIZE + PADDING * 2;
         this.width = Math.max(Math.max(titleWidth, slotsWidth), hintWidth);
-        this.height = HEADER_HEIGHT + MAX_ROWS * SLOT_SIZE + FOOTER_HEIGHT;
+        this.height = HEADER_HEIGHT + visibleRowCount * SLOT_SIZE + FOOTER_HEIGHT;
 
         // Calculate slot area offset to center slots within modal
         int slotAreaWidth = SLOTS_PER_ROW * SLOT_SIZE;
@@ -116,7 +119,7 @@ public class PopupCellPartition extends Gui {
         // Draw partition slots
         int slotStartY = y + HEADER_HEIGHT;
 
-        for (int i = 0; i < MAX_PARTITION_SLOTS; i++) {
+        for (int i = 0; i < editableSlotCount; i++) {
             int slotX = x + slotOffsetX + (i % SLOTS_PER_ROW) * SLOT_SIZE;
             int slotY = slotStartY + (i / SLOTS_PER_ROW) * SLOT_SIZE;
 
@@ -179,12 +182,12 @@ public class PopupCellPartition extends Gui {
         int relX = mouseX - x - slotOffsetX;
         int relY = mouseY - slotStartY;
 
-        if (relX >= 0 && relX < SLOTS_PER_ROW * SLOT_SIZE && relY >= 0 && relY < MAX_ROWS * SLOT_SIZE) {
+        if (relX >= 0 && relX < SLOTS_PER_ROW * SLOT_SIZE && relY >= 0 && relY < visibleRowCount * SLOT_SIZE) {
             int slotCol = relX / SLOT_SIZE;
             int slotRow = relY / SLOT_SIZE;
             int slotIndex = slotRow * SLOTS_PER_ROW + slotCol;
 
-            if (slotIndex < MAX_PARTITION_SLOTS && slotIndex < editablePartition.size()) {
+            if (slotIndex < editableSlotCount && slotIndex < editablePartition.size()) {
                 ItemStack heldStack = Minecraft.getMinecraft().thePlayer.inventory.getItemStack();
                 Object replacementIngredient = getReplacementIngredient(heldStack);
                 ItemStack replacement = convertIngredientForCell(replacementIngredient);
@@ -247,7 +250,7 @@ public class PopupCellPartition extends Gui {
      * Handle NEI ghost ingredient drop.
      */
     public boolean handleGhostDrop(int slotIndex, Object ingredient) {
-        if (slotIndex < 0 || slotIndex >= MAX_PARTITION_SLOTS) return false;
+        if (slotIndex < 0 || slotIndex >= editableSlotCount) return false;
 
         ItemStack stack = convertIngredientForCell(ingredient);
 
@@ -300,7 +303,7 @@ public class PopupCellPartition extends Gui {
         List<GhostTarget<?>> targets = new ArrayList<>();
         int slotStartY = y + HEADER_HEIGHT;
 
-        for (int i = 0; i < MAX_PARTITION_SLOTS; i++) {
+        for (int i = 0; i < editableSlotCount; i++) {
             final int slotIndex = i;
             int slotX = x + slotOffsetX + (i % SLOTS_PER_ROW) * SLOT_SIZE;
             int slotY = slotStartY + (i / SLOTS_PER_ROW) * SLOT_SIZE;

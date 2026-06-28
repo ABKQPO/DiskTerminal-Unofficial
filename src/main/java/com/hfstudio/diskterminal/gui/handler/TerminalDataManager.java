@@ -963,10 +963,10 @@ public class TerminalDataManager {
     private int getHighestNonEmptyPartitionSlot(CellInfo cell, int slotsPerRow) {
         List<ItemStack> partition = cell.getPartition();
 
-        // Cap at cell's actual type limit (e.g. 8 for some custom cells) to avoid
+        // Cap at the cell's editable config slots to avoid
         // generating empty continuation rows beyond what the cell can hold.
-        int maxTypes = (int) cell.getTotalTypes();
-        int effectiveMax = Math.min(MAX_PARTITION_SLOTS, maxTypes);
+        int maxSlots = cell.getConfigSlotCount();
+        int effectiveMax = Math.min(MAX_PARTITION_SLOTS, maxSlots);
         int highest = -1;
 
         for (int i = 0; i < Math.min(partition.size(), effectiveMax); i++) {

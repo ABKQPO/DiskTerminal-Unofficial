@@ -34,6 +34,7 @@ public class CellInfo implements Renameable {
     private final long totalBytes;
     private final long usedTypes;
     private final long totalTypes;
+    private final int configSlotCount;
     private final long storedItemCount;
     private final List<ItemStack> partition = new ArrayList<>();
     private final List<ItemStack> contents = new ArrayList<>();
@@ -54,6 +55,7 @@ public class CellInfo implements Renameable {
         this.totalBytes = nbt.getLong("totalBytes");
         this.usedTypes = nbt.getLong("usedTypes");
         this.totalTypes = nbt.getLong("totalTypes");
+        this.configSlotCount = nbt.hasKey("configSlotCount") ? nbt.getInteger("configSlotCount") : (int) totalTypes;
         this.storedItemCount = nbt.getLong("storedItemCount");
 
         // Parse upgrade items for display
@@ -84,7 +86,7 @@ public class CellInfo implements Renameable {
 
                 IAEStack<?> aeStack = AEStackUtil.readStackFromNBT(partNbt);
                 ItemStack stack = AEStackUtil.getDisplayStack(aeStack);
-                if (ItemStacks.isEmpty(stack) && partNbt.hasKey("id")) stack = ItemStacks.load(partNbt);
+                if (ItemStacks.isEmpty(stack) && partNbt.hasKey("id")) stack = ItemStacks.loadDisplay(partNbt);
                 if (!ItemStacks.isEmpty(stack)) {
                     fillPartitionSlots(slot + 1);
                     this.partition.set(slot, stack);
@@ -98,7 +100,7 @@ public class CellInfo implements Renameable {
                 NBTTagCompound stackNbt = contentList.getCompoundTagAt(i);
                 IAEStack<?> aeStack = AEStackUtil.readStackFromNBT(stackNbt);
                 ItemStack stack = AEStackUtil.getDisplayStack(aeStack);
-                if (ItemStacks.isEmpty(stack)) stack = ItemStacks.load(stackNbt);
+                if (ItemStacks.isEmpty(stack)) stack = ItemStacks.loadDisplay(stackNbt);
 
                 long count;
                 if (stackNbt.hasKey("Cnt")) {
@@ -167,6 +169,10 @@ public class CellInfo implements Renameable {
 
     public long getTotalTypes() {
         return totalTypes;
+    }
+
+    public int getConfigSlotCount() {
+        return configSlotCount;
     }
 
     public long getStoredItemCount() {

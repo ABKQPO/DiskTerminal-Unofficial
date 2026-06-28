@@ -54,17 +54,19 @@ public class StockReplenisherScanner implements IStorageBusScanner {
             Object machine = node.getMachine();
             if (!(machine instanceof TileSuperStockReplenisher tile)) continue;
 
-            appendConfig(tile, out, trackerMap);
+            appendConfig(tile, out, trackerMap, contentLimit);
         }
     }
 
-    private void appendConfig(TileSuperStockReplenisher tile, NBTTagList out, Map<Long, StorageBusTracker> trackerMap) {
+    private void appendConfig(TileSuperStockReplenisher tile, NBTTagList out, Map<Long, StorageBusTracker> trackerMap,
+        int contentLimit) {
         StorageBusId targetId = StorageBusId.of(tile, SIDE_ORDINAL, BusRole.STORAGE, StorageType.ITEM);
         long busId = targetId.getLegacyKey();
 
         ItemStack icon = iconFor(tile);
         String displayName = icon == null ? "" : icon.getDisplayName();
-        NBTTagCompound busData = StorageBusDataHandler.createMixedStockReplenisherData(tile, icon, displayName, busId);
+        NBTTagCompound busData = StorageBusDataHandler
+            .createMixedStockReplenisherData(tile, icon, displayName, busId, contentLimit);
         out.appendTag(busData);
 
         trackerMap.put(

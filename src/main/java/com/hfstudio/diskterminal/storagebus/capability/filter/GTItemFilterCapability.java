@@ -179,10 +179,10 @@ public class GTItemFilterCapability implements IFilterCapability {
             if (index < 0 || index >= configs.length) continue;
 
             if (slotTag.hasKey("config")) {
-                configs[index] = ItemStack.loadItemStackFromNBT(slotTag.getCompoundTag("config"));
+                configs[index] = ItemStacks.loadDisplay(slotTag.getCompoundTag("config"));
             }
             if (slotTag.hasKey("extracted")) {
-                extracted[index] = ItemStack.loadItemStackFromNBT(slotTag.getCompoundTag("extracted"));
+                extracted[index] = ItemStacks.loadDisplay(slotTag.getCompoundTag("extracted"));
             }
         }
     }

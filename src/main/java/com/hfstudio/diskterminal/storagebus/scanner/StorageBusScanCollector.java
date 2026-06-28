@@ -1,65 +1,64 @@
 package com.hfstudio.diskterminal.storagebus.scanner;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 
-import com.hfstudio.diskterminal.api.scanner.ScanResult;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler;
 import com.hfstudio.diskterminal.container.handler.StorageBusDataHandler.StorageBusTracker;
-import com.hfstudio.diskterminal.storagebus.model.SimpleScanResult;
-import com.hfstudio.diskterminal.storagebus.model.StorageBusScanEntry;
+import com.hfstudio.diskterminal.storagebus.model.StorageBusId;
 import com.hfstudio.diskterminal.storagebus.runtime.StorageBusCapabilityProviderRegistry;
 import com.hfstudio.diskterminal.storagebus.runtime.StorageBusProviderFactory;
 
 import appeng.api.networking.IGrid;
 
 /**
- * Collects scanner output into bound {@link StorageBusScanEntry} entries and registers a capability
- * provider per discovered bus. Scanners only discover objects and produce read-model NBT plus a
- * tracker carrying the bus's stable identity and source family; provider creation, registration and
- * descriptor/snapshot assembly belong here, in the runtime layer.
+ * Collects storage bus read-model NBT and rebuilds the capability-provider registry. Scanners only
+ * discover objects and emit NBT plus a tracker carrying the bus's stable identity and source
+ * family; provider creation and registration belong here, in the runtime layer.
  */
 public class StorageBusScanCollector {
 
     private final StorageBusProviderFactory providerFactory = new StorageBusProviderFactory();
-    private final StorageBusSnapshotAssembler assembler = new StorageBusSnapshotAssembler();
 
     /**
-     * Holds both products of a scan: the read-model NBT sent to the client and the assembled entries.
+     * Run all registered scanners, populate the tracker map and bus NBT, and rebuild the provider
+     * registry.
      */
-    public record CollectResult(NBTTagList busList, ScanResult<StorageBusScanEntry> entries) {}
-
-    /**
-     * Run all registered scanners, populate the tracker map and bus NBT, rebuild the provider registry,
-     * and assemble one {@link StorageBusScanEntry} per discovered bus.
-     */
-    public CollectResult collect(IGrid grid, Map<Long, StorageBusTracker> trackerMap,
+    public NBTTagList collect(IGrid grid, Map<Long, StorageBusTracker> trackerMap,
         StorageBusCapabilityProviderRegistry registry, int contentLimit) {
         NBTTagList busList = StorageBusDataHandler.collectStorageBuses(grid, trackerMap, contentLimit);
+        Set<StorageBusId> activeIds = new LinkedHashSet<>();
 
-        registry.clear();
         for (StorageBusTracker tracker : trackerMap.values()) {
             if (tracker.targetId == null || tracker.source == null) continue;
 
-            registry.register(providerFactory.create(tracker.targetId, tracker.source));
-        }
+            activeIds.add(tracker.targetId);
+            if (registry.find(tracker.targetId)
+                .isEmpty()) {
+                registry.register(providerFactory.create(tracker.targetId, tracker.source));
+            }
 
-        List<StorageBusScanEntry> entries = new ArrayList<>();
+            tracker.availableCapabilities = registry.find(tracker.targetId)
+                .map(provider -> provider.availableCapabilities())
+                .orElseGet(Collections::emptySet);
+        }
+        registry.retainOnly(activeIds);
+
         for (int i = 0; i < busList.tagCount(); i++) {
             NBTTagCompound busData = busList.getCompoundTagAt(i);
             StorageBusTracker tracker = trackerMap.get(busData.getLong("id"));
             if (tracker == null) continue;
-            tracker.hasConnectedContents = busData.hasKey("contents") && busData.getTagList("contents", 10)
-                .tagCount() > 0;
-
-            StorageBusScanEntry entry = assembler.assemble(tracker, busData, registry);
-            if (entry != null) entries.add(entry);
+            tracker.hasPartitionConfigured = StorageBusDataHandler.readAndStripPartitionSummary(busData);
+            tracker.hasConnectedContents = StorageBusDataHandler.readAndStripContentSummary(busData);
+            tracker.partitionSummaryKnown = true;
+            tracker.contentSummaryKnown = true;
         }
 
-        return new CollectResult(busList, new SimpleScanResult<>(entries));
+        return busList;
     }
 }

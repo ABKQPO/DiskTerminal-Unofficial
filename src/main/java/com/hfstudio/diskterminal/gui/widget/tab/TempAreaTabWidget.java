@@ -54,7 +54,7 @@ import appeng.api.AEApi;
  * and partition rows for the inserted cell.
  *
  * <h3>Line list structure</h3>
- * 
+ *
  * <pre>
  * TempCellInfo → TempAreaHeader (cell slot + Send button)
  * ├─ CellContentRow (content, first) → SlotsLine + DO_PARTITION button
@@ -483,14 +483,14 @@ public class TempAreaTabWidget extends AbstractTabWidget {
             line.setCountProvider(() -> cell::getContentCount);
         } else {
             line.setItemsSupplier(cell::getPartition);
-            line.setMaxSlots((int) cell.getTotalTypes());
+            line.setMaxSlots(cell.getConfigSlotCount());
         }
 
         line.setSlotClickCallback((slotIndex, mouseButton) -> {
             if (mouseButton != 0 || tempSlotIndex < 0) return;
 
-            // Defensive: verify slotIndex is within the cell's actual type limit
-            if (slotIndex < 0 || slotIndex >= cell.getTotalTypes()) return;
+            // Defensive: verify slotIndex is within the cell's editable config slots
+            if (slotIndex < 0 || slotIndex >= cell.getConfigSlotCount()) return;
 
             if (mode == SlotsLine.SlotMode.CONTENT) {
                 // Content slot: toggle partition for that item
@@ -619,9 +619,8 @@ public class TempAreaTabWidget extends AbstractTabWidget {
             if (!validForCellType) continue;
 
             // Find first empty slot in this cell's partition
-            // For cells, use totalTypes as the maximum config slots (always 63 for standard cells)
             List<ItemStack> partition = cellInfo.getPartition();
-            int availableSlots = (int) cellInfo.getTotalTypes();
+            int availableSlots = cellInfo.getConfigSlotCount();
             int targetSlot = -1;
 
             for (int i = 0; i < availableSlots; i++) {

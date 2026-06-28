@@ -170,6 +170,8 @@ public class CellDataHandler {
     private static void populateConfigInventory(NBTTagCompound cellData, IAEStackInventory configInv) {
         if (configInv == null) return;
 
+        cellData.setInteger("configSlotCount", configInv.getSizeInventory());
+
         NBTTagList partitionList = new NBTTagList();
         for (int i = 0; i < configInv.getSizeInventory(); i++) {
             IAEStack<?> partitionStack = configInv.getAEStackInSlot(i);

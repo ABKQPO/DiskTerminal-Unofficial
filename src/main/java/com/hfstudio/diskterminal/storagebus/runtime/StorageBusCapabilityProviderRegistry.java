@@ -1,8 +1,10 @@
 package com.hfstudio.diskterminal.storagebus.runtime;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import com.hfstudio.diskterminal.api.capability.ICapabilityProvider;
 import com.hfstudio.diskterminal.api.capability.ICapabilityProviderRegistry;
@@ -38,5 +40,22 @@ public class StorageBusCapabilityProviderRegistry implements ICapabilityProvider
      */
     public void clear() {
         providers.clear();
+    }
+
+    /**
+     * Remove any providers whose target ids are not present in the latest scan result while keeping
+     * reusable providers for still-live targets.
+     */
+    public void retainOnly(Set<? extends TargetId> activeIds) {
+        if (activeIds == null || activeIds.isEmpty()) {
+            providers.clear();
+            return;
+        }
+
+        Set<TargetId> staleIds = new LinkedHashSet<>(providers.keySet());
+        staleIds.removeAll(activeIds);
+        for (TargetId staleId : staleIds) {
+            providers.remove(staleId);
+        }
     }
 }

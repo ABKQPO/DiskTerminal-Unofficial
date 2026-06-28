@@ -6,8 +6,11 @@ import java.util.function.IntFunction;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
 
+import com.hfstudio.diskterminal.util.AEStackUtil;
 import com.hfstudio.diskterminal.util.FluidStacks;
 import com.hfstudio.diskterminal.util.ItemStacks;
+
+import appeng.api.storage.data.IAEStack;
 
 /**
  * Utility methods for stack comparison in GUI code.
@@ -41,7 +44,7 @@ public class ComparisonUtils {
         for (ItemStack partItem : partition) {
             if (ItemStacks.isEmpty(partItem)) continue;
 
-            if (stack.isItemEqual(partItem) && ItemStack.areItemStackTagsEqual(stack, partItem)) {
+            if (isSamePartitionType(stack, partItem)) {
                 return true;
             }
         }
@@ -75,12 +78,22 @@ public class ComparisonUtils {
             if (ItemStacks.isEmpty(partItem)) continue;
             if (!normalizedType.equals(normalizeStackTypeId(partitionTypeProvider.apply(i)))) continue;
 
-            if (stack.isItemEqual(partItem) && ItemStack.areItemStackTagsEqual(stack, partItem)) {
+            if (isSamePartitionType(stack, partItem)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private static boolean isSamePartitionType(ItemStack left, ItemStack right) {
+        IAEStack<?> leftStack = AEStackUtil.convertItemUsingRegisteredTypes(left);
+        IAEStack<?> rightStack = AEStackUtil.convertItemUsingRegisteredTypes(right);
+        if (leftStack != null && rightStack != null) {
+            return AEStackUtil.isSameType(leftStack, rightStack);
+        }
+
+        return left.isItemEqual(right) && ItemStack.areItemStackTagsEqual(left, right);
     }
 
     private static String normalizeStackTypeId(String stackTypeId) {

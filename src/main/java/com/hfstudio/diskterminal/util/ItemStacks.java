@@ -31,6 +31,17 @@ public class ItemStacks {
     }
 
     /**
+     * Load an ItemStack for GUI display and normalize its count to one.
+     */
+    public static ItemStack loadDisplay(NBTTagCompound nbt) {
+        if (nbt == null) return null;
+
+        NBTTagCompound copy = (NBTTagCompound) nbt.copy();
+        copy.setByte("Count", (byte) 1);
+        return ItemStack.loadItemStackFromNBT(copy);
+    }
+
+    /**
      * Clear an ItemStack's custom display name (no clearCustomName in 1.7.10).
      */
     public static void clearCustomName(ItemStack stack) {

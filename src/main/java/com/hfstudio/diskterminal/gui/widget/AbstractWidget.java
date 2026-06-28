@@ -120,7 +120,7 @@ public abstract class AbstractWidget implements IWidget {
             fontRenderer,
             I18n.format("gui.disk_terminal.partition_indicator"),
             slotX + 1,
-            slotY + 1,
+            slotY - 1,
             color);
     }
 

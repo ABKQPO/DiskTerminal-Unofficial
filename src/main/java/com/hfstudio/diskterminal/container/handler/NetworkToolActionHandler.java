@@ -14,7 +14,9 @@ import net.minecraft.nbt.NBTTagCompound;
 
 import com.hfstudio.diskterminal.DiskTerminal;
 import com.hfstudio.diskterminal.api.IItemCompactingCell;
+import com.hfstudio.diskterminal.api.capability.ICapabilityProvider;
 import com.hfstudio.diskterminal.api.capability.IFilterCapability;
+import com.hfstudio.diskterminal.api.capability.IRefreshCapability;
 import com.hfstudio.diskterminal.client.CellFilter;
 import com.hfstudio.diskterminal.client.StorageType;
 import com.hfstudio.diskterminal.container.ContainerCellTerminalBase.StorageTracker;
@@ -52,6 +54,14 @@ import appeng.util.IterationCounter;
 public class NetworkToolActionHandler {
 
     private NetworkToolActionHandler() {}
+
+    public static boolean affectsStorages(String toolId) {
+        return MassPartitionCellTool.TOOL_ID.equals(toolId) || AttributeUniqueTool.TOOL_ID.equals(toolId);
+    }
+
+    public static boolean affectsStorageBuses(String toolId) {
+        return MassPartitionBusTool.TOOL_ID.equals(toolId);
+    }
 
     public static void handleAction(String toolId, Map<CellFilter, CellFilter.State> activeFilters,
         Map<Long, StorageTracker> storageById, Map<Long, StorageBusTracker> storageBusById, IGrid grid,
@@ -97,10 +107,18 @@ public class NetworkToolActionHandler {
             if (!matchesBusFilters(tracker, activeFilters)) continue;
             if (tracker.targetId == null || tracker.source == null) continue;
 
-            providerFactory.create(tracker.targetId, tracker.source)
-                .findCapability(IFilterCapability.class)
+            ICapabilityProvider<?> provider = providerFactory.create(tracker.targetId, tracker.source);
+            provider.findCapability(IFilterCapability.class)
                 .filter(IFilterCapability::supportsPreviewFill)
-                .ifPresent(filter -> { if (filter.fillFromPreview()) tracker.hostTile.markDirty(); });
+                .ifPresent(filter -> {
+                    if (!filter.fillFromPreview()) return;
+
+                    provider.findCapability(IRefreshCapability.class)
+                        .ifPresent(refresh -> {
+                            refresh.markDirty();
+                            refresh.requestRefresh();
+                        });
+                });
         }
     }
 

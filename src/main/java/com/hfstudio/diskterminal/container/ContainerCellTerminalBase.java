@@ -113,6 +113,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     protected int subnetSlotLimit = 64;
 
     protected int storageBusPollCounter = 0;
+    protected boolean storageBusRefreshUrgent = false;
 
     protected long currentNetworkId = 0;
     protected IGrid currentNetworkGrid = null;
@@ -236,14 +237,17 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         boolean isOnStorageBusTab = (activeTab == GuiConstants.TAB_STORAGE_BUS_INVENTORY
             || activeTab == GuiConstants.TAB_STORAGE_BUS_PARTITION);
 
-        if (!isOnStorageBusTab && !needsStorageBusRefresh) return;
+        if (!isOnStorageBusTab) return;
 
         DiskTerminalServerConfig config = DiskTerminalServerConfig.getInstance();
 
         if (needsStorageBusRefresh) {
+            if (!storageBusRefreshUrgent && needsFullRefresh) return;
+
             regenStorageBusList();
             storageBusPollCounter = 0;
             needsStorageBusRefresh = false;
+            storageBusRefreshUrgent = false;
 
             return;
         }
@@ -267,7 +271,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         this.activeTab = tab;
 
         if (isOnStorageBusTab) {
-            requestStorageBusRefresh();
+            requestStorageBusRefresh(true);
             storageBusPollCounter = 0;
         }
 
@@ -280,19 +284,22 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         int normalizedBusLimit = busLimit < 0 ? Integer.MAX_VALUE : busLimit;
         int normalizedSubnetLimit = subnetLimit < 0 ? Integer.MAX_VALUE : subnetLimit;
 
-        if (this.cellSlotLimit == normalizedCellLimit && this.busSlotLimit == normalizedBusLimit
-            && this.subnetSlotLimit == normalizedSubnetLimit) {
-            return;
-        }
+        boolean cellChanged = this.cellSlotLimit != normalizedCellLimit;
+        boolean busChanged = this.busSlotLimit != normalizedBusLimit;
+        boolean subnetChanged = this.subnetSlotLimit != normalizedSubnetLimit;
+
+        if (!cellChanged && !busChanged && !subnetChanged) return;
 
         this.cellSlotLimit = normalizedCellLimit;
         this.busSlotLimit = normalizedBusLimit;
         this.subnetSlotLimit = normalizedSubnetLimit;
 
-        requestStorageRefresh();
-        requestStorageBusRefresh();
-        requestTempCellRefresh();
-        requestSubnetRefresh();
+        if (cellChanged) {
+            requestStorageRefresh();
+            requestTempCellRefresh();
+        }
+        if (busChanged) requestStorageBusRefresh();
+        if (subnetChanged) requestSubnetRefresh();
     }
 
     public int getCellSlotLimit() {
@@ -341,13 +348,14 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
     protected void regenStorageBusList() {
         this.needsStorageBusRefresh = false;
+        this.storageBusRefreshUrgent = false;
         this.storageBusById.clear();
 
-        StorageBusScanCollector.CollectResult result = storageBusCollector
+        NBTTagList storageBusList = storageBusCollector
             .collect(getEffectiveGrid(), this.storageBusById, this.storageBusProviders, busSlotLimit);
 
         NBTTagCompound data = new NBTTagCompound();
-        data.setTag("storageBuses", result.busList());
+        data.setTag("storageBuses", storageBusList);
         sendChunked(TerminalChannels.BUSES, data, "storageBuses", "id");
     }
 
@@ -1125,8 +1133,8 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         EntityPlayer player = this.getPlayerInv().player;
         NetworkToolActionHandler.handleAction(toolId, activeFilters, byId, storageBusById, grid, player);
 
-        requestStorageRefresh();
-        requestStorageBusRefresh();
+        if (NetworkToolActionHandler.affectsStorages(toolId)) requestStorageRefresh();
+        if (NetworkToolActionHandler.affectsStorageBuses(toolId)) requestStorageBusRefresh();
     }
 
     public void handleTempCellAction(PacketTempCellAction.Action action, int tempSlotIndex, int playerSlotIndex,
@@ -1322,8 +1330,13 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     }
 
     public void requestStorageBusRefresh() {
+        requestStorageBusRefresh(false);
+    }
+
+    public void requestStorageBusRefresh(boolean urgent) {
         this.needsStorageBusRefresh = true;
-        this.needsFullRefresh = true;
+        this.storageBusRefreshUrgent |= urgent;
+        if (tabNeedsStorageBuses(this.activeTab)) this.needsFullRefresh = true;
     }
 
     public void requestTempCellRefresh() {
@@ -1347,8 +1360,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     }
 
     protected boolean tabNeedsStorageBuses(int tab) {
-        return tab == GuiConstants.TAB_STORAGE_BUS_INVENTORY || tab == GuiConstants.TAB_STORAGE_BUS_PARTITION
-            || tab == GuiConstants.TAB_NETWORK_TOOLS;
+        return tab == GuiConstants.TAB_STORAGE_BUS_INVENTORY || tab == GuiConstants.TAB_STORAGE_BUS_PARTITION;
     }
 
     protected boolean tabNeedsTempCells(int tab) {

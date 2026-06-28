@@ -140,11 +140,19 @@ public class AEStackUtil {
         if (stack == null) return null;
 
         ItemStack displayStack = stack.getItemStackForNEI();
-        if (!ItemStacks.isEmpty(displayStack)) return displayStack;
+        if (!ItemStacks.isEmpty(displayStack)) return normalizeDisplayStack(displayStack);
 
-        if (stack instanceof IAEItemStack itemStack) return itemStack.getItemStack();
+        if (stack instanceof IAEItemStack itemStack) return normalizeDisplayStack(itemStack.getItemStack());
 
         return null;
+    }
+
+    public static ItemStack normalizeDisplayStack(ItemStack stack) {
+        if (ItemStacks.isEmpty(stack)) return null;
+
+        ItemStack normalized = stack.copy();
+        normalized.stackSize = 1;
+        return normalized;
     }
 
     @SideOnly(Side.CLIENT)

@@ -250,8 +250,8 @@ public class CellContentTabWidget extends AbstractTabWidget {
 
                     @Override
                     public void accept(Object ing) {
-                        // Defensive: verify the target index is still valid for this cell's type limit
-                        if (slot.absoluteIndex < 0 || slot.absoluteIndex >= cell.getTotalTypes()) return;
+                        // Defensive: verify the target index is still valid for this cell's editable config slots
+                        if (slot.absoluteIndex < 0 || slot.absoluteIndex >= cell.getConfigSlotCount()) return;
 
                         ItemStack stack = GhostIngredientHandler
                             .convertIngredientForType(ing, cell.getStackTypeId(), false);
@@ -515,16 +515,16 @@ public class CellContentTabWidget extends AbstractTabWidget {
         } else {
             // Partition mode: partition list is the items source
             line.setItemsSupplier(cell::getPartition);
-            line.setMaxSlots((int) cell.getTotalTypes());
+            line.setMaxSlots(cell.getConfigSlotCount());
         }
 
         line.setSlotClickCallback((slotIndex, mouseButton) -> {
             if (mouseButton != 0) return;
 
-            // Defensive: verify slotIndex is within the cell's actual type limit.
+            // Defensive: verify slotIndex is within the cell's editable config slots.
             // Prevents stale index values from sending wrong slot indices to the server,
             // which could happen if GUI data changed between draw (index computed) and click.
-            if (slotIndex < 0 || slotIndex >= cell.getTotalTypes()) return;
+            if (slotIndex < 0 || slotIndex >= cell.getConfigSlotCount()) return;
 
             if (isPartitionMode) {
                 ItemStack heldStack = guiContext.getHeldStack();
