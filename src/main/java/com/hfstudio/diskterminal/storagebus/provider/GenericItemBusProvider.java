@@ -91,9 +91,13 @@ public class GenericItemBusProvider implements ICapabilityProvider<StorageBusId>
 
         Set<ResourceLocation> capabilities = new LinkedHashSet<>();
         capabilities.add(StorageBusCapabilityIds.RENAME);
-        if (buildFilterCapability(bus).isPresent()) capabilities.add(StorageBusCapabilityIds.FILTER);
+        if (supportsFilter(bus)) capabilities.add(StorageBusCapabilityIds.FILTER);
 
         return capabilities;
+    }
+
+    private boolean supportsFilter(PartSharedItemBus<?> bus) {
+        return bus.getAEInventoryByName(StorageName.CONFIG) != null && bus.getStackType() != null;
     }
 
     private Optional<IFilterCapability> buildFilterCapability(PartSharedItemBus<?> bus) {

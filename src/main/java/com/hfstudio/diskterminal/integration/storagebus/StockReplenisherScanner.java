@@ -72,7 +72,7 @@ public class StockReplenisherScanner implements IStorageBusScanner {
         trackerMap.put(
             busId,
             new StorageBusTracker(busId, tile, tile, SIDE_ORDINAL, StorageType.ITEM)
-                .withTarget(targetId, StorageBusSource.AE2FC_STOCK_REPLENISHER));
+                .withTarget(targetId, StorageBusSource.MIXED_CONFIG_TARGET));
     }
 
     private ItemStack iconFor(TileSuperStockReplenisher tile) {

@@ -16,6 +16,6 @@ public enum StorageBusSource {
     /** GregTech ME input bus/hatch meta tile. */
     GREGTECH,
 
-    /** AE2FluidCraft Super Stock Replenisher tile (item or fluid target configuration). */
-    AE2FC_STOCK_REPLENISHER
+    /** Mixed item/fluid configuration target. */
+    MIXED_CONFIG_TARGET
 }

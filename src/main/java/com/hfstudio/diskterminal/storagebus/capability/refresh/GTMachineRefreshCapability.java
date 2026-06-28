@@ -1,11 +1,10 @@
 package com.hfstudio.diskterminal.storagebus.capability.refresh;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
 import net.minecraft.tileentity.TileEntity;
 
 import com.hfstudio.diskterminal.api.capability.IRefreshCapability;
+import com.hfstudio.diskterminal.integration.storagebus.gtmachine.GTMachineClassNames;
+import com.hfstudio.diskterminal.integration.storagebus.gtmachine.GTMachineReflectionHelper;
 
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.common.tileentities.machines.MTEHatchInputBusME;
@@ -34,6 +33,27 @@ public class GTMachineRefreshCapability implements IRefreshCapability {
 
     @Override
     public void requestRefresh() {
+        boolean isSuperItemVariant = GTMachineReflectionHelper.readBooleanField(metaTileEntity, "isSuper")
+            .orElse(false);
+
+        if (GTMachineReflectionHelper.hasClassName(metaTileEntity, GTMachineClassNames.SUPER_DUAL_INPUT_HATCH_ME)) {
+            refreshByReflection(metaTileEntity, "isAutoPullItemListForGui");
+            return;
+        }
+
+        if (GTMachineReflectionHelper.hasClassName(metaTileEntity, GTMachineClassNames.SUPER_INPUT_BUS_ME)
+            || GTMachineReflectionHelper
+                .hasAnyClassName(metaTileEntity, GTMachineClassNames.GTNL_SUPER_ITEM_INPUT_CLASSES)
+                && isSuperItemVariant) {
+            refreshByReflection(metaTileEntity, "isAutoPullItemList");
+            return;
+        }
+
+        if (GTMachineReflectionHelper.hasClassName(metaTileEntity, GTMachineClassNames.SUPER_INPUT_HATCH_ME)) {
+            refreshByReflection(metaTileEntity, "isAutoPullFluidListForGui");
+            return;
+        }
+
         if (metaTileEntity instanceof MTEHatchInputBusME inputBus) {
             refreshGregTechMachine(inputBus);
             return;
@@ -47,40 +67,27 @@ public class GTMachineRefreshCapability implements IRefreshCapability {
     private void refreshGregTechMachine(MTEHatchInputBusME inputBus) {
         if (inputBus.isAutoPullItemList()) return;
 
-        invokeNoArg(inputBus, "updateAllInformationSlots");
-        if (inputBus.doFastRecipeCheck()) invokeNoArg(inputBus, "configureWatchers");
+        GTMachineReflectionHelper.invokeVoid(inputBus, "updateAllInformationSlots");
+        if (inputBus.doFastRecipeCheck()) GTMachineReflectionHelper.invokeVoid(inputBus, "configureWatchers");
     }
 
     private void refreshGregTechMachine(MTEHatchInputME inputHatch) {
         if (inputHatch.isAutoPullFluidList()) return;
 
-        invokeNoArg(inputHatch, "updateAllInformationSlots");
-        if (inputHatch.doFastRecipeCheck()) invokeNoArg(inputHatch, "configureWatchers");
+        GTMachineReflectionHelper.invokeVoid(inputHatch, "updateAllInformationSlots");
+        if (inputHatch.doFastRecipeCheck()) GTMachineReflectionHelper.invokeVoid(inputHatch, "configureWatchers");
     }
 
-    private void invokeNoArg(Object target, String methodName) {
-        if (target == null) return;
-
-        try {
-            Method method = findMethod(target.getClass(), methodName);
-            if (method == null) return;
-
-            method.setAccessible(true);
-            method.invoke(target);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {}
-    }
-
-    private Method findMethod(Class<?> type, String methodName, Class<?>... parameterTypes)
-        throws NoSuchMethodException {
-        Class<?> current = type;
-        while (current != null) {
-            try {
-                return current.getDeclaredMethod(methodName, parameterTypes);
-            } catch (NoSuchMethodException ignored) {
-                current = current.getSuperclass();
-            }
+    private void refreshByReflection(Object target, String autoPullMethodName) {
+        if (GTMachineReflectionHelper.invokeBoolean(target, autoPullMethodName)
+            .orElse(false)) {
+            return;
         }
 
-        throw new NoSuchMethodException(methodName);
+        GTMachineReflectionHelper.invokeVoid(target, "updateAllInformationSlots");
+        if (GTMachineReflectionHelper.invokeBoolean(target, "doFastRecipeCheck")
+            .orElse(false)) {
+            GTMachineReflectionHelper.invokeVoid(target, "configureWatchers");
+        }
     }
 }

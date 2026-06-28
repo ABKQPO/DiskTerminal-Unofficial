@@ -1,147 +1,36 @@
 package com.hfstudio.diskterminal.storagebus.capability.filter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.fluids.FluidStack;
 
-import com.hfstudio.diskterminal.api.capability.IFilterCapability;
 import com.hfstudio.diskterminal.api.snapshot.FilterSnapshot;
 import com.hfstudio.diskterminal.api.snapshot.FilterType;
-import com.hfstudio.diskterminal.storagebus.model.SimpleFilterSnapshot;
+import com.hfstudio.diskterminal.integration.storagebus.gtmachine.GTMachineClassNames;
+import com.hfstudio.diskterminal.integration.storagebus.gtmachine.GTMachineReflectionHelper;
 import com.hfstudio.diskterminal.util.AEStackUtil;
 import com.hfstudio.diskterminal.util.FluidStacks;
 import com.hfstudio.diskterminal.util.ItemStacks;
 
 import appeng.api.storage.data.IAEStack;
 import appeng.util.item.AEFluidStack;
+import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.util.GTUtility;
 import gregtech.common.tileentities.machines.MTEHatchInputME;
 
-/**
- * Filter capability for a GregTech ME input hatch. Filter slots map to the hatch fluid config slots.
- */
-public class GTFluidFilterCapability implements IFilterCapability {
-
-    private final MTEHatchInputME inputHatch;
-    private final FluidStack[] configs;
-    private final FluidStack[] extracted;
-    private final boolean editable;
+public class GTFluidFilterCapability extends AbstractGTFilterCapability<FluidStack> {
 
     public GTFluidFilterCapability(MTEHatchInputME inputHatch) {
-        this.inputHatch = inputHatch;
-        this.configs = new FluidStack[MTEHatchInputME.SLOT_COUNT];
-        this.extracted = new FluidStack[MTEHatchInputME.SLOT_COUNT];
-        // While auto-pull drives the slots, the filter is managed by the network and must not be edited.
-        this.editable = !inputHatch.isAutoPullFluidList();
-        readSnapshot();
+        this((MetaTileEntity) inputHatch);
+    }
+
+    public GTFluidFilterCapability(MetaTileEntity metaTileEntity) {
+        super(createAccess(metaTileEntity), FilterType.FLUID);
     }
 
     @Override
-    public int getFilterSlotCount() {
-        return MTEHatchInputME.SLOT_COUNT;
-    }
-
-    @Override
-    public List<FilterSnapshot> getFilters() {
-        List<FilterSnapshot> filters = new ArrayList<>();
-        for (int slot = 0; slot < configs.length; slot++) {
-            FluidStack config = configs[slot];
-            if (config == null) continue;
-
-            NBTTagCompound data = new NBTTagCompound();
-            AEStackUtil.writeStackToNBT(
-                data,
-                AEFluidStack.create(config)
-                    .setStackSize(1));
-            data.setInteger("slot", slot);
-            filters.add(new SimpleFilterSnapshot(FilterType.FLUID, data));
-        }
-
-        return filters;
-    }
-
-    @Override
-    public boolean setFilter(int slot, FilterSnapshot filter) {
-        if (!editable || slot < 0 || slot >= configs.length || filter == null) return false;
-
-        FluidStack stack = sanitize(filter);
-        if (stack == null) return false;
-
-        inputHatch.setSlotConfig(slot, stack);
-
-        return true;
-    }
-
-    @Override
-    public boolean clearFilter(int slot) {
-        if (!editable || slot < 0 || slot >= configs.length) return false;
-
-        inputHatch.setSlotConfig(slot, null);
-
-        return true;
-    }
-
-    @Override
-    public void clearAllFilters() {
-        if (!editable) return;
-
-        for (int slot = 0; slot < configs.length; slot++) inputHatch.setSlotConfig(slot, null);
-    }
-
-    @Override
-    public boolean toggleFilter(FilterSnapshot filter) {
-        if (!editable || filter == null) return false;
-
-        FluidStack stack = sanitize(filter);
-        if (stack == null) return false;
-
-        int existing = findSlot(stack);
-        if (existing >= 0) {
-            inputHatch.setSlotConfig(existing, null);
-
-            return true;
-        }
-
-        int empty = findEmptySlot();
-        if (empty < 0) return false;
-
-        inputHatch.setSlotConfig(empty, stack);
-
-        return true;
-    }
-
-    @Override
-    public boolean supportsPreviewFill() {
-        return editable;
-    }
-
-    @Override
-    public boolean fillFromPreview() {
-        if (!editable) return false;
-
-        clearAllFilters();
-
-        int slot = 0;
-        for (FluidStack stack : extracted) {
-            if (slot >= configs.length) break;
-            if (stack == null) continue;
-
-            FluidStack copy = stack.copy();
-            copy.amount = 1;
-            inputHatch.setSlotConfig(slot++, copy);
-        }
-
-        return true;
-    }
-
-    private FluidStack sanitize(FilterSnapshot filter) {
-        // Match the GT hatch GUI flow first: it resolves fluids from the held item through GTUtility,
-        // which supports GT and IFluidContainerItem containers. Fall back to the broader DiskTerminal
-        // extraction path so AE2FC fluid drops and other existing inputs keep working.
+    protected FluidStack sanitize(FilterSnapshot filter) {
         ItemStack display = AEStackUtil.readDisplayStack(filter.getData());
         if (ItemStacks.isEmpty(display)) {
             IAEStack<?> stack = AEStackUtil.readPartitionStack(filter.getData(), null);
@@ -153,43 +42,184 @@ public class GTFluidFilterCapability implements IFilterCapability {
         if (fluid == null) return null;
 
         fluid.amount = 1;
-
         return fluid;
     }
 
-    private int findSlot(FluidStack target) {
-        for (int slot = 0; slot < configs.length; slot++) {
-            FluidStack config = configs[slot];
-            if (config != null && config.isFluidEqual(target)) return slot;
-        }
-
-        return -1;
+    @Override
+    protected NBTTagCompound createFilterData(FluidStack config) {
+        NBTTagCompound data = new NBTTagCompound();
+        AEStackUtil.writeStackToNBT(
+            data,
+            AEFluidStack.create(config)
+                .setStackSize(1));
+        return data;
     }
 
-    private int findEmptySlot() {
-        for (int slot = 0; slot < configs.length; slot++) {
-            if (configs[slot] == null) return slot;
-        }
-
-        return -1;
+    @Override
+    protected FluidStack copyForConfig(FluidStack previewStack) {
+        FluidStack copy = previewStack.copy();
+        copy.amount = 1;
+        return copy;
     }
 
-    private void readSnapshot() {
-        NBTTagCompound serialized = new NBTTagCompound();
-        inputHatch.saveNBTData(serialized);
-        NBTTagList slots = serialized.getTagList("slots", 10);
+    @Override
+    protected boolean isEmpty(FluidStack stack) {
+        return stack == null;
+    }
 
-        for (int i = 0; i < slots.tagCount(); i++) {
-            NBTTagCompound slotTag = slots.getCompoundTagAt(i);
-            int index = slotTag.getInteger("index");
-            if (index < 0 || index >= configs.length) continue;
+    @Override
+    protected boolean isSame(FluidStack left, FluidStack right) {
+        return left.isFluidEqual(right);
+    }
 
-            if (slotTag.hasKey("config")) {
-                configs[index] = FluidStack.loadFluidStackFromNBT(slotTag.getCompoundTag("config"));
+    private static FluidBusAccess createAccess(MetaTileEntity metaTileEntity) {
+        if (GTMachineReflectionHelper.hasClassName(metaTileEntity, GTMachineClassNames.SUPER_INPUT_HATCH_ME)) {
+            return new SuperFluidHatchAccess(metaTileEntity);
+        }
+
+        return new StandardFluidHatchAccess((MTEHatchInputME) metaTileEntity);
+    }
+
+    private interface FluidBusAccess extends FilterAccess<FluidStack> {
+    }
+
+    private static class StandardFluidHatchAccess implements FluidBusAccess {
+
+        private final MTEHatchInputME inputHatch;
+        private final FluidStack[] configs = new FluidStack[MTEHatchInputME.SLOT_COUNT];
+        private final FluidStack[] extracted = new FluidStack[MTEHatchInputME.SLOT_COUNT];
+        private final boolean editable;
+
+        private StandardFluidHatchAccess(MTEHatchInputME inputHatch) {
+            this.inputHatch = inputHatch;
+            this.editable = !inputHatch.isAutoPullFluidList();
+            readSnapshot();
+        }
+
+        @Override
+        public int getFilterSlotCount() {
+            return MTEHatchInputME.SLOT_COUNT;
+        }
+
+        @Override
+        public FluidStack getConfig(int slot) {
+            return slot < 0 || slot >= configs.length ? null : configs[slot];
+        }
+
+        @Override
+        public boolean setConfig(int slot, FluidStack stack) {
+            inputHatch.setSlotConfig(slot, stack);
+            return true;
+        }
+
+        @Override
+        public boolean clearConfig(int slot) {
+            inputHatch.setSlotConfig(slot, null);
+            return true;
+        }
+
+        @Override
+        public FluidStack[] getPreviewStacks() {
+            return extracted;
+        }
+
+        @Override
+        public boolean isEditable() {
+            return editable;
+        }
+
+        private void readSnapshot() {
+            NBTTagCompound serialized = new NBTTagCompound();
+            inputHatch.saveNBTData(serialized);
+            NBTTagList slots = serialized.getTagList("slots", 10);
+
+            for (int i = 0; i < slots.tagCount(); i++) {
+                NBTTagCompound slotTag = slots.getCompoundTagAt(i);
+                int index = slotTag.getInteger("index");
+                if (index < 0 || index >= configs.length) continue;
+
+                if (slotTag.hasKey("config")) {
+                    configs[index] = FluidStack.loadFluidStackFromNBT(slotTag.getCompoundTag("config"));
+                }
+                if (slotTag.hasKey("extracted")) {
+                    extracted[index] = FluidStack.loadFluidStackFromNBT(slotTag.getCompoundTag("extracted"));
+                }
             }
-            if (slotTag.hasKey("extracted")) {
-                extracted[index] = FluidStack.loadFluidStackFromNBT(slotTag.getCompoundTag("extracted"));
+        }
+    }
+
+    private static class SuperFluidHatchAccess implements FluidBusAccess {
+
+        private final MetaTileEntity metaTileEntity;
+        private final int slotCount;
+        private final FluidStack[] configs;
+        private final FluidStack[] extracted;
+        private final boolean editable;
+
+        private SuperFluidHatchAccess(MetaTileEntity metaTileEntity) {
+            this.metaTileEntity = metaTileEntity;
+            this.slotCount = GTMachineReflectionHelper.invokeInt(metaTileEntity, "getFluidSlotCountForGui")
+                .orElse(0);
+            this.editable = !GTMachineReflectionHelper.invokeBoolean(metaTileEntity, "isAutoPullFluidListForGui")
+                .orElse(false);
+            this.configs = readConfigs(metaTileEntity, slotCount);
+            this.extracted = readPreview(metaTileEntity, slotCount);
+        }
+
+        @Override
+        public int getFilterSlotCount() {
+            return slotCount;
+        }
+
+        @Override
+        public FluidStack getConfig(int slot) {
+            return slot < 0 || slot >= configs.length ? null : configs[slot];
+        }
+
+        @Override
+        public boolean setConfig(int slot, FluidStack stack) {
+            return GTMachineReflectionHelper.invokeVoid(
+                metaTileEntity,
+                "setFilterFluidForGui",
+                GTMachineReflectionHelper.INT_FLUIDSTACK_ARG_TYPES,
+                slot,
+                stack == null ? null : stack.copy());
+        }
+
+        @Override
+        public boolean clearConfig(int slot) {
+            return setConfig(slot, null);
+        }
+
+        @Override
+        public FluidStack[] getPreviewStacks() {
+            return extracted;
+        }
+
+        @Override
+        public boolean isEditable() {
+            return editable;
+        }
+
+        private static FluidStack[] readConfigs(MetaTileEntity metaTileEntity, int slotCount) {
+            FluidStack[] values = new FluidStack[Math.max(0, slotCount)];
+            for (int slot = 0; slot < values.length; slot++) {
+                values[slot] = GTMachineReflectionHelper.invokeFluidStack(metaTileEntity, "getFilterFluidForGui", slot)
+                    .map(FluidStack::copy)
+                    .orElse(null);
             }
+            return values;
+        }
+
+        private static FluidStack[] readPreview(MetaTileEntity metaTileEntity, int slotCount) {
+            FluidStack[] values = new FluidStack[Math.max(0, slotCount)];
+            for (int slot = 0; slot < values.length; slot++) {
+                values[slot] = GTMachineReflectionHelper
+                    .invokeFluidStack(metaTileEntity, "getInformationFluidForGui", slot)
+                    .map(FluidStack::copy)
+                    .orElse(null);
+            }
+            return values;
         }
     }
 }

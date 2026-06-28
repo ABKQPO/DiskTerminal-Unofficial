@@ -101,9 +101,13 @@ public class AEStorageBusProvider implements ICapabilityProvider<StorageBusId> {
         Set<ResourceLocation> capabilities = new LinkedHashSet<>();
         capabilities.add(StorageBusCapabilityIds.RENAME);
         if (part instanceof IPriorityHost) capabilities.add(StorageBusCapabilityIds.PRIORITY);
-        if (buildFilterCapability(part).isPresent()) capabilities.add(StorageBusCapabilityIds.FILTER);
+        if (supportsFilter(part)) capabilities.add(StorageBusCapabilityIds.FILTER);
 
         return capabilities;
+    }
+
+    private boolean supportsFilter(IPart part) {
+        return configInventory(part) != null && stackType(part) != null;
     }
 
     private Optional<IFilterCapability> buildFilterCapability(IPart part) {

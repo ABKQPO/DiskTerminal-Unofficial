@@ -26,6 +26,8 @@ import com.hfstudio.diskterminal.client.StorageType;
 import com.hfstudio.diskterminal.data.StorageBusCustomNameData;
 import com.hfstudio.diskterminal.integration.Mods;
 import com.hfstudio.diskterminal.integration.storagebus.StorageBusScannerRegistry;
+import com.hfstudio.diskterminal.integration.storagebus.gtmachine.GTMachineClassNames;
+import com.hfstudio.diskterminal.integration.storagebus.gtmachine.GTMachineReflectionHelper;
 import com.hfstudio.diskterminal.storagebus.model.StorageBusId;
 import com.hfstudio.diskterminal.storagebus.runtime.StorageBusSource;
 import com.hfstudio.diskterminal.util.AEStackUtil;
@@ -218,6 +220,70 @@ public class StorageBusDataHandler {
         return busData;
     }
 
+    public static NBTTagCompound createGenericGregTechItemBusData(MetaTileEntity metaTileEntity, long busId,
+        StorageType storageType, BusRole busRole, boolean supportsAutoPull, boolean autoPullEnabled,
+        ItemStack[] configs, ItemStack[] extracted, long[] extractedAmounts, int contentLimit) {
+        NBTTagCompound busData = createGregTechBusBaseData(metaTileEntity, busId, storageType, busRole);
+        addGenericGregTechItemBusData(
+            busData,
+            supportsAutoPull,
+            autoPullEnabled,
+            configs,
+            extracted,
+            extractedAmounts,
+            contentLimit);
+        return busData;
+    }
+
+    public static NBTTagCompound createGenericGregTechFluidHatchData(MetaTileEntity metaTileEntity, long busId,
+        StorageType storageType, BusRole busRole, boolean supportsAutoPull, boolean autoPullEnabled,
+        FluidStack[] configs, FluidStack[] extracted, long[] extractedAmounts, int contentLimit) {
+        NBTTagCompound busData = createGregTechBusBaseData(metaTileEntity, busId, storageType, busRole);
+        addGenericGregTechFluidBusData(
+            busData,
+            supportsAutoPull,
+            autoPullEnabled,
+            configs,
+            extracted,
+            extractedAmounts,
+            contentLimit);
+        return busData;
+    }
+
+    public static NBTTagCompound createGenericGregTechMixedBusData(MetaTileEntity metaTileEntity, long busId,
+        BusRole busRole, boolean supportsAutoPull, boolean autoPullEnabled, ItemStack[] itemConfigs,
+        ItemStack[] itemPreview, long[] itemAmounts, FluidStack[] fluidConfigs, FluidStack[] fluidPreview,
+        long[] fluidAmounts, int contentLimit) {
+        NBTTagCompound busData = createGregTechBusBaseData(metaTileEntity, busId, StorageType.ITEM, busRole);
+        busData.setString("stackType", "mixed");
+        busData.setBoolean("supportsAutoPull", supportsAutoPull);
+        busData.setBoolean("autoPullEnabled", autoPullEnabled);
+
+        int fluidSlotCount = fluidConfigs == null ? 0 : fluidConfigs.length;
+        int itemSlotCount = itemConfigs == null ? 0 : itemConfigs.length;
+        addStockReplenisherSlotTypes(busData, fluidSlotCount, itemSlotCount);
+
+        NBTTagList partitionList = new NBTTagList();
+        appendMixedFluidPartition(partitionList, fluidConfigs, 0);
+        appendMixedItemPartition(partitionList, itemConfigs, fluidSlotCount);
+        busData.setTag("partition", partitionList);
+
+        NBTTagList contentsList = new NBTTagList();
+        int writtenContents = 0;
+        writtenContents = appendMixedFluidContents(
+            contentsList,
+            fluidPreview,
+            fluidAmounts,
+            writtenContents,
+            0,
+            contentLimit);
+        appendMixedItemContents(contentsList, itemPreview, itemAmounts, writtenContents, fluidSlotCount, contentLimit);
+        busData.setTag("contents", contentsList);
+        busData.setBoolean(PARTITION_SUMMARY_KEY, partitionList.tagCount() > 0);
+        busData.setBoolean(CONTENT_SUMMARY_KEY, hasMixedContents(itemPreview, fluidPreview));
+        return busData;
+    }
+
     /**
      * Create read-model NBT for the AE2FluidCraft Super Stock Replenisher as a single mixed-type target.
      * The tile exposes multiple independent config inventories (currently fluids and items). They are
@@ -345,6 +411,107 @@ public class StorageBusDataHandler {
         busData.setBoolean(CONTENT_SUMMARY_KEY, hasContents);
     }
 
+    private static void appendMixedFluidPartition(NBTTagList partitionList, FluidStack[] configs, int slotOffset) {
+        if (configs == null) {
+            return;
+        }
+
+        for (int slot = 0; slot < configs.length; slot++) {
+            FluidStack stack = configs[slot];
+            if (stack == null) {
+                continue;
+            }
+
+            NBTTagCompound partNbt = new NBTTagCompound();
+            partNbt.setInteger("slot", slotOffset + slot);
+            partNbt.setString("stackTypeId", "fluid");
+            AEStackUtil.writeStackToNBT(
+                partNbt,
+                AEFluidStack.create(stack)
+                    .setStackSize(1));
+            partitionList.appendTag(partNbt);
+        }
+    }
+
+    private static void appendMixedItemPartition(NBTTagList partitionList, ItemStack[] configs, int slotOffset) {
+        if (configs == null) {
+            return;
+        }
+
+        for (int slot = 0; slot < configs.length; slot++) {
+            ItemStack stack = configs[slot];
+            if (ItemStacks.isEmpty(stack)) {
+                continue;
+            }
+
+            NBTTagCompound partNbt = AEStackUtil.writeItemLikePartitionStack(stack);
+            if (partNbt == null) {
+                continue;
+            }
+            partNbt.setInteger("slot", slotOffset + slot);
+            partNbt.setString("stackTypeId", "item");
+            partitionList.appendTag(partNbt);
+        }
+    }
+
+    private static int appendMixedFluidContents(NBTTagList contentsList, FluidStack[] preview, long[] amounts,
+        int writtenContents, int slotOffset, int contentLimit) {
+        if (preview == null) {
+            return writtenContents;
+        }
+
+        for (int slot = 0; slot < preview.length; slot++) {
+            if (isContentLimitReached(writtenContents, contentLimit)) {
+                return writtenContents;
+            }
+
+            FluidStack stack = preview[slot];
+            if (stack == null) {
+                continue;
+            }
+
+            NBTTagCompound stackNbt = new NBTTagCompound();
+            AEStackUtil.writeStackToNBT(stackNbt, AEFluidStack.create(stack));
+            stackNbt.setLong("Cnt", getLongAt(amounts, slot));
+            stackNbt.setInteger("slot", slotOffset + slot);
+            stackNbt.setString("stackTypeId", "fluid");
+            contentsList.appendTag(stackNbt);
+            writtenContents++;
+        }
+
+        return writtenContents;
+    }
+
+    private static int appendMixedItemContents(NBTTagList contentsList, ItemStack[] preview, long[] amounts,
+        int writtenContents, int slotOffset, int contentLimit) {
+        if (preview == null) {
+            return writtenContents;
+        }
+
+        for (int slot = 0; slot < preview.length; slot++) {
+            if (isContentLimitReached(writtenContents, contentLimit)) {
+                return writtenContents;
+            }
+
+            ItemStack stack = preview[slot];
+            if (ItemStacks.isEmpty(stack)) {
+                continue;
+            }
+
+            NBTTagCompound stackNbt = AEStackUtil.writeItemLikePartitionStack(stack);
+            if (stackNbt == null) {
+                continue;
+            }
+            stackNbt.setLong("Cnt", getLongAt(amounts, slot));
+            stackNbt.setInteger("slot", slotOffset + slot);
+            stackNbt.setString("stackTypeId", "item");
+            contentsList.appendTag(stackNbt);
+            writtenContents++;
+        }
+
+        return writtenContents;
+    }
+
     private static NBTTagCompound createStorageBusData(PartStorageBus bus, long busId, StorageType storageType,
         int contentLimit) {
         TileEntity hostTile = bus.getHost()
@@ -407,33 +574,79 @@ public class StorageBusDataHandler {
     }
 
     private static void addGregTechItemBusData(NBTTagCompound busData, MTEHatchInputBusME inputBus, int contentLimit) {
+        GregTechItemSnapshot snapshot = createGregTechItemSnapshot(inputBus);
+        long[] amounts = new long[snapshot.extractedAmounts().length];
+        for (int i = 0; i < amounts.length; i++) {
+            amounts[i] = snapshot.extractedAmounts()[i];
+        }
+
+        addGenericGregTechItemBusData(
+            busData,
+            inputBus.autoPullAvailable,
+            inputBus.isAutoPullItemList(),
+            snapshot.configs(),
+            snapshot.extracted(),
+            amounts,
+            contentLimit);
+    }
+
+    private static void addGregTechFluidHatchData(NBTTagCompound busData, MTEHatchInputME inputHatch,
+        int contentLimit) {
+        GregTechFluidSnapshot snapshot = createGregTechFluidSnapshot(inputHatch);
+        long[] amounts = new long[snapshot.extractedAmounts().length];
+        for (int i = 0; i < amounts.length; i++) {
+            amounts[i] = snapshot.extractedAmounts()[i];
+        }
+
+        addGenericGregTechFluidBusData(
+            busData,
+            inputHatch.autoPullAvailable,
+            inputHatch.isAutoPullFluidList(),
+            snapshot.configs(),
+            snapshot.extracted(),
+            amounts,
+            contentLimit);
+    }
+
+    private static void addGenericGregTechItemBusData(NBTTagCompound busData, boolean supportsAutoPull,
+        boolean autoPullEnabled, ItemStack[] configs, ItemStack[] extracted, long[] extractedAmounts,
+        int contentLimit) {
         busData.setString("stackType", "item");
-        busData.setBoolean("supportsAutoPull", inputBus.autoPullAvailable);
-        busData.setBoolean("autoPullEnabled", inputBus.isAutoPullItemList());
+        busData.setBoolean("supportsAutoPull", supportsAutoPull);
+        busData.setBoolean("autoPullEnabled", autoPullEnabled);
 
         NBTTagList partitionList = new NBTTagList();
         NBTTagList contentsList = new NBTTagList();
-        GregTechItemSnapshot snapshot = createGregTechItemSnapshot(inputBus);
         int writtenContents = 0;
+        int slotCount = Math.max(
+            configs == null ? 0 : configs.length,
+            Math.max(extracted == null ? 0 : extracted.length, extractedAmounts == null ? 0 : extractedAmounts.length));
 
-        for (int slotIndex = 0; slotIndex < snapshot.configs().length; slotIndex++) {
-            ItemStack configStack = snapshot.configs()[slotIndex];
+        for (int slotIndex = 0; slotIndex < slotCount; slotIndex++) {
+            ItemStack configStack = getItemAt(configs, slotIndex);
             if (!ItemStacks.isEmpty(configStack)) {
                 NBTTagCompound partNbt = AEStackUtil.writeItemLikePartitionStack(configStack);
-                if (partNbt == null) continue;
-                partNbt.setInteger("slot", slotIndex);
-                partNbt.setString("stackTypeId", "item");
-                partitionList.appendTag(partNbt);
+                if (partNbt != null) {
+                    partNbt.setInteger("slot", slotIndex);
+                    partNbt.setString("stackTypeId", "item");
+                    partitionList.appendTag(partNbt);
+                }
             }
 
-            if (isContentLimitReached(writtenContents, contentLimit)) continue;
+            if (isContentLimitReached(writtenContents, contentLimit)) {
+                continue;
+            }
 
-            ItemStack extractedStack = snapshot.extracted()[slotIndex];
-            if (ItemStacks.isEmpty(extractedStack)) continue;
+            ItemStack extractedStack = getItemAt(extracted, slotIndex);
+            if (ItemStacks.isEmpty(extractedStack)) {
+                continue;
+            }
 
             NBTTagCompound stackNbt = AEStackUtil.writeItemLikePartitionStack(extractedStack);
-            if (stackNbt == null) continue;
-            stackNbt.setLong("Cnt", snapshot.extractedAmounts()[slotIndex]);
+            if (stackNbt == null) {
+                continue;
+            }
+            stackNbt.setLong("Cnt", getLongAt(extractedAmounts, slotIndex));
             stackNbt.setString("stackTypeId", "item");
             contentsList.appendTag(stackNbt);
             writtenContents++;
@@ -442,25 +655,29 @@ public class StorageBusDataHandler {
         busData.setTag("partition", partitionList);
         busData.setTag("contents", contentsList);
         busData.setBoolean(PARTITION_SUMMARY_KEY, partitionList.tagCount() > 0);
-        busData.setBoolean(CONTENT_SUMMARY_KEY, hasGregTechItemContents(snapshot));
+        busData.setBoolean(CONTENT_SUMMARY_KEY, hasItemContents(extracted));
     }
 
-    private static void addGregTechFluidHatchData(NBTTagCompound busData, MTEHatchInputME inputHatch,
+    private static void addGenericGregTechFluidBusData(NBTTagCompound busData, boolean supportsAutoPull,
+        boolean autoPullEnabled, FluidStack[] configs, FluidStack[] extracted, long[] extractedAmounts,
         int contentLimit) {
         busData.setString("stackType", "fluid");
-        busData.setBoolean("supportsAutoPull", inputHatch.autoPullAvailable);
-        busData.setBoolean("autoPullEnabled", inputHatch.isAutoPullFluidList());
+        busData.setBoolean("supportsAutoPull", supportsAutoPull);
+        busData.setBoolean("autoPullEnabled", autoPullEnabled);
 
         NBTTagList partitionList = new NBTTagList();
         NBTTagList contentsList = new NBTTagList();
-        GregTechFluidSnapshot snapshot = createGregTechFluidSnapshot(inputHatch);
         int writtenContents = 0;
+        int slotCount = Math.max(
+            configs == null ? 0 : configs.length,
+            Math.max(extracted == null ? 0 : extracted.length, extractedAmounts == null ? 0 : extractedAmounts.length));
 
-        for (int slotIndex = 0; slotIndex < snapshot.configs().length; slotIndex++) {
-            FluidStack configStack = snapshot.configs()[slotIndex];
+        for (int slotIndex = 0; slotIndex < slotCount; slotIndex++) {
+            FluidStack configStack = getFluidAt(configs, slotIndex);
             if (configStack != null) {
                 NBTTagCompound partNbt = new NBTTagCompound();
                 partNbt.setInteger("slot", slotIndex);
+                partNbt.setString("stackTypeId", "fluid");
                 AEStackUtil.writeStackToNBT(
                     partNbt,
                     AEFluidStack.create(configStack)
@@ -468,14 +685,19 @@ public class StorageBusDataHandler {
                 partitionList.appendTag(partNbt);
             }
 
-            if (isContentLimitReached(writtenContents, contentLimit)) continue;
+            if (isContentLimitReached(writtenContents, contentLimit)) {
+                continue;
+            }
 
-            FluidStack extractedStack = snapshot.extracted()[slotIndex];
-            if (extractedStack == null) continue;
+            FluidStack extractedStack = getFluidAt(extracted, slotIndex);
+            if (extractedStack == null) {
+                continue;
+            }
 
             NBTTagCompound stackNbt = new NBTTagCompound();
             AEStackUtil.writeStackToNBT(stackNbt, AEFluidStack.create(extractedStack));
-            stackNbt.setLong("Cnt", snapshot.extractedAmounts()[slotIndex]);
+            stackNbt.setLong("Cnt", getLongAt(extractedAmounts, slotIndex));
+            stackNbt.setString("stackTypeId", "fluid");
             contentsList.appendTag(stackNbt);
             writtenContents++;
         }
@@ -483,7 +705,7 @@ public class StorageBusDataHandler {
         busData.setTag("partition", partitionList);
         busData.setTag("contents", contentsList);
         busData.setBoolean(PARTITION_SUMMARY_KEY, partitionList.tagCount() > 0);
-        busData.setBoolean(CONTENT_SUMMARY_KEY, hasGregTechFluidContents(snapshot));
+        busData.setBoolean(CONTENT_SUMMARY_KEY, hasFluidContents(extracted));
     }
 
     private static void addCustomName(NBTTagCompound busData, Object bus) {
@@ -986,6 +1208,70 @@ public class StorageBusDataHandler {
      * @return true if mode was changed
      */
     public static boolean toggleIOMode(StorageBusTracker tracker) {
+        boolean isSuperItemVariant = GTMachineReflectionHelper.readBooleanField(tracker.storageBus, "isSuper")
+            .orElse(false);
+
+        if (GTMachineReflectionHelper.hasClassName(tracker.storageBus, GTMachineClassNames.SUPER_DUAL_INPUT_HATCH_ME)) {
+            boolean autoPullEnabled = GTMachineReflectionHelper
+                .invokeBoolean(tracker.storageBus, "isAutoPullItemListForGui")
+                .orElse(false);
+            boolean supportsAutoPull = GTMachineReflectionHelper.readBooleanField(tracker.storageBus, "allowAuto")
+                .orElse(false);
+            if (!supportsAutoPull) return false;
+
+            boolean changed = GTMachineReflectionHelper.invokeVoid(
+                tracker.storageBus,
+                "setAutoPullItemList",
+                GTMachineReflectionHelper.BOOLEAN_ARG_TYPES,
+                !autoPullEnabled);
+            if (!changed) return false;
+
+            tracker.hostTile.markDirty();
+            return true;
+        }
+
+        if (GTMachineReflectionHelper.hasClassName(tracker.storageBus, GTMachineClassNames.SUPER_INPUT_BUS_ME)
+            || GTMachineReflectionHelper
+                .hasAnyClassName(tracker.storageBus, GTMachineClassNames.GTNL_SUPER_ITEM_INPUT_CLASSES)
+                && isSuperItemVariant) {
+            boolean supportsAutoPull = GTMachineReflectionHelper
+                .readBooleanField(tracker.storageBus, "autoPullAvailable")
+                .orElse(false);
+            if (!supportsAutoPull) return false;
+
+            boolean autoPullEnabled = GTMachineReflectionHelper.invokeBoolean(tracker.storageBus, "isAutoPullItemList")
+                .orElse(false);
+            boolean changed = GTMachineReflectionHelper.invokeVoid(
+                tracker.storageBus,
+                "setAutoPullItemList",
+                GTMachineReflectionHelper.BOOLEAN_ARG_TYPES,
+                !autoPullEnabled);
+            if (!changed) return false;
+
+            tracker.hostTile.markDirty();
+            return true;
+        }
+
+        if (GTMachineReflectionHelper.hasClassName(tracker.storageBus, GTMachineClassNames.SUPER_INPUT_HATCH_ME)) {
+            boolean supportsAutoPull = GTMachineReflectionHelper
+                .readBooleanField(tracker.storageBus, "autoPullAvailable")
+                .orElse(false);
+            if (!supportsAutoPull) return false;
+
+            boolean autoPullEnabled = GTMachineReflectionHelper
+                .invokeBoolean(tracker.storageBus, "isAutoPullFluidListForGui")
+                .orElse(false);
+            boolean changed = GTMachineReflectionHelper.invokeVoid(
+                tracker.storageBus,
+                "setAutoPullFluidList",
+                GTMachineReflectionHelper.BOOLEAN_ARG_TYPES,
+                !autoPullEnabled);
+            if (!changed) return false;
+
+            tracker.hostTile.markDirty();
+            return true;
+        }
+
         if (tracker.storageBus instanceof MTEHatchInputBusME inputBus) {
             if (!inputBus.autoPullAvailable) return false;
 
@@ -1028,6 +1314,35 @@ public class StorageBusDataHandler {
     public static boolean busHasPartition(StorageBusTracker tracker) {
         if (tracker.partitionSummaryKnown) return tracker.hasPartitionConfigured;
 
+        boolean isSuperItemVariant = GTMachineReflectionHelper.readBooleanField(tracker.storageBus, "isSuper")
+            .orElse(false);
+
+        if (GTMachineReflectionHelper.hasClassName(tracker.storageBus, GTMachineClassNames.SUPER_DUAL_INPUT_HATCH_ME)) {
+            return hasMixedPartition(
+                GTMachineReflectionHelper.readItemStackArrayField(tracker.storageBus, "i_mark")
+                    .orElse(null),
+                GTMachineReflectionHelper.readFluidStackArrayField(tracker.storageBus, "f_mark")
+                    .orElse(null));
+        }
+
+        if (GTMachineReflectionHelper.hasClassName(tracker.storageBus, GTMachineClassNames.SUPER_INPUT_HATCH_ME)) {
+            return hasFluidContents(
+                GTMachineReflectionHelper.readFluidStackArrayField(tracker.storageBus, "storedFluids")
+                    .orElse(null));
+        }
+
+        if (GTMachineReflectionHelper.hasClassName(tracker.storageBus, GTMachineClassNames.SUPER_INPUT_BUS_ME)
+            || GTMachineReflectionHelper
+                .hasAnyClassName(tracker.storageBus, GTMachineClassNames.GTNL_SUPER_ITEM_INPUT_CLASSES)
+                && isSuperItemVariant) {
+            int filterSlotCount = GTMachineReflectionHelper.invokeInt(tracker.storageBus, "getFilterSlotCountForGui")
+                .orElse(0);
+            return hasItemContents(
+                GTMachineReflectionHelper.readItemStackArrayField(tracker.storageBus, "mInventory")
+                    .map(inv -> slice(inv, filterSlotCount))
+                    .orElse(null));
+        }
+
         if (tracker.storageBus instanceof MTEHatchInputBusME inputBus) {
             return hasGregTechItemPartition(createGregTechItemSnapshot(inputBus));
         }
@@ -1053,6 +1368,40 @@ public class StorageBusDataHandler {
      */
     public static boolean busHasConnectedInventory(StorageBusTracker tracker) {
         if (tracker.contentSummaryKnown) return tracker.hasConnectedContents;
+
+        boolean isSuperItemVariant = GTMachineReflectionHelper.readBooleanField(tracker.storageBus, "isSuper")
+            .orElse(false);
+
+        if (GTMachineReflectionHelper.hasClassName(tracker.storageBus, GTMachineClassNames.SUPER_DUAL_INPUT_HATCH_ME)) {
+            return hasMixedContents(
+                GTMachineReflectionHelper.readItemStackArrayField(tracker.storageBus, "i_display")
+                    .orElse(null),
+                GTMachineReflectionHelper.readFluidStackArrayField(tracker.storageBus, "f_display")
+                    .orElse(null));
+        }
+
+        if (GTMachineReflectionHelper.hasClassName(tracker.storageBus, GTMachineClassNames.SUPER_INPUT_HATCH_ME)) {
+            return hasFluidContents(
+                GTMachineReflectionHelper.readFluidStackArrayField(tracker.storageBus, "storedInformationFluids")
+                    .orElse(null));
+        }
+
+        if (GTMachineReflectionHelper.hasClassName(tracker.storageBus, GTMachineClassNames.SUPER_INPUT_BUS_ME)) {
+            int filterSlotCount = GTMachineReflectionHelper.invokeInt(tracker.storageBus, "getFilterSlotCountForGui")
+                .orElse(0);
+            return hasItemContents(
+                GTMachineReflectionHelper.readItemStackArrayField(tracker.storageBus, "mInventory")
+                    .map(inv -> sliceFrom(inv, filterSlotCount, filterSlotCount))
+                    .orElse(null));
+        }
+
+        if (GTMachineReflectionHelper
+            .hasAnyClassName(tracker.storageBus, GTMachineClassNames.GTNL_SUPER_ITEM_INPUT_CLASSES)
+            && isSuperItemVariant) {
+            return hasItemContents(
+                GTMachineReflectionHelper.readItemStackArrayField(tracker.storageBus, "shadowInventory")
+                    .orElse(null));
+        }
 
         if (tracker.storageBus instanceof MTEHatchInputBusME inputBus) {
             return hasGregTechItemContents(createGregTechItemSnapshot(inputBus));
@@ -1152,6 +1501,87 @@ public class StorageBusDataHandler {
         }
 
         return false;
+    }
+
+    private static boolean hasItemContents(ItemStack[] stacks) {
+        if (stacks == null) {
+            return false;
+        }
+
+        for (ItemStack stack : stacks) {
+            if (!ItemStacks.isEmpty(stack)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean hasFluidContents(FluidStack[] stacks) {
+        if (stacks == null) {
+            return false;
+        }
+
+        for (FluidStack stack : stacks) {
+            if (stack != null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean hasMixedPartition(ItemStack[] itemConfigs, FluidStack[] fluidConfigs) {
+        return hasItemContents(itemConfigs) || hasFluidContents(fluidConfigs);
+    }
+
+    private static boolean hasMixedContents(ItemStack[] itemPreview, FluidStack[] fluidPreview) {
+        return hasItemContents(itemPreview) || hasFluidContents(fluidPreview);
+    }
+
+    private static ItemStack getItemAt(ItemStack[] values, int index) {
+        if (values == null || index < 0 || index >= values.length) {
+            return null;
+        }
+
+        return values[index];
+    }
+
+    private static FluidStack getFluidAt(FluidStack[] values, int index) {
+        if (values == null || index < 0 || index >= values.length) {
+            return null;
+        }
+
+        return values[index];
+    }
+
+    private static long getLongAt(long[] values, int index) {
+        if (values == null || index < 0 || index >= values.length) {
+            return 0L;
+        }
+
+        return values[index];
+    }
+
+    private static ItemStack[] slice(ItemStack[] values, int length) {
+        if (values == null || length <= 0) {
+            return new ItemStack[0];
+        }
+
+        ItemStack[] copy = new ItemStack[Math.min(length, values.length)];
+        System.arraycopy(values, 0, copy, 0, copy.length);
+        return copy;
+    }
+
+    private static ItemStack[] sliceFrom(ItemStack[] values, int offset, int length) {
+        if (values == null || offset < 0 || length <= 0 || offset >= values.length) {
+            return new ItemStack[0];
+        }
+
+        int actualLength = Math.min(length, values.length - offset);
+        ItemStack[] copy = new ItemStack[actualLength];
+        System.arraycopy(values, offset, copy, 0, actualLength);
+        return copy;
     }
 
     private static GregTechItemSnapshot createGregTechItemSnapshot(MTEHatchInputBusME inputBus) {

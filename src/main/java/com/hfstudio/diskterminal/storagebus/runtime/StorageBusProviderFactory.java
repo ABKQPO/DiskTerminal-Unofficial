@@ -26,7 +26,7 @@ public class StorageBusProviderFactory {
             case AE_STORAGE_BUS -> new AEStorageBusProvider(id, aeResolver);
             case AE_SHARED_BUS -> new GenericItemBusProvider(id, aeResolver);
             case GREGTECH -> new GTStorageBusProvider(id, gtResolver);
-            case AE2FC_STOCK_REPLENISHER -> new StockReplenisherProvider(id, stockReplenisherResolver);
+            case MIXED_CONFIG_TARGET -> new StockReplenisherProvider(id, stockReplenisherResolver);
         };
     }
 }

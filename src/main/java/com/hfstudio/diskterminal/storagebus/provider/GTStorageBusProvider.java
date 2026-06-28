@@ -13,6 +13,8 @@ import com.hfstudio.diskterminal.api.capability.ICapabilityProvider;
 import com.hfstudio.diskterminal.api.capability.IFilterCapability;
 import com.hfstudio.diskterminal.api.capability.IRefreshCapability;
 import com.hfstudio.diskterminal.api.capability.IRenameCapability;
+import com.hfstudio.diskterminal.integration.storagebus.gtmachine.GTMachineClassNames;
+import com.hfstudio.diskterminal.integration.storagebus.gtmachine.GTMachineReflectionHelper;
 import com.hfstudio.diskterminal.storagebus.capability.filter.GTFluidFilterCapability;
 import com.hfstudio.diskterminal.storagebus.capability.filter.GTItemFilterCapability;
 import com.hfstudio.diskterminal.storagebus.capability.refresh.GTMachineRefreshCapability;
@@ -33,6 +35,10 @@ import gregtech.common.tileentities.machines.MTEHatchInputME;
  * every call.
  */
 public class GTStorageBusProvider implements ICapabilityProvider<StorageBusId> {
+
+    private static final int FILTER_KIND_NONE = 0;
+    private static final int FILTER_KIND_ITEM = 1;
+    private static final int FILTER_KIND_FLUID = 2;
 
     private final StorageBusId id;
     private final StorageBusResolver resolver;
@@ -83,8 +89,7 @@ public class GTStorageBusProvider implements ICapabilityProvider<StorageBusId> {
         // The filter capability is exposed even while auto-pull is active so the partition view still
         // renders; the capability itself rejects edits in that state. Only the meta-tile type matters
         // here, so avoid constructing (and serializing) the full filter capability.
-        MetaTileEntity meta = handle.getMetaTileEntity();
-        if (meta instanceof MTEHatchInputBusME || meta instanceof MTEHatchInputME) {
+        if (resolveFilterKind(handle.getMetaTileEntity()) != FILTER_KIND_NONE) {
             capabilities.add(StorageBusCapabilityIds.FILTER);
         }
 
@@ -92,14 +97,32 @@ public class GTStorageBusProvider implements ICapabilityProvider<StorageBusId> {
     }
 
     private Optional<IFilterCapability> buildFilterCapability(MetaTileEntity meta) {
-        if (meta instanceof MTEHatchInputBusME inputBus) {
-            return Optional.of(new GTItemFilterCapability(inputBus));
+        int filterKind = resolveFilterKind(meta);
+        if (filterKind == FILTER_KIND_ITEM) {
+            return Optional.of(new GTItemFilterCapability(meta));
         }
-
-        if (meta instanceof MTEHatchInputME inputHatch) {
-            return Optional.of(new GTFluidFilterCapability(inputHatch));
+        if (filterKind == FILTER_KIND_FLUID) {
+            return Optional.of(new GTFluidFilterCapability(meta));
         }
 
         return Optional.empty();
+    }
+
+    private int resolveFilterKind(MetaTileEntity meta) {
+        boolean isSuperItemVariant = GTMachineReflectionHelper.readBooleanField(meta, "isSuper")
+            .orElse(false);
+        if (meta instanceof MTEHatchInputBusME
+            || GTMachineReflectionHelper.hasClassName(meta, GTMachineClassNames.SUPER_INPUT_BUS_ME)
+            || GTMachineReflectionHelper.hasAnyClassName(meta, GTMachineClassNames.GTNL_SUPER_ITEM_INPUT_CLASSES)
+                && isSuperItemVariant) {
+            return FILTER_KIND_ITEM;
+        }
+
+        if (meta instanceof MTEHatchInputME
+            || GTMachineReflectionHelper.hasClassName(meta, GTMachineClassNames.SUPER_INPUT_HATCH_ME)) {
+            return FILTER_KIND_FLUID;
+        }
+
+        return FILTER_KIND_NONE;
     }
 }
