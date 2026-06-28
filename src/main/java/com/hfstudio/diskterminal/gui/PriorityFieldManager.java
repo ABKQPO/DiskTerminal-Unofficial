@@ -47,6 +47,9 @@ public class PriorityFieldManager {
     // Field dimensions - sized for 7 digits with caret (-999999 to 9999999)
     public static final int FIELD_WIDTH = 35;
     private static final int FIELD_HEIGHT = 6;
+    private static final int FIELD_BACKGROUND_WIDTH = FIELD_WIDTH;
+    private static final int FIELD_BACKGROUND_HEIGHT = 10;
+    private static final int FIELD_BACKGROUND_Y_OFFSET = -2;
 
     // Position offset from right edge of content area (leave room for [+]/[-] button)
     public static final int RIGHT_MARGIN = 15;
@@ -269,10 +272,10 @@ public class PriorityFieldManager {
 
         private Rectangle calculateVisibleBounds(Rectangle contentViewport) {
             Rectangle fieldBounds = new Rectangle(
-                textField.xPosition - 1,
-                textField.yPosition - 1,
-                FIELD_WIDTH + 2,
-                FIELD_HEIGHT + 2);
+                textField.xPosition,
+                textField.yPosition + FIELD_BACKGROUND_Y_OFFSET,
+                FIELD_BACKGROUND_WIDTH,
+                FIELD_BACKGROUND_HEIGHT);
             if (contentViewport == null) return fieldBounds;
 
             Rectangle clippedBounds = fieldBounds.intersection(contentViewport);
@@ -285,9 +288,16 @@ public class PriorityFieldManager {
             int x = textField.xPosition;
             int y = textField.yPosition;
 
-            // Draw background
-            Gui.drawRect(x - 1, y - 1, x + FIELD_WIDTH + 1, y + FIELD_HEIGHT + 1, 0xFF373737);
-            Gui.drawRect(x, y, x + FIELD_WIDTH, y + FIELD_HEIGHT, textField.isFocused() ? 0xFF000000 : 0xFF1E1E1E);
+            GuiConstants.drawHorizontalSlicedTerminalSprite(
+                x,
+                y + FIELD_BACKGROUND_Y_OFFSET + 1,
+                131,
+                38,
+                71,
+                12,
+                FIELD_BACKGROUND_WIDTH,
+                FIELD_BACKGROUND_HEIGHT - 1,
+                4);
 
             // Draw text with scaling
             String text = textField.getText();

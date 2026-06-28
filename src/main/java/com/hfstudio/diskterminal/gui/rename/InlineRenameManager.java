@@ -55,6 +55,9 @@ public class InlineRenameManager {
 
     // Layout constants for the text field
     private static final int TEXT_FIELD_HEIGHT = 9;
+    private static final int TEXT_FIELD_TEXTURE_HEIGHT = 12;
+    private static final int TEXT_FIELD_Y_OFFSET = -1;
+    private static final int TEXT_HORIZONTAL_PADDING = 2;
 
     private InlineRenameManager() {}
 
@@ -237,10 +240,10 @@ public class InlineRenameManager {
 
         // Click inside the rename field: keep editing
         int fieldWidth = editingRightEdge - editingX;
-        int fieldY = editingY + 1;
+        int fieldY = editingY + TEXT_FIELD_Y_OFFSET;
         if (mouseX >= editingX && mouseX < editingX + fieldWidth
             && mouseY >= fieldY
-            && mouseY < fieldY + TEXT_FIELD_HEIGHT) {
+            && mouseY < fieldY + TEXT_FIELD_TEXTURE_HEIGHT) {
             return;
         }
 
@@ -258,21 +261,28 @@ public class InlineRenameManager {
         int x = editingX;
         int y = editingY + 1; // Vertically aligned with text (y + 1 is where text draws)
         int width = editingRightEdge - editingX;
-        int height = TEXT_FIELD_HEIGHT;
 
-        // Draw background with dark border
-        Gui.drawRect(x - 1, y - 1, x + width + 1, y + height + 1, 0xFF373737);
-        Gui.drawRect(x, y, x + width, y + height, 0xFFE0E0E0);
+        GuiConstants.drawHorizontalSlicedTerminalSprite(
+            x,
+            editingY + TEXT_FIELD_Y_OFFSET,
+            131,
+            38,
+            71,
+            TEXT_FIELD_TEXTURE_HEIGHT,
+            width,
+            TEXT_FIELD_TEXTURE_HEIGHT,
+            4);
 
         // Draw text with scrolling if too long
         String displayText = editingText;
         int textWidth = fontRenderer.getStringWidth(displayText);
-        int visibleWidth = width - 4;
-        int textX = x + 2;
+        int visibleWidth = width - (TEXT_HORIZONTAL_PADDING * 2);
+        int textX = x + TEXT_HORIZONTAL_PADDING;
+        int scrollOffset = 0;
 
         if (textWidth > visibleWidth) {
             int cursorX = fontRenderer.getStringWidth(displayText.substring(0, editingCursorPos));
-            int scrollOffset = Math.max(0, cursorX - visibleWidth + 10);
+            scrollOffset = Math.max(0, cursorX - visibleWidth + 10);
             textX -= scrollOffset;
         }
 
@@ -281,8 +291,10 @@ public class InlineRenameManager {
         // Draw blinking cursor
         long time = System.currentTimeMillis();
         if ((time / 500) % 2 == 0) {
-            int cursorX = x + 2 + fontRenderer.getStringWidth(displayText.substring(0, editingCursorPos));
-            Gui.drawRect(cursorX, y, cursorX + 1, y + height - 1, 0xFF000000);
+            int cursorX = x + TEXT_HORIZONTAL_PADDING
+                + fontRenderer.getStringWidth(displayText.substring(0, editingCursorPos))
+                - scrollOffset;
+            Gui.drawRect(cursorX, y, cursorX + 1, y + TEXT_FIELD_HEIGHT - 1, 0xFF000000);
         }
     }
 

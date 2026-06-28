@@ -20,6 +20,12 @@ import net.minecraft.util.IChatComponent;
  */
 public class MessageHelper {
 
+    private static final long DUPLICATE_SUPPRESSION_WINDOW_MS = 250;
+
+    private static String lastOverlayText = "";
+    private static MessageType lastOverlayType = null;
+    private static long lastOverlayTimestamp = Long.MIN_VALUE;
+
     private MessageHelper() {}
 
     /**
@@ -90,37 +96,54 @@ public class MessageHelper {
         EntityPlayer player = Minecraft.getMinecraft().thePlayer;
         if (player == null) return;
 
-        // Send to chat
-        player.addChatMessage(component);
+        String messageText = component.getUnformattedText();
+        if (shouldSuppressDuplicate(messageText, type)) return;
 
-        // Send to overlay using unformatted text
-        OverlayMessageRenderer.setMessage(component.getUnformattedText(), type);
+        player.addChatMessage(component);
+        showOverlay(messageText, type);
     }
 
     private static void send(String translationKey, MessageType type, EnumChatFormatting chatColor, Object... args) {
         EntityPlayer player = Minecraft.getMinecraft().thePlayer;
         if (player == null) return;
 
-        // Create colored chat message
         ChatComponentTranslation chatMessage = new ChatComponentTranslation(translationKey, args);
         chatMessage.setChatStyle(new ChatStyle().setColor(chatColor));
-        player.addChatMessage(chatMessage);
+        String messageText = chatMessage.getUnformattedText();
+        if (shouldSuppressDuplicate(messageText, type)) return;
 
-        // Create overlay message from the same component so nested chat components resolve correctly.
-        String overlayText = chatMessage.getUnformattedText();
-        OverlayMessageRenderer.setMessage(overlayText, type);
+        player.addChatMessage(chatMessage);
+        showOverlay(messageText, type);
     }
 
     private static void sendRaw(String message, MessageType type, EnumChatFormatting chatColor) {
         EntityPlayer player = Minecraft.getMinecraft().thePlayer;
         if (player == null) return;
 
-        // Create colored chat message
+        if (shouldSuppressDuplicate(message, type)) return;
+
         ChatComponentText chatMessage = new ChatComponentText(message);
         chatMessage.setChatStyle(new ChatStyle().setColor(chatColor));
         player.addChatMessage(chatMessage);
+        showOverlay(message, type);
+    }
 
-        // Send to overlay
-        OverlayMessageRenderer.setMessage(message, type);
+    private static boolean shouldSuppressDuplicate(String text, MessageType type) {
+        String normalizedText = text == null ? "" : text;
+        long now = System.currentTimeMillis();
+        boolean duplicate = type == lastOverlayType && normalizedText.equals(lastOverlayText)
+            && now - lastOverlayTimestamp <= DUPLICATE_SUPPRESSION_WINDOW_MS;
+
+        if (!duplicate) {
+            lastOverlayText = normalizedText;
+            lastOverlayType = type;
+            lastOverlayTimestamp = now;
+        }
+
+        return duplicate;
+    }
+
+    private static void showOverlay(String text, MessageType type) {
+        OverlayMessageRenderer.setMessage(text == null ? "" : text, type);
     }
 }

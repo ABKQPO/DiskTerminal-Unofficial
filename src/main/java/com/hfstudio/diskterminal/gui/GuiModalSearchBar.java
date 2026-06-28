@@ -27,13 +27,12 @@ public class GuiModalSearchBar {
     private static final int HORIZONTAL_MARGIN = 20;
     private static final int VERTICAL_MARGIN = 10;
     private static final int PADDING = 6;
-    private static final int BACKGROUND_COLOR = 0xF0303030;
-    private static final int FIELD_BACKGROUND = 0xFF1A1A1A;
-    private static final int BORDER_COLOR = 0xFF333333;
     private static final int TEXT_COLOR = 0xE0E0E0;
     private static final int WRAP_THRESHOLD = 20; // Wrap on space if within this many chars
     private static final int MIN_LINES = 1;
     private static final int MAX_LINES = 6;
+    private static final int FIELD_TEXTURE_HEIGHT = 12;
+    private static final int FIELD_HORIZONTAL_PADDING = 4;
 
     private final FontRenderer fontRenderer;
     private final MEGuiTextField sourceField;
@@ -119,23 +118,30 @@ public class GuiModalSearchBar {
 
         // Reset GL state for proper color rendering
         GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
-        // Draw background with border
         int bgX = x - PADDING;
         int bgY = y - PADDING;
         int bgWidth = width + (PADDING * 2);
         int bgHeight = height + (PADDING * 2);
 
-        Gui.drawRect(bgX - 1, bgY - 1, bgX + bgWidth + 1, bgY + bgHeight + 1, BORDER_COLOR);
-        Gui.drawRect(bgX, bgY, bgX + bgWidth, bgY + bgHeight, BACKGROUND_COLOR);
+        GuiConstants.drawChildWindowBackground(bgX, bgY, bgWidth, bgHeight);
 
-        // Draw text field background
-        Gui.drawRect(x, y, x + width, y + height, 0xFF404040);
-        Gui.drawRect(x + 1, y + 1, x + width - 1, y + height - 1, FIELD_BACKGROUND);
+        GuiConstants.drawNineSlicedTexture(
+            GuiConstants.TERMINAL_TEXTURE,
+            x,
+            y,
+            131,
+            38,
+            71,
+            FIELD_TEXTURE_HEIGHT,
+            width,
+            height,
+            4,
+            256,
+            256);
 
         // Draw selection highlight across wrapped lines
         if (selectionStart != -1 && selectionStart != cursorPosition) {
@@ -151,7 +157,7 @@ public class GuiModalSearchBar {
 
         for (int i = 0; i < numLines && i < cachedLines.size(); i++) {
             String line = cachedLines.get(i);
-            fontRenderer.drawStringWithShadow(line, x + 4, lineY, TEXT_COLOR);
+            fontRenderer.drawStringWithShadow(line, x + FIELD_HORIZONTAL_PADDING, lineY, TEXT_COLOR);
             lineY += LINE_HEIGHT;
         }
 
@@ -180,7 +186,7 @@ public class GuiModalSearchBar {
 
         String lineText = cursorLine < cachedLines.size() ? cachedLines.get(cursorLine) : "";
         String textBeforeCursor = lineText.substring(0, Math.min(cursorOffset, lineText.length()));
-        int cursorX = x + 4 + fontRenderer.getStringWidth(textBeforeCursor);
+        int cursorX = x + FIELD_HORIZONTAL_PADDING + fontRenderer.getStringWidth(textBeforeCursor);
         int cursorY = baseY + PADDING + (cursorLine * LINE_HEIGHT);
 
         Gui.drawRect(cursorX, cursorY, cursorX + 1, cursorY + LINE_HEIGHT - 2, 0xFFFFFFFF);
@@ -232,7 +238,7 @@ public class GuiModalSearchBar {
             String highlightText = line
                 .substring(Math.min(highlightStart, line.length()), Math.min(highlightEnd, line.length()));
 
-            int hlX1 = x + 4 + fontRenderer.getStringWidth(beforeHighlight);
+            int hlX1 = x + FIELD_HORIZONTAL_PADDING + fontRenderer.getStringWidth(beforeHighlight);
             int hlX2 = hlX1 + fontRenderer.getStringWidth(highlightText);
             int hlY = baseY + PADDING + (i * LINE_HEIGHT);
 
@@ -244,7 +250,7 @@ public class GuiModalSearchBar {
      * Update cached wrapped lines and their start indices.
      */
     private void updateCachedLines() {
-        cachedLines = wrapText(text.toString(), width - 8);
+        cachedLines = wrapText(text.toString(), width - (FIELD_HORIZONTAL_PADDING * 2));
 
         lineStartIndices = new int[cachedLines.size() + 1];
         int charIndex = 0;
@@ -368,7 +374,7 @@ public class GuiModalSearchBar {
 
         if (clickedLine < cachedLines.size()) {
             String line = cachedLines.get(clickedLine);
-            int lineStartX = x + 4;
+            int lineStartX = x + FIELD_HORIZONTAL_PADDING;
             int clickX = mouseX - lineStartX;
 
             int charOffset = 0;

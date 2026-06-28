@@ -646,6 +646,12 @@ public class TerminalDataManager {
         int contentCount = slotLimit.getEffectiveCount(
             bus.getContents()
                 .size());
+
+        if (bus.hasMixedContentTypes() && contentCount > 1) {
+            addMixedStorageBusInventoryRows(bus, contentCount);
+            return;
+        }
+
         int contentRows = Math.max(1, (contentCount + SLOTS_PER_ROW_BUS - 1) / SLOTS_PER_ROW_BUS);
 
         for (int row = 0; row < contentRows; row++) {
@@ -708,6 +714,32 @@ public class TerminalDataManager {
             for (int rowStart = groupStart; rowStart < groupStart + visibleSlots; rowStart += SLOTS_PER_ROW_BUS) {
                 int rowSlots = Math.min(SLOTS_PER_ROW_BUS, groupStart + visibleSlots - rowStart);
                 this.storageBusPartitionLines.add(new StorageBusContentRow(bus, rowStart, firstRow, rowSlots));
+                firstRow = false;
+            }
+
+            groupStart = groupEnd;
+        }
+    }
+
+    private void addMixedStorageBusInventoryRows(StorageBusInfo bus, int contentCount) {
+        if (contentCount <= 0) {
+            this.storageBusInventoryLines.add(new StorageBusContentRow(bus, 0, true));
+            return;
+        }
+
+        boolean firstRow = true;
+        int groupStart = 0;
+
+        while (groupStart < contentCount) {
+            String groupType = bus.getContentTypeId(groupStart);
+            int groupEnd = groupStart + 1;
+            while (groupEnd < contentCount && groupType.equals(bus.getContentTypeId(groupEnd))) {
+                groupEnd++;
+            }
+
+            for (int rowStart = groupStart; rowStart < groupEnd; rowStart += SLOTS_PER_ROW_BUS) {
+                int rowSlots = Math.min(SLOTS_PER_ROW_BUS, groupEnd - rowStart);
+                this.storageBusInventoryLines.add(new StorageBusContentRow(bus, rowStart, firstRow, rowSlots));
                 firstRow = false;
             }
 

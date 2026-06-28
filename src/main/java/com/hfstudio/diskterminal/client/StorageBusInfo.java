@@ -108,6 +108,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
     private final boolean supportsFluidStackType;
     private final boolean supportsEssentiaStackType;
     private final boolean hasMixedPartitionSlotTypes;
+    private final boolean hasMixedContentTypes;
     private final long totalItemCount;
     private final Set<String> availableCapabilities = new HashSet<>();
     private int partitionCount;
@@ -250,6 +251,7 @@ public class StorageBusInfo implements Renameable, Prioritizable {
             this.contentTypeIds.add(this.stackTypeId);
         }
 
+        this.hasMixedContentTypes = detectMixedContentTypes();
         this.totalItemCount = contentTotal;
     }
 
@@ -456,6 +458,10 @@ public class StorageBusInfo implements Renameable, Prioritizable {
 
     public boolean hasMixedPartitionSlotTypes() {
         return hasMixedPartitionSlotTypes;
+    }
+
+    public boolean hasMixedContentTypes() {
+        return hasMixedContentTypes;
     }
 
     public boolean supportsStackType(String typeId) {
@@ -799,6 +805,20 @@ public class StorageBusInfo implements Renameable, Prioritizable {
             }
 
             if (!first.equals(slotTypeId)) return true;
+        }
+
+        return false;
+    }
+
+    private boolean detectMixedContentTypes() {
+        String first = null;
+        for (String contentTypeId : contentTypeIds) {
+            if (first == null) {
+                first = contentTypeId;
+                continue;
+            }
+
+            if (!first.equals(contentTypeId)) return true;
         }
 
         return false;

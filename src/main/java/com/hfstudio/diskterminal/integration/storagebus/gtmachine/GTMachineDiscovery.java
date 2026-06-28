@@ -14,6 +14,7 @@ public class GTMachineDiscovery {
     }
 
     private enum EmptyNodeCollection implements IReadOnlyCollection<IGridNode> {
+
         INSTANCE;
 
         @Override

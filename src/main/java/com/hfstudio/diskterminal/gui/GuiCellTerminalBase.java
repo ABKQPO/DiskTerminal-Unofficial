@@ -745,17 +745,16 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     private boolean isPopupObscuringPoint(int mouseX, int mouseY) {
         if (partitionPopup != null) return partitionPopup.isInsidePopup(mouseX, mouseY);
         if (inventoryPopup != null) return inventoryPopup.isInsidePopup(mouseX, mouseY);
+        if (networkToolModal != null) return networkToolModal.isInside(mouseX, mouseY);
 
         return false;
     }
 
     public boolean isBlockingPopupAt(int mouseX, int mouseY) {
-        return hasBlockingPopup() && isPopupObscuringPoint(mouseX, mouseY);
+        return isPopupObscuringPoint(mouseX, mouseY);
     }
 
     public boolean isMouseOverBlockingPopup() {
-        if (!hasBlockingPopup()) return false;
-
         ScaledResolution resolution = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
         int mouseX = Mouse.getX() * resolution.getScaledWidth() / mc.displayWidth;
         int mouseY = resolution.getScaledHeight() - Mouse.getY() * resolution.getScaledHeight() / mc.displayHeight - 1;
@@ -1214,14 +1213,9 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             if (modalSearchBar.handleMouseClick(mouseX, mouseY, mouseButton)) return;
         }
 
-        // Handle network tool confirmation modal first (blocks all other clicks)
+        // Handle network tool confirmation popup before other clicks.
         if (networkToolModal != null) {
             if (networkToolModal.handleClick(mouseX, mouseY, mouseButton)) return;
-
-            // Click outside modal cancels it
-            networkToolModal = null;
-
-            return;
         }
 
         boolean hadPopupAtStart = inventoryPopup != null || partitionPopup != null;
@@ -1273,6 +1267,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
     @Override
     protected void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
+        if (networkToolModal != null && networkToolModal.handleDrag(mouseX, mouseY, clickedMouseButton)) return;
         if (partitionPopup != null && partitionPopup.handleDrag(mouseX, mouseY, clickedMouseButton)) return;
         if (inventoryPopup != null && inventoryPopup.handleDrag(mouseX, mouseY, clickedMouseButton)) return;
         if (isPopupObscuringPoint(mouseX, mouseY)) return;
@@ -1282,7 +1277,8 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
 
     @Override
     protected void mouseMovedOrUp(int mouseX, int mouseY, int state) {
-        boolean hadPopupAtStart = hasBlockingPopup();
+        boolean hadPopupAtStart = hasBlockingPopup() || networkToolModal != null;
+        if (networkToolModal != null) networkToolModal.stopDragging();
         if (partitionPopup != null) partitionPopup.stopDragging();
         if (inventoryPopup != null) inventoryPopup.stopDragging();
         if (hadPopupAtStart && isPopupObscuringPoint(mouseX, mouseY)) return;
@@ -1433,7 +1429,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         if (InlineRenameManager.getInstance()
             .handleKey(typedChar, keyCode)) return;
 
-        // Handle network tool confirmation modal (blocks all other input)
+        // Handle network tool confirmation popup shortcuts first.
         if (networkToolModal != null) {
             if (networkToolModal.handleKeyTyped(keyCode)) return;
         }

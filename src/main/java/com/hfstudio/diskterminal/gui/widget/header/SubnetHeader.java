@@ -6,9 +6,10 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.resources.I18n;
+
+import org.lwjgl.opengl.GL11;
 
 import com.hfstudio.diskterminal.gui.GuiConstants;
 import com.hfstudio.diskterminal.gui.rename.InlineRenameManager;
@@ -39,6 +40,11 @@ public class SubnetHeader extends AbstractHeader {
     private static final int STAR_SIZE = GuiConstants.FAVORITE_STAR_SIZE;
     private static final int STAR_SCALED_SIZE = (int) (STAR_SIZE * STAR_SCALING);
     private static final int LOAD_BUTTON_MARGIN = 4;
+    private static final int LOAD_BUTTON_TEXTURE_X = 60;
+    private static final int LOAD_BUTTON_TEXTURE_Y = 40;
+    private static final int LOAD_BUTTON_TEXTURE_HOVER_Y = 50;
+    private static final int LOAD_BUTTON_TEXTURE_SIZE = 10;
+    private static final int LOAD_BUTTON_TEXTURE_BORDER = 2;
 
     // Colors
     private static final int COLOR_MAIN_NETWORK = 0xFF00838F;
@@ -212,25 +218,27 @@ public class SubnetHeader extends AbstractHeader {
      */
     private void drawLoadButton(int x, int btnY, String text, boolean isHovered, boolean isEnabled) {
         int buttonHeight = 10;
+        int textureY = isHovered ? LOAD_BUTTON_TEXTURE_HOVER_Y : LOAD_BUTTON_TEXTURE_Y;
 
-        // Background
-        int bgColor;
         if (!isEnabled) {
-            bgColor = 0xFF808080;
-        } else if (isHovered) {
-            bgColor = 0xFF4A90D9;
-        } else {
-            bgColor = 0xFF3B7DC9;
+            GL11.glColor4f(0.7F, 0.7F, 0.7F, 1.0F);
         }
-        Gui.drawRect(x, btnY, x + loadButtonWidth, btnY + buttonHeight, bgColor);
 
-        // Border (3D effect)
-        int highlightColor = isEnabled ? 0xFF6BA5E7 : 0xFFA0A0A0;
-        int shadowColor = isEnabled ? 0xFF2A5B8A : 0xFF606060;
-        Gui.drawRect(x, btnY, x + loadButtonWidth, btnY + 1, highlightColor);
-        Gui.drawRect(x, btnY, x + 1, btnY + buttonHeight, highlightColor);
-        Gui.drawRect(x, btnY + buttonHeight - 1, x + loadButtonWidth, btnY + buttonHeight, shadowColor);
-        Gui.drawRect(x + loadButtonWidth - 1, btnY, x + loadButtonWidth, btnY + buttonHeight, shadowColor);
+        GuiConstants.drawNineSlicedTexture(
+            GuiConstants.ATLAS_TEXTURE,
+            x,
+            btnY,
+            LOAD_BUTTON_TEXTURE_X,
+            textureY,
+            LOAD_BUTTON_TEXTURE_SIZE,
+            LOAD_BUTTON_TEXTURE_SIZE,
+            loadButtonWidth,
+            buttonHeight,
+            LOAD_BUTTON_TEXTURE_BORDER,
+            GuiConstants.ATLAS_WIDTH,
+            GuiConstants.ATLAS_HEIGHT);
+
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
         // Text
         int textX = x + LOAD_BUTTON_MARGIN / 2;
