@@ -415,7 +415,14 @@ public class SubnetOverviewTabWidget extends AbstractTabWidget {
         // Load button: switch to main network
         header.setOnLoadClick(() -> { if (subnetContext != null) subnetContext.switchToNetwork(0); });
 
-        // FIXME: does not supply the star onClick lambda
+        header.setOnStarClick(() -> {
+            boolean newFavorite = !subnet.isFavorite();
+            subnet.setFavorite(newFavorite);
+            DiskTerminalNetwork.INSTANCE.sendToServer(PacketSubnetAction.toggleFavorite(subnet.getId(), newFavorite));
+            this.subnetList.sort(SUBNET_COMPARATOR);
+            buildSubnetLines();
+            if (guiContext != null) guiContext.rebuildAndUpdateScrollbar();
+        });
 
         return header;
     }

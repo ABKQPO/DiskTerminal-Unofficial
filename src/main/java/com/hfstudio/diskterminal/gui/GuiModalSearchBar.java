@@ -47,6 +47,14 @@ public class GuiModalSearchBar {
     // Calculated dimensions
     private int x, width;
     private int screenHeight;
+    private boolean layoutDirty = true;
+    private int cachedVisibleLineCount = MIN_LINES;
+    private int cachedHeight = 0;
+    private int cachedY = 0;
+    private int cachedBgX = 0;
+    private int cachedBgY = 0;
+    private int cachedBgWidth = 0;
+    private int cachedBgHeight = 0;
 
     // Cached wrapped lines for cursor/selection calculations
     private List<String> cachedLines = new ArrayList<>();
@@ -78,7 +86,7 @@ public class GuiModalSearchBar {
         this.selectionStart = -1;
         this.visible = true;
 
-        updateCachedLines();
+        markLayoutDirty();
 
         Keyboard.enableRepeatEvents(true);
     }
@@ -106,12 +114,7 @@ public class GuiModalSearchBar {
         if (!visible) return;
 
         cursorBlinkCounter++;
-        updateCachedLines();
-
-        int numLines = Math.clamp(cachedLines.size(), MIN_LINES, MAX_LINES);
-        int textAreaHeight = numLines * LINE_HEIGHT + 8;
-        int height = textAreaHeight + (PADDING * 2);
-        int y = screenHeight - height - VERTICAL_MARGIN;
+        ensureLayoutCache();
 
         GL11.glPushMatrix();
         GL11.glTranslatef(0, 0, 1000); // Above everything
@@ -122,23 +125,18 @@ public class GuiModalSearchBar {
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
-        int bgX = x - PADDING;
-        int bgY = y - PADDING;
-        int bgWidth = width + (PADDING * 2);
-        int bgHeight = height + (PADDING * 2);
-
-        GuiConstants.drawChildWindowBackground(bgX, bgY, bgWidth, bgHeight);
+        GuiConstants.drawChildWindowBackground(cachedBgX, cachedBgY, cachedBgWidth, cachedBgHeight);
 
         GuiConstants.drawNineSlicedTexture(
             GuiConstants.TERMINAL_TEXTURE,
             x,
-            y,
+            cachedY,
             131,
             38,
             71,
             FIELD_TEXTURE_HEIGHT,
             width,
-            height,
+            cachedHeight,
             4,
             256,
             256);
@@ -147,15 +145,15 @@ public class GuiModalSearchBar {
         if (selectionStart != -1 && selectionStart != cursorPosition) {
             int selStart = Math.min(selectionStart, cursorPosition);
             int selEnd = Math.max(selectionStart, cursorPosition);
-            drawSelectionHighlight(selStart, selEnd, y);
+            drawSelectionHighlight(selStart, selEnd, cachedY);
         }
 
         // Draw wrapped text
-        int lineY = y + PADDING;
+        int lineY = cachedY + PADDING;
         GL11.glEnable(GL11.GL_TEXTURE_2D);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
-        for (int i = 0; i < numLines && i < cachedLines.size(); i++) {
+        for (int i = 0; i < cachedVisibleLineCount && i < cachedLines.size(); i++) {
             String line = cachedLines.get(i);
             fontRenderer.drawStringWithShadow(line, x + FIELD_HORIZONTAL_PADDING, lineY, TEXT_COLOR);
             lineY += LINE_HEIGHT;
@@ -165,7 +163,7 @@ public class GuiModalSearchBar {
         if ((cursorBlinkCounter / 40) % 2 == 0) {
             GL11.glDisable(GL11.GL_TEXTURE_2D);
             GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            drawCursor(y);
+            drawCursor(cachedY);
         }
 
         // Restore GL state
@@ -247,34 +245,6 @@ public class GuiModalSearchBar {
     }
 
     /**
-     * Update cached wrapped lines and their start indices.
-     */
-    private void updateCachedLines() {
-        cachedLines = wrapText(text.toString(), width - (FIELD_HORIZONTAL_PADDING * 2));
-
-        lineStartIndices = new int[cachedLines.size() + 1];
-        int charIndex = 0;
-
-        for (int i = 0; i < cachedLines.size(); i++) {
-            lineStartIndices[i] = charIndex;
-            charIndex += cachedLines.get(i)
-                .length();
-
-            // Account for spaces that were consumed during wrapping
-            if (i < cachedLines.size() - 1) {
-                int nextLineStart = charIndex;
-
-                // Check if there was a space wrap
-                if (nextLineStart < text.length() && text.charAt(nextLineStart) == ' ') {
-                    charIndex++;
-                }
-            }
-        }
-
-        lineStartIndices[cachedLines.size()] = text.length();
-    }
-
-    /**
      * Wrap text intelligently: on space if within threshold, or on any character.
      */
     private List<String> wrapText(String text, int maxWidth) {
@@ -339,17 +309,11 @@ public class GuiModalSearchBar {
     public boolean handleMouseClick(int mouseX, int mouseY, int mouseButton) {
         if (!visible) return false;
 
-        int numLines = Math.clamp(cachedLines.size(), MIN_LINES, MAX_LINES);
-        int textAreaHeight = numLines * LINE_HEIGHT + 8;
-        int height = textAreaHeight + (PADDING * 2);
-        int y = screenHeight - height - VERTICAL_MARGIN;
+        ensureLayoutCache();
 
-        int bgX = x - PADDING;
-        int bgY = y - PADDING;
-        int bgWidth = width + (PADDING * 2);
-        int bgHeight = height + (PADDING * 2);
-
-        boolean insideModal = mouseX >= bgX && mouseX < bgX + bgWidth && mouseY >= bgY && mouseY < bgY + bgHeight;
+        boolean insideModal = mouseX >= cachedBgX && mouseX < cachedBgX + cachedBgWidth
+            && mouseY >= cachedBgY
+            && mouseY < cachedBgY + cachedBgHeight;
 
         if (!insideModal) {
             close();
@@ -362,14 +326,14 @@ public class GuiModalSearchBar {
             text = new StringBuilder();
             cursorPosition = 0;
             selectionStart = -1;
-            updateCachedLines();
+            markLayoutDirty();
             syncToSource();
 
             return true;
         }
 
         // Left-click positions cursor based on click location
-        int clickedLine = (mouseY - y - PADDING) / LINE_HEIGHT;
+        int clickedLine = (mouseY - cachedY - PADDING) / LINE_HEIGHT;
         clickedLine = Math.clamp(clickedLine, 0, cachedLines.size() - 1);
 
         if (clickedLine < cachedLines.size()) {
@@ -682,7 +646,47 @@ public class GuiModalSearchBar {
     }
 
     private void syncToSource() {
+        markLayoutDirty();
         sourceField.setText(text.toString(), true);
         onTextChanged.run();
+    }
+
+    private void markLayoutDirty() {
+        this.layoutDirty = true;
+    }
+
+    private void ensureLayoutCache() {
+        if (!layoutDirty) return;
+
+        updateCachedLines(text.toString());
+        cachedVisibleLineCount = Math.clamp(cachedLines.size(), MIN_LINES, MAX_LINES);
+        int textAreaHeight = cachedVisibleLineCount * LINE_HEIGHT + 8;
+        cachedHeight = textAreaHeight + (PADDING * 2);
+        cachedY = screenHeight - cachedHeight - VERTICAL_MARGIN;
+        cachedBgX = x - PADDING;
+        cachedBgY = cachedY - PADDING;
+        cachedBgWidth = width + (PADDING * 2);
+        cachedBgHeight = cachedHeight + (PADDING * 2);
+        layoutDirty = false;
+    }
+
+    private void updateCachedLines(String currentText) {
+        cachedLines = wrapText(currentText, width - (FIELD_HORIZONTAL_PADDING * 2));
+
+        lineStartIndices = new int[cachedLines.size() + 1];
+        int charIndex = 0;
+
+        for (int i = 0; i < cachedLines.size(); i++) {
+            lineStartIndices[i] = charIndex;
+            charIndex += cachedLines.get(i)
+                .length();
+
+            if (i < cachedLines.size() - 1 && charIndex < currentText.length()
+                && currentText.charAt(charIndex) == ' ') {
+                charIndex++;
+            }
+        }
+
+        lineStartIndices[cachedLines.size()] = currentText.length();
     }
 }

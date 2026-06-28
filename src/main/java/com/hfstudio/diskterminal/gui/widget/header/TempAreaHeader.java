@@ -38,13 +38,9 @@ public class TempAreaHeader extends AbstractHeader {
 
     // Send button layout
     public static final int SEND_BUTTON_X = 150;
-    private static final int SEND_BUTTON_Y_OFFSET = 3;
+    private static final int SEND_BUTTON_Y_OFFSET = 2;
     private static final int SEND_BUTTON_WIDTH = 28;
-    private static final int SEND_BUTTON_HEIGHT = 12;
-
-    // Send button colors
-    private static final int COLOR_SEND_BUTTON = 0xFF5599CC;
-    private static final int COLOR_SEND_BUTTON_HOVER = 0xFF77BBEE;
+    private static final int SEND_BUTTON_HEIGHT = 14;
 
     // Name width limit leaves room for the right-side content edge.
     private static final int MAX_NAME_WIDTH = GuiConstants.CONTENT_RIGHT_EDGE - GuiConstants.HEADER_NAME_X - 4;
@@ -236,7 +232,7 @@ public class TempAreaHeader extends AbstractHeader {
     }
 
     /**
-     * Draw the "Send" button with 3D border effect.
+     * Draw the "Send" button using the shared textured button style.
      */
     private void drawSendButton(int mouseX, int mouseY) {
         int btnX = SEND_BUTTON_X;
@@ -246,28 +242,15 @@ public class TempAreaHeader extends AbstractHeader {
             && mouseY >= btnY
             && mouseY < btnY + SEND_BUTTON_HEIGHT;
 
-        int btnColor = sendButtonHovered ? COLOR_SEND_BUTTON_HOVER : COLOR_SEND_BUTTON;
-        Gui.drawRect(btnX, btnY, btnX + SEND_BUTTON_WIDTH, btnY + SEND_BUTTON_HEIGHT, btnColor);
-
-        // 3D border effect
-        Gui.drawRect(btnX, btnY, btnX + SEND_BUTTON_WIDTH, btnY + 1, GuiConstants.COLOR_BUTTON_HIGHLIGHT);
-        Gui.drawRect(btnX, btnY, btnX + 1, btnY + SEND_BUTTON_HEIGHT, GuiConstants.COLOR_BUTTON_HIGHLIGHT);
-        Gui.drawRect(
-            btnX,
-            btnY + SEND_BUTTON_HEIGHT - 1,
-            btnX + SEND_BUTTON_WIDTH,
-            btnY + SEND_BUTTON_HEIGHT,
-            GuiConstants.COLOR_BUTTON_SHADOW);
-        Gui.drawRect(
-            btnX + SEND_BUTTON_WIDTH - 1,
-            btnY,
-            btnX + SEND_BUTTON_WIDTH,
-            btnY + SEND_BUTTON_HEIGHT,
-            GuiConstants.COLOR_BUTTON_SHADOW);
+        if (sendButtonHovered) {
+            GuiConstants.drawChildWindowButtonHover(btnX, btnY, SEND_BUTTON_WIDTH, SEND_BUTTON_HEIGHT);
+        } else {
+            GuiConstants.drawChildWindowButton(btnX, btnY, SEND_BUTTON_WIDTH, SEND_BUTTON_HEIGHT);
+        }
 
         String text = I18n.format("gui.disk_terminal.temp_area.send");
         AbstractWidget
-            .drawCenteredString(fontRenderer, text, btnX, btnY, SEND_BUTTON_WIDTH, SEND_BUTTON_HEIGHT, 0x000000);
+            .drawCenteredString(fontRenderer, text, btnX, btnY, SEND_BUTTON_WIDTH, SEND_BUTTON_HEIGHT, 0xFFFFFFFF);
     }
 
     @Override

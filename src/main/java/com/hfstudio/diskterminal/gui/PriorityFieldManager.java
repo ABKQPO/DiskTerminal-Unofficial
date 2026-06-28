@@ -58,6 +58,12 @@ public class PriorityFieldManager {
     private final Map<Long, InlinePriorityField> fields = new HashMap<>();
     private InlinePriorityField focusedField = null;
     private Rectangle contentViewport = null;
+    private Rectangle scissorViewport = null;
+    private boolean scissorDirty = true;
+    private int scissorX;
+    private int scissorY;
+    private int scissorWidth;
+    private int scissorHeight;
 
     private PriorityFieldManager() {}
 
@@ -96,6 +102,10 @@ public class PriorityFieldManager {
             guiTop + GuiConstants.CONTENT_START_Y,
             GuiConstants.CONTENT_RIGHT_EDGE + GuiConstants.ROW_RIGHT_EXTENSION,
             viewportHeight);
+        if (scissorViewport == null || !scissorViewport.equals(this.contentViewport)) {
+            this.scissorViewport = new Rectangle(this.contentViewport);
+            this.scissorDirty = true;
+        }
     }
 
     /**
@@ -120,16 +130,27 @@ public class PriorityFieldManager {
     private boolean enableContentScissor() {
         if (contentViewport == null) return false;
 
+        updateScissorCache();
+
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        GL11.glScissor(scissorX, scissorY, scissorWidth, scissorHeight);
+
+        return true;
+    }
+
+    private void updateScissorCache() {
+        if (!scissorDirty && scissorViewport != null && scissorViewport.equals(contentViewport)) return;
+
         Minecraft mc = Minecraft.getMinecraft();
         ScaledResolution resolution = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
         int scaleFactor = resolution.getScaleFactor();
-        int scissorX = contentViewport.x * scaleFactor;
-        int scissorY = mc.displayHeight - (contentViewport.y + contentViewport.height) * scaleFactor;
 
-        GL11.glEnable(GL11.GL_SCISSOR_TEST);
-        GL11.glScissor(scissorX, scissorY, contentViewport.width * scaleFactor, contentViewport.height * scaleFactor);
-
-        return true;
+        scissorX = contentViewport.x * scaleFactor;
+        scissorY = mc.displayHeight - (contentViewport.y + contentViewport.height) * scaleFactor;
+        scissorWidth = contentViewport.width * scaleFactor;
+        scissorHeight = contentViewport.height * scaleFactor;
+        scissorViewport = new Rectangle(contentViewport);
+        scissorDirty = false;
     }
 
     /**

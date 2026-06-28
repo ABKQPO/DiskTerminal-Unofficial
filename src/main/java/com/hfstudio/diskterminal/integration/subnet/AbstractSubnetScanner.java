@@ -64,17 +64,26 @@ public abstract class AbstractSubnetScanner implements ISubnetScanner {
     protected IGridNode findPrimaryNode(IGrid grid) {
         if (grid == null) return null;
 
-        // Prefer interface nodes for consistent identification
+        // Prefer the interface-host node with the lowest stable world position.
+        // Grid machine iteration order is not guaranteed, so picking the first node
+        // causes subnet ids to drift between scans.
+        IGridNode bestInterfaceNode = null;
         for (IGridNode node : grid.getMachines(IInterfaceHost.class)) {
-            return node;
+            if (isBetterPrimaryNode(node, bestInterfaceNode)) {
+                bestInterfaceNode = node;
+            }
         }
+        if (bestInterfaceNode != null) return bestInterfaceNode;
 
-        // Fall back to any node
+        // Fall back to the lowest-position node in the whole grid.
+        IGridNode bestNode = null;
         for (IGridNode node : grid.getNodes()) {
-            return node;
+            if (isBetterPrimaryNode(node, bestNode)) {
+                bestNode = node;
+            }
         }
 
-        return null;
+        return bestNode;
     }
 
     /**
@@ -216,6 +225,28 @@ public abstract class AbstractSubnetScanner implements ISubnetScanner {
         if (node == null || node.getGridBlock() == null) return null;
         return node.getGridBlock()
             .getLocation();
+    }
+
+    private boolean isBetterPrimaryNode(IGridNode candidate, IGridNode currentBest) {
+        if (candidate == null) return false;
+        if (currentBest == null) return true;
+
+        DimensionalCoord candidateLoc = getNodeLocation(candidate);
+        DimensionalCoord currentLoc = getNodeLocation(currentBest);
+
+        if (candidateLoc == null) return false;
+        if (currentLoc == null) return true;
+
+        int dimCompare = Integer.compare(candidateLoc.getDimension(), currentLoc.getDimension());
+        if (dimCompare != 0) return dimCompare < 0;
+
+        int xCompare = Integer.compare(candidateLoc.x, currentLoc.x);
+        if (xCompare != 0) return xCompare < 0;
+
+        int yCompare = Integer.compare(candidateLoc.y, currentLoc.y);
+        if (yCompare != 0) return yCompare < 0;
+
+        return candidateLoc.z < currentLoc.z;
     }
 
     /**

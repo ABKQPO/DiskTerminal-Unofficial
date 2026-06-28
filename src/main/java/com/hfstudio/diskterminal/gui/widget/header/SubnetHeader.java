@@ -35,16 +35,15 @@ import com.hfstudio.diskterminal.gui.widget.DoubleClickTracker;
  */
 public class SubnetHeader extends AbstractHeader {
 
-    private static final int STAR_X = 2;
-    private static final float STAR_SCALING = 0.5f;
+    private static final int STAR_X = 3;
     private static final int STAR_SIZE = GuiConstants.FAVORITE_STAR_SIZE;
-    private static final int STAR_SCALED_SIZE = (int) (STAR_SIZE * STAR_SCALING);
     private static final int LOAD_BUTTON_MARGIN = 4;
     private static final int LOAD_BUTTON_TEXTURE_X = 60;
     private static final int LOAD_BUTTON_TEXTURE_Y = 40;
     private static final int LOAD_BUTTON_TEXTURE_HOVER_Y = 50;
     private static final int LOAD_BUTTON_TEXTURE_SIZE = 10;
     private static final int LOAD_BUTTON_TEXTURE_BORDER = 2;
+    private static final int LOAD_BUTTON_HEIGHT = 14;
 
     // Colors
     private static final int COLOR_MAIN_NETWORK = 0xFF00838F;
@@ -126,8 +125,8 @@ public class SubnetHeader extends AbstractHeader {
         // Calculate Load button position from right edge
         String loadText = I18n.format("disk_terminal.subnet.load");
         int loadTextWidth = fontRenderer.getStringWidth(loadText);
-        loadButtonWidth = loadTextWidth + LOAD_BUTTON_MARGIN;
-        loadButtonX = GuiConstants.CONTENT_RIGHT_EDGE - LOAD_BUTTON_MARGIN - loadTextWidth;
+        loadButtonWidth = loadTextWidth + LOAD_BUTTON_MARGIN + 4;
+        loadButtonX = GuiConstants.CONTENT_RIGHT_EDGE - loadButtonWidth;
 
         // Draw direction arrow between icon and name (when connection-level header)
         boolean hasArrow = directionSupplier != null;
@@ -152,10 +151,10 @@ public class SubnetHeader extends AbstractHeader {
         if (!isMain) drawLocation();
 
         // Draw Load button
-        int loadButtonY = y + (GuiConstants.ROW_HEIGHT - 10) / 2;
+        int loadButtonY = y + (GuiConstants.ROW_HEIGHT - LOAD_BUTTON_HEIGHT) / 2;
         boolean isLoadHover = mouseX >= loadButtonX && mouseX < loadButtonX + loadButtonWidth
             && mouseY >= loadButtonY
-            && mouseY < loadButtonY + 10;
+            && mouseY < loadButtonY + LOAD_BUTTON_HEIGHT;
         loadButtonHovered = isLoadHover;
         drawLoadButton(loadButtonX, loadButtonY, loadText, isLoadHover, canLoad);
 
@@ -170,10 +169,10 @@ public class SubnetHeader extends AbstractHeader {
     private void drawStar(int mouseX, int mouseY) {
         boolean isFav = isFavoriteSupplier != null && isFavoriteSupplier.get();
 
-        int offset = (GuiConstants.ROW_HEIGHT - STAR_SCALED_SIZE) / 2;
+        int offset = (GuiConstants.ROW_HEIGHT - STAR_SIZE) / 2;
 
         // Check star hover
-        starHovered = mouseX >= STAR_X + offset && mouseX < STAR_X + STAR_SCALED_SIZE + offset
+        starHovered = mouseX >= STAR_X && mouseX < STAR_X + STAR_SIZE
             && mouseY >= y
             && mouseY < y + GuiConstants.ROW_HEIGHT;
 
@@ -181,7 +180,7 @@ public class SubnetHeader extends AbstractHeader {
         int texX = GuiConstants.FAVORITE_STAR_X + (isFav ? 0 : size);
         int texY = GuiConstants.FAVORITE_STAR_Y + (starHovered ? size : 0);
 
-        GuiConstants.drawAtlasSpriteScaled(STAR_X + offset, y + offset, texX, texY, size, size, STAR_SCALING);
+        GuiConstants.drawAtlasSprite(STAR_X, y + offset, texX, texY, size, size);
     }
 
     /**
@@ -217,7 +216,6 @@ public class SubnetHeader extends AbstractHeader {
      * Draw the Load button at the right edge of the header.
      */
     private void drawLoadButton(int x, int btnY, String text, boolean isHovered, boolean isEnabled) {
-        int buttonHeight = 10;
         int textureY = isHovered ? LOAD_BUTTON_TEXTURE_HOVER_Y : LOAD_BUTTON_TEXTURE_Y;
 
         if (!isEnabled) {
@@ -233,7 +231,7 @@ public class SubnetHeader extends AbstractHeader {
             LOAD_BUTTON_TEXTURE_SIZE,
             LOAD_BUTTON_TEXTURE_SIZE,
             loadButtonWidth,
-            buttonHeight,
+            LOAD_BUTTON_HEIGHT,
             LOAD_BUTTON_TEXTURE_BORDER,
             GuiConstants.ATLAS_WIDTH,
             GuiConstants.ATLAS_HEIGHT);
@@ -241,8 +239,8 @@ public class SubnetHeader extends AbstractHeader {
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
         // Text
-        int textX = x + LOAD_BUTTON_MARGIN / 2;
-        int textY = btnY + (buttonHeight - fontRenderer.FONT_HEIGHT) / 2;
+        int textX = x + (loadButtonWidth - fontRenderer.getStringWidth(text)) / 2;
+        int textY = btnY + (LOAD_BUTTON_HEIGHT - fontRenderer.FONT_HEIGHT) / 2;
         int textColor = isEnabled ? 0xFFFFFFFF : 0xFFC0C0C0;
         fontRenderer.drawString(text, textX, textY, textColor);
     }
