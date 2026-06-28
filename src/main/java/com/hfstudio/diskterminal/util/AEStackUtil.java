@@ -8,6 +8,8 @@ import net.minecraft.nbt.NBTTagCompound;
 
 import org.lwjgl.opengl.GL11;
 
+import com.hfstudio.diskterminal.integration.GregTechIntegration;
+
 import appeng.api.storage.data.AEStackTypeRegistry;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
@@ -152,7 +154,7 @@ public class AEStackUtil {
 
         ItemStack normalized = stack.copy();
         normalized.stackSize = 1;
-        return normalized;
+        return GregTechIntegration.prepareDisplayStack(normalized);
     }
 
     @SideOnly(Side.CLIENT)
