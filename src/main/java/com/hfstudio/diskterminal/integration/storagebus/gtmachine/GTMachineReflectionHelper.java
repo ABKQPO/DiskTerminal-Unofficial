@@ -235,16 +235,16 @@ public class GTMachineReflectionHelper {
             if (this == obj) {
                 return true;
             }
-            if (!(obj instanceof MethodKey other)) {
+            if (!(obj instanceof MethodKey(Class<?> owner1, String name, Class<?>[] types))) {
                 return false;
             }
-            if (owner != other.owner || !methodName.equals(other.methodName())
-                || parameterTypes.length != other.parameterTypes.length) {
+            if (owner != owner1 || !methodName.equals(name)
+                || parameterTypes.length != types.length) {
                 return false;
             }
 
             for (int i = 0; i < parameterTypes.length; i++) {
-                if (parameterTypes[i] != other.parameterTypes[i]) {
+                if (parameterTypes[i] != types[i]) {
                     return false;
                 }
             }

@@ -38,7 +38,7 @@ import com.hfstudio.diskterminal.gui.widget.line.AbstractLine;
 import com.hfstudio.diskterminal.gui.widget.line.CellSlotsLine;
 import com.hfstudio.diskterminal.gui.widget.line.ContinuationLine;
 import com.hfstudio.diskterminal.gui.widget.line.SlotsLine;
-import com.hfstudio.diskterminal.integration.ThaumicEnergisticsIntegration;
+import com.hfstudio.diskterminal.integration.Mods;
 import com.hfstudio.diskterminal.network.PacketExtractUpgrade;
 import com.hfstudio.diskterminal.network.PacketInsertCell;
 import com.hfstudio.diskterminal.network.PacketPartitionAction;
@@ -142,7 +142,7 @@ public class CellContentTabWidget extends AbstractTabWidget {
                 : notSet;
             lines.add(I18n.format("gui.disk_terminal.controls.key_essentia", essentiaKey));
 
-            if (!essentiaKey.equals(notSet) && !ThaumicEnergisticsIntegration.isModLoaded()) {
+            if (!essentiaKey.equals(notSet) && !Mods.ThaumicEnergistics.isModLoaded()) {
                 lines.add(I18n.format("gui.disk_terminal.controls.essentia_warning"));
             }
 

@@ -60,6 +60,7 @@ import com.hfstudio.diskterminal.gui.rename.InlineRenameManager;
 import com.hfstudio.diskterminal.gui.widget.tab.AbstractTabWidget;
 import com.hfstudio.diskterminal.gui.widget.tab.NetworkToolsTabWidget;
 import com.hfstudio.diskterminal.gui.widget.tab.SubnetOverviewTabWidget;
+import com.hfstudio.diskterminal.integration.Mods;
 import com.hfstudio.diskterminal.integration.NEIIntegration;
 import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
 import com.hfstudio.diskterminal.network.PacketHighlightBlock;
@@ -721,8 +722,8 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
         if (isPopupObscuringPoint(mouseX, mouseY)) return null;
 
-        for (Object slotObject : this.inventorySlots.inventorySlots) {
-            Slot slot = (Slot) slotObject;
+        for (Slot slotObject : this.inventorySlots.inventorySlots) {
+            Slot slot = slotObject;
             if (slot.func_111238_b() && isMouseOverContainerSlot(slot, mouseX, mouseY)) return slot;
         }
 
@@ -1481,7 +1482,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
     }
 
     private boolean handleNEIVirtualStackKey(int keyCode) {
-        if (!NEIIntegration.isModLoaded()) return false;
+        if (!Mods.NotEnoughItems.isModLoaded()) return false;
         if (keyCode != Keyboard.KEY_R && keyCode != Keyboard.KEY_U) return false;
 
         ScaledResolution resolution = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);

@@ -55,9 +55,8 @@ public class PacketSetPriority implements IMessage {
         private void handleGuiPriority(EntityPlayerMP player, PacketSetPriority message) {
             Container container = player.openContainer;
 
-            if (!(container instanceof ContainerCellTerminalBase)) return;
+            if (!(container instanceof ContainerCellTerminalBase cellContainer)) return;
 
-            ContainerCellTerminalBase cellContainer = (ContainerCellTerminalBase) container;
             cellContainer.handleSetPriority(message.storageId, message.priority);
         }
     }

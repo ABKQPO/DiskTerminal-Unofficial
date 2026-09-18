@@ -19,6 +19,8 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidTankInfo;
+import net.minecraftforge.fluids.IFluidHandler;
 
 import com.glodblock.github.common.tile.TileSuperStockReplenisher;
 import com.hfstudio.diskterminal.client.BusRole;
@@ -974,15 +976,15 @@ public class StorageBusDataHandler {
     }
 
     private static List<IAEStack<?>> collectFluidImportPreview(PartBaseImportBus<?> bus, Object target, int limit) {
-        if (!(target instanceof net.minecraftforge.fluids.IFluidHandler fluidHandler)) return Collections.emptyList();
+        if (!(target instanceof IFluidHandler fluidHandler)) return Collections.emptyList();
 
         ForgeDirection side = bus.getSide()
             .getOpposite();
-        net.minecraftforge.fluids.FluidTankInfo[] infos = fluidHandler.getTankInfo(side);
+        FluidTankInfo[] infos = fluidHandler.getTankInfo(side);
         if (infos == null || infos.length == 0) return Collections.emptyList();
 
         List<IAEStack<?>> preview = new ArrayList<>(Math.min(limit, infos.length));
-        for (net.minecraftforge.fluids.FluidTankInfo info : infos) {
+        for (FluidTankInfo info : infos) {
             if (preview.size() >= limit) break;
             FluidStack fluid = info == null ? null : info.fluid;
             if (fluid == null || fluid.amount <= 0) continue;
@@ -1115,7 +1117,7 @@ public class StorageBusDataHandler {
         TileEntity target = world.getTileEntity(x, y, z);
         if (target == null) return null;
 
-        if (isFluidSharedBus(bus) && target instanceof net.minecraftforge.fluids.IFluidHandler fluidHandler) {
+        if (isFluidSharedBus(bus) && target instanceof IFluidHandler fluidHandler) {
             return fluidHandler;
         }
         if (isEssentiaSharedBus(bus) && target instanceof IAspectContainer aspectContainer) {

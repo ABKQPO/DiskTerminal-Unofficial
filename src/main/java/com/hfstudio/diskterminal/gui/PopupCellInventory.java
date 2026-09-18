@@ -311,9 +311,8 @@ public class PopupCellInventory extends Gui {
      * This ensures we show up-to-date partition status after server updates.
      */
     private List<ItemStack> getCurrentPartition() {
-        if (!(parent instanceof GuiCellTerminalBase)) return cell.getPartition();
+        if (!(parent instanceof GuiCellTerminalBase gui)) return cell.getPartition();
 
-        GuiCellTerminalBase gui = (GuiCellTerminalBase) parent;
         StorageInfo storage = gui.getStorageMap()
             .get(storageId);
 

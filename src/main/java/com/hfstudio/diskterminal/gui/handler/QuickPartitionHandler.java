@@ -15,6 +15,7 @@ import com.hfstudio.diskterminal.client.CellContentRow;
 import com.hfstudio.diskterminal.client.CellInfo;
 import com.hfstudio.diskterminal.client.StorageInfo;
 import com.hfstudio.diskterminal.gui.GuiCellTerminalBase;
+import com.hfstudio.diskterminal.integration.Mods;
 import com.hfstudio.diskterminal.integration.NEIIntegration;
 import com.hfstudio.diskterminal.integration.ThaumicEnergisticsIntegration;
 import com.hfstudio.diskterminal.network.DiskTerminalNetwork;
@@ -75,7 +76,7 @@ public class QuickPartitionHandler {
      */
     public static QuickPartitionResult attemptQuickPartition(PartitionType type, List<Object> partitionLines,
         Map<Long, StorageInfo> storageMap) {
-        if (type == PartitionType.ESSENTIA && !ThaumicEnergisticsIntegration.isModLoaded()) {
+        if (type == PartitionType.ESSENTIA && !Mods.ThaumicEnergistics.isModLoaded()) {
             return QuickPartitionResult.error("disk_terminal.quick_partition.essentia_unavailable");
         }
 

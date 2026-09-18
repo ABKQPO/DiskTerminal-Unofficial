@@ -9,14 +9,8 @@ import cpw.mods.fml.common.Optional;
 
 public class BaublesIntegration {
 
-    private BaublesIntegration() {}
-
-    public static boolean isModLoaded() {
-        return Mods.Baubles.isModLoaded();
-    }
-
     public static IInventory getInventory(EntityPlayer player) {
-        if (!isModLoaded()) return null;
+        if (!Mods.Baubles.isModLoaded()) return null;
 
         return getBaublesInventory(player);
     }

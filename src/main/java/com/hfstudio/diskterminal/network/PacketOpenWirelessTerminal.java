@@ -7,6 +7,7 @@ import net.minecraft.item.ItemStack;
 import com.hfstudio.diskterminal.ItemRegistry;
 import com.hfstudio.diskterminal.gui.GuiHandler;
 import com.hfstudio.diskterminal.integration.BaublesIntegration;
+import com.hfstudio.diskterminal.integration.Mods;
 import com.hfstudio.diskterminal.util.ItemStacks;
 
 import appeng.api.AEApi;
@@ -52,7 +53,7 @@ public class PacketOpenWirelessTerminal implements IMessage {
                 }
             }
 
-            if (BaublesIntegration.isModLoaded()) tryOpenFromBaubles(player);
+            if (Mods.Baubles.isModLoaded()) tryOpenFromBaubles(player);
         }
 
         private boolean tryOpenWirelessCellTerminal(ItemStack is, EntityPlayerMP player, int slot, boolean isBauble) {

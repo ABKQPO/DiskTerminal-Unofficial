@@ -47,8 +47,7 @@ public class StorageBusScanCollector {
                 provider = Optional.of(created);
             }
 
-            tracker.availableCapabilities = provider
-                .map(capabilityProvider -> capabilityProvider.availableCapabilities())
+            tracker.availableCapabilities = provider.map(ICapabilityProvider::availableCapabilities)
                 .orElseGet(Collections::emptySet);
         }
         registry.retainOnly(activeIds);

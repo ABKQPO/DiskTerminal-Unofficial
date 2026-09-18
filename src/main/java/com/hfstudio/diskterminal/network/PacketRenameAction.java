@@ -94,9 +94,8 @@ public class PacketRenameAction implements IMessage {
 
             TileEntity tile = tracker.tile;
 
-            if (!(tile instanceof ICustomNameObject)) return;
+            if (!(tile instanceof ICustomNameObject nameable)) return;
 
-            ICustomNameObject nameable = (ICustomNameObject) tile;
             String trimmed = newName.trim();
             nameable.setCustomName(trimmed.isEmpty() ? null : trimmed);
             tile.markDirty();

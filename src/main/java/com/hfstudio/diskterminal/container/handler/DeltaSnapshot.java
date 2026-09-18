@@ -189,7 +189,7 @@ public class DeltaSnapshot {
 
         if (tag instanceof NBTTagLong longTag) {
             long value = longTag.func_150291_c();
-            return 31 * hash + (int) (value ^ (value >>> 32));
+            return 31 * hash + Long.hashCode(value);
         }
 
         if (tag instanceof NBTTagShort shortTag) {
@@ -205,8 +205,7 @@ public class DeltaSnapshot {
         }
 
         if (tag instanceof NBTTagDouble doubleTag) {
-            long value = Double.doubleToLongBits(doubleTag.func_150286_g());
-            return 31 * hash + (int) (value ^ (value >>> 32));
+            return 31 * hash + Double.hashCode(doubleTag.func_150286_g());
         }
 
         if (tag instanceof NBTTagByteArray byteArrayTag) {

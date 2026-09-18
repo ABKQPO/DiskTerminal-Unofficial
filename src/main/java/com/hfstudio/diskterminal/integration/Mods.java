@@ -3,23 +3,19 @@ package com.hfstudio.diskterminal.integration;
 import java.util.Locale;
 import java.util.function.Supplier;
 
-import org.jetbrains.annotations.NotNull;
-
 import com.gtnewhorizon.gtnhlib.util.data.IMod;
-import com.gtnewhorizon.gtnhmixins.builders.ITargetMod;
-import com.gtnewhorizon.gtnhmixins.builders.TargetModBuilder;
 
 import appeng.api.storage.data.AEStackTypeRegistry;
 import cpw.mods.fml.common.Loader;
 
-public enum Mods implements IMod, ITargetMod {
+public enum Mods implements IMod {
 
     // spotless:off
     NotEnoughItems("NotEnoughItems"),
     AE2FluidCraft("ae2fc"),
     ThaumicEnergistics("thaumicenergistics"),
     GregTech("gregtech"),
-    Baubles("Baubles", () -> Loader.isModLoaded("Baubles") || Loader.isModLoaded("Baubles|Expanded"), null),
+    Baubles("Baubles", () -> Loader.isModLoaded("Baubles") || Loader.isModLoaded("Baubles|Expanded")),
     WirelessCraftingTerminal("ae2wct"),
     Thaumcraft("thaumcraft"),
     AE2("appliedenergistics2"),
@@ -37,29 +33,20 @@ public enum Mods implements IMod, ITargetMod {
     public final String modid;
     public final String resourceDomain;
     private final Supplier<Boolean> supplier;
-    private final TargetModBuilder targetBuilder;
     private Boolean loaded;
 
     Mods(String modid) {
-        this(modid, null, null);
+        this(modid, null);
     }
 
     Mods(Supplier<Boolean> supplier) {
-        this(null, supplier, null);
+        this(null, supplier);
     }
 
-    Mods(String modid, Supplier<Boolean> supplier, String coreModClass) {
+    Mods(String modid, Supplier<Boolean> supplier) {
         this.modid = modid;
         this.resourceDomain = modid != null ? modid.toLowerCase(Locale.ENGLISH) : null;
         this.supplier = supplier;
-        this.targetBuilder = new TargetModBuilder().setModId(modid)
-            .setCoreModClass(coreModClass);
-    }
-
-    @NotNull
-    @Override
-    public TargetModBuilder getBuilder() {
-        return targetBuilder;
     }
 
     @Override

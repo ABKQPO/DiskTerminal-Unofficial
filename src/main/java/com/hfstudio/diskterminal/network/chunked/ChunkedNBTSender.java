@@ -79,11 +79,7 @@ public class ChunkedNBTSender {
     }
 
     private static long nextSessionId(String channel) {
-        AtomicLong counter = sessionCounters.get(channel);
-        if (counter == null) {
-            counter = new AtomicLong();
-            sessionCounters.put(channel, counter);
-        }
+        AtomicLong counter = sessionCounters.computeIfAbsent(channel, k -> new AtomicLong());
         return counter.incrementAndGet();
     }
 }

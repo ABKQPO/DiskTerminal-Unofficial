@@ -18,14 +18,8 @@ public class NEIIntegration {
 
     public static final String MOD_ID = "NotEnoughItems";
 
-    private NEIIntegration() {}
-
-    public static boolean isModLoaded() {
-        return Mods.NotEnoughItems.isModLoaded();
-    }
-
     public static void registerGuiHandlers() {
-        if (!isModLoaded()) return;
+        if (!Mods.NotEnoughItems.isModLoaded()) return;
 
         registerGuiHandlersInternal();
     }
@@ -34,7 +28,7 @@ public class NEIIntegration {
      * Get the stack hovered in the NEI overlay (item list / bookmarks), or null.
      */
     public static ItemStack getStackUnderMouse() {
-        if (!isModLoaded()) return null;
+        if (!Mods.NotEnoughItems.isModLoaded()) return null;
 
         return getStackUnderMouseInternal();
     }
@@ -43,19 +37,19 @@ public class NEIIntegration {
      * Get the stack currently dragged from the NEI item or bookmark panel.
      */
     public static ItemStack getDraggedStack() {
-        if (!isModLoaded()) return null;
+        if (!Mods.NotEnoughItems.isModLoaded()) return null;
 
         return getDraggedStackInternal();
     }
 
     public static boolean showRecipe(ItemStack stack) {
-        if (!isModLoaded() || stack == null) return false;
+        if (!Mods.NotEnoughItems.isModLoaded() || stack == null) return false;
 
         return showRecipeInternal(stack);
     }
 
     public static boolean showUsage(ItemStack stack) {
-        if (!isModLoaded() || stack == null) return false;
+        if (!Mods.NotEnoughItems.isModLoaded() || stack == null) return false;
 
         return showUsageInternal(stack);
     }

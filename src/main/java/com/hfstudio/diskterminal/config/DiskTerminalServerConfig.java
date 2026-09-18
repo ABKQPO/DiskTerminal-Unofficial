@@ -158,42 +158,33 @@ public class DiskTerminalServerConfig {
         this.tabNetworkToolsEnabled = this.tabNetworkToolsEnabledProperty.getBoolean();
 
         // Polling settings
-        config.setCategoryComment(
-            CATEGORY_POLLING,
-            "Storage bus polling settings.\n" + "WARNING: Storage bus polling can be expensive on large networks!\n"
-                + "It requires iterating through all storage buses and their inventories.\n"
-                + "Consider keeping polling disabled and reopening the terminal to refresh.");
+        config.setCategoryComment(CATEGORY_POLLING, """
+            Storage bus polling settings.
+            WARNING: Storage bus polling can be expensive on large networks!
+            It requires iterating through all storage buses and their inventories.
+            Consider keeping polling disabled and reopening the terminal to refresh.""");
         config.setCategoryLanguageKey(CATEGORY_POLLING, "config.disk_terminal.config.server.polling");
 
-        this.storageBusPollingEnabledProperty = config.get(
-            CATEGORY_POLLING,
-            "storageBusPollingEnabled",
-            false,
-            "Enable automatic polling of storage bus data while on storage bus tabs.\n"
-                + "WARNING: This can impact server performance on large networks!\n"
-                + "When disabled, storage bus data is only fetched once per terminal session.\n"
-                + "Reopen the terminal to manually refresh.");
+        this.storageBusPollingEnabledProperty = config.get(CATEGORY_POLLING, "storageBusPollingEnabled", false, """
+            Enable automatic polling of storage bus data while on storage bus tabs.
+            WARNING: This can impact server performance on large networks!
+            When disabled, storage bus data is only fetched once per terminal session.
+            Reopen the terminal to manually refresh.""");
         this.storageBusPollingEnabledProperty.setLanguageKey("config.disk_terminal.config.server.polling.enabled");
         this.storageBusPollingEnabled = this.storageBusPollingEnabledProperty.getBoolean();
 
-        this.pollingIntervalProperty = config.get(
-            CATEGORY_POLLING,
-            "pollingInterval",
-            20,
-            "How often to poll for storage bus updates, in ticks (20 ticks = 1 second).\n"
-                + "Higher values reduce server load but make data less responsive.\n"
-                + "Only applies when storage bus polling is enabled.",
-            1,
-            1200);
+        this.pollingIntervalProperty = config.get(CATEGORY_POLLING, "pollingInterval", 20, """
+            How often to poll for storage bus updates, in ticks (20 ticks = 1 second).
+            Higher values reduce server load but make data less responsive.
+            Only applies when storage bus polling is enabled.""", 1, 1200);
         this.pollingIntervalProperty.setLanguageKey("config.disk_terminal.config.server.polling.interval");
         this.pollingInterval = this.pollingIntervalProperty.getInt();
 
         // Cell operation settings
-        config.setCategoryComment(
-            CATEGORY_CELL_OPERATIONS,
-            "Cell operation permissions.\n"
-                + "These settings control whether cells can be inserted/ejected from drives using the Disk Terminal GUI.\n"
-                + "Disabling these forces players to manage cells directly at the drives/chests instead.");
+        config.setCategoryComment(CATEGORY_CELL_OPERATIONS, """
+            Cell operation permissions.
+            These settings control whether cells can be inserted/ejected from drives using the Disk Terminal GUI.
+            Disabling these forces players to manage cells directly at the drives/chests instead.""");
         config.setCategoryLanguageKey(CATEGORY_CELL_OPERATIONS, "config.disk_terminal.config.server.cell_ops");
 
         this.cellEjectEnabledProperty = config.get(
@@ -214,13 +205,10 @@ public class DiskTerminalServerConfig {
         this.cellInsertEnabledProperty.setLanguageKey("config.disk_terminal.config.server.cell_ops.insert");
         this.cellInsertEnabled = this.cellInsertEnabledProperty.getBoolean();
 
-        this.cellSwapEnabledProperty = config.get(
-            CATEGORY_CELL_OPERATIONS,
-            "cellSwapEnabled",
-            true,
-            "Allow swapping cells between drives/chests through the Disk Terminal.\n"
-                + "When disabled, clicking a cell slot with a cell in hand will not swap.\n"
-                + "Requires both eject and insert to be enabled to function.");
+        this.cellSwapEnabledProperty = config.get(CATEGORY_CELL_OPERATIONS, "cellSwapEnabled", true, """
+            Allow swapping cells between drives/chests through the Disk Terminal.
+            When disabled, clicking a cell slot with a cell in hand will not swap.
+            Requires both eject and insert to be enabled to function.""");
         this.cellSwapEnabledProperty.setLanguageKey("config.disk_terminal.config.server.cell_ops.swap");
         this.cellSwapEnabled = this.cellSwapEnabledProperty.getBoolean();
 
@@ -312,41 +300,28 @@ public class DiskTerminalServerConfig {
             "Settings controlling how the Disk Terminal streams data from server to client.");
         config.setCategoryLanguageKey(CATEGORY_NETWORK, "config.disk_terminal.config.server.network");
 
-        this.maxChunkBytesProperty = config.get(
-            CATEGORY_NETWORK,
-            "maxChunkBytes",
-            524288,
-            "Maximum payload size (in bytes) per network chunk packet.\n"
-                + "Larger values mean fewer round-trips but risk exceeding the engine's packet limit.\n"
-                + "Default 524288 (512 KiB) stays safely under vanilla's ~1 MiB hardcoded S2C cap.\n"
-                + "Lower this if you observe disconnects with messages like 'Payload may not be larger than'.\n"
-                + "Range: 4096 (4 KiB) - 10485760 (10 MiB).",
-            4096,
-            10485760);
+        this.maxChunkBytesProperty = config.get(CATEGORY_NETWORK, "maxChunkBytes", 524288, """
+            Maximum payload size (in bytes) per network chunk packet.
+            Larger values mean fewer round-trips but risk exceeding the engine's packet limit.
+            Default 524288 (512 KiB) stays safely under vanilla's ~1 MiB hardcoded S2C cap.
+            Lower this if you observe disconnects with messages like 'Payload may not be larger than'.
+            Range: 4096 (4 KiB) - 10485760 (10 MiB).""", 4096, 10485760);
         this.maxChunkBytesProperty.setLanguageKey("config.disk_terminal.config.server.network.max_chunk_bytes");
         this.maxChunkBytes = this.maxChunkBytesProperty.getInt();
 
-        this.minRefreshIntervalTicksProperty = config.get(
-            CATEGORY_NETWORK,
-            "minRefreshIntervalTicks",
-            10,
-            "Minimum number of ticks between full data refreshes (20 ticks = 1 second).\n"
-                + "Throttles regen of storages/buses/subnets when many trigger events fire in quick succession.\n"
-                + "Lower for snappier updates, higher to reduce server load on large networks.\n"
-                + "Range: 1 - 200.",
-            1,
-            200);
+        this.minRefreshIntervalTicksProperty = config.get(CATEGORY_NETWORK, "minRefreshIntervalTicks", 10, """
+            Minimum number of ticks between full data refreshes (20 ticks = 1 second).
+            Throttles regen of storages/buses/subnets when many trigger events fire in quick succession.
+            Lower for snappier updates, higher to reduce server load on large networks.
+            Range: 1 - 200.""", 1, 200);
         this.minRefreshIntervalTicksProperty
             .setLanguageKey("config.disk_terminal.config.server.network.min_refresh_interval_ticks");
         this.minRefreshIntervalTicks = this.minRefreshIntervalTicksProperty.getInt();
 
-        this.enableDeltaUpdatesProperty = config.get(
-            CATEGORY_NETWORK,
-            "enableDeltaUpdates",
-            true,
-            "Enable delta updates: after the first full payload, send only changed entries.\n"
-                + "Greatly reduces bandwidth on large networks where most state is static between ticks.\n"
-                + "Disable to always send full payloads (useful for debugging desync issues).");
+        this.enableDeltaUpdatesProperty = config.get(CATEGORY_NETWORK, "enableDeltaUpdates", true, """
+            Enable delta updates: after the first full payload, send only changed entries.
+            Greatly reduces bandwidth on large networks where most state is static between ticks.
+            Disable to always send full payloads (useful for debugging desync issues).""");
         this.enableDeltaUpdatesProperty
             .setLanguageKey("config.disk_terminal.config.server.network.enable_delta_updates");
         this.enableDeltaUpdates = this.enableDeltaUpdatesProperty.getBoolean();

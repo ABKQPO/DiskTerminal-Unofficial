@@ -132,8 +132,7 @@ public class PacketExtractUpgrade implements IMessage {
             NetUtil.run(player, () -> {
                 Container container = player.openContainer;
 
-                if (container instanceof ContainerCellTerminalBase) {
-                    ContainerCellTerminalBase cellContainer = (ContainerCellTerminalBase) container;
+                if (container instanceof ContainerCellTerminalBase cellContainer) {
                     cellContainer.handleExtractUpgrade(
                         player,
                         message.getTargetType(),

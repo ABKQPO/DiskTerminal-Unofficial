@@ -24,26 +24,20 @@ public class ThaumicEnergisticsIntegration {
 
     public static final String MOD_ID = "thaumicenergistics";
 
-    private ThaumicEnergisticsIntegration() {}
-
-    public static boolean isModLoaded() {
-        return Mods.ThaumicEnergistics.isModLoaded();
-    }
-
     public static NBTTagCompound tryPopulateEssentiaCell(ICellHandler cellHandler, ItemStack cellStack, int slotLimit) {
-        if (!isModLoaded()) return null;
+        if (!Mods.ThaumicEnergistics.isModLoaded()) return null;
 
         return populateEssentiaCell(cellHandler, cellStack, slotLimit);
     }
 
     public static ItemStack tryConvertEssentiaContainerToAspect(ItemStack container) {
-        if (!isModLoaded()) return null;
+        if (!Mods.ThaumicEnergistics.isModLoaded()) return null;
 
         return convertEssentiaContainer(container);
     }
 
     public static void registerStorageBusScanner() {
-        if (!isModLoaded()) return;
+        if (!Mods.ThaumicEnergistics.isModLoaded()) return;
 
         registerStorageBusScannerInternal();
     }
