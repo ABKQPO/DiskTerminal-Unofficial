@@ -11,10 +11,10 @@ import gregtech.common.tileentities.machines.MTEHatchInputBusME;
 import gregtech.common.tileentities.machines.MTEHatchInputME;
 
 /**
- * Refresh capability for GregTech ME input buses and hatches. Their slot config setter only mutates
- * the stored config; the extracted preview used by recipe pulls is refreshed separately. Trigger that
- * refresh immediately after filter edits so newly marked partitions become effective without waiting
- * for the machine's next polling cycle.
+ * Refresh capability for GregTech ME input buses and hatches. Slot configuration updates also refresh
+ * watcher subscriptions and schedule recipe checks; the extracted preview used by recipe pulls is
+ * refreshed separately. Trigger that preview refresh immediately after filter edits so newly marked
+ * partitions become effective without waiting for the machine's next polling cycle.
  */
 public class GTMachineRefreshCapability implements IRefreshCapability {
 
@@ -68,14 +68,12 @@ public class GTMachineRefreshCapability implements IRefreshCapability {
         if (inputBus.isAutoPullItemList()) return;
 
         GTMachineReflectionHelper.invokeVoid(inputBus, "updateAllInformationSlots");
-        if (inputBus.doFastRecipeCheck()) GTMachineReflectionHelper.invokeVoid(inputBus, "configureWatchers");
     }
 
     private void refreshGregTechMachine(MTEHatchInputME inputHatch) {
         if (inputHatch.isAutoPullFluidList()) return;
 
         GTMachineReflectionHelper.invokeVoid(inputHatch, "updateAllInformationSlots");
-        if (inputHatch.doFastRecipeCheck()) GTMachineReflectionHelper.invokeVoid(inputHatch, "configureWatchers");
     }
 
     private void refreshByReflection(Object target, String autoPullMethodName) {
@@ -85,9 +83,6 @@ public class GTMachineRefreshCapability implements IRefreshCapability {
         }
 
         GTMachineReflectionHelper.invokeVoid(target, "updateAllInformationSlots");
-        if (GTMachineReflectionHelper.invokeBoolean(target, "doFastRecipeCheck")
-            .orElse(false)) {
-            GTMachineReflectionHelper.invokeVoid(target, "configureWatchers");
-        }
+        GTMachineReflectionHelper.invokeVoid(target, "configureWatchers");
     }
 }
