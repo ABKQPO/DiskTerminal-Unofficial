@@ -101,5 +101,10 @@ public class DiskTerminalNetwork {
             PacketCapabilityAction.class,
             packetId++,
             Side.SERVER);
+        INSTANCE.registerMessage(
+            PacketRequestAreaAction.Handler.class,
+            PacketRequestAreaAction.class,
+            packetId++,
+            Side.SERVER);
     }
 }

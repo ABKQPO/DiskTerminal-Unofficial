@@ -23,6 +23,7 @@ import com.hfstudio.diskterminal.client.CellFilter;
 import com.hfstudio.diskterminal.client.CellFilter.State;
 import com.hfstudio.diskterminal.client.CellInfo;
 import com.hfstudio.diskterminal.client.EmptySlotInfo;
+import com.hfstudio.diskterminal.client.RequestAreaDeviceInfo;
 import com.hfstudio.diskterminal.client.SearchFilterMode;
 import com.hfstudio.diskterminal.client.SlotLimit;
 import com.hfstudio.diskterminal.client.StorageBusContentRow;
@@ -58,6 +59,7 @@ public class TerminalDataManager {
 
     private final Map<Long, StorageInfo> storageMap = new LinkedHashMap<>();
     private final Map<Long, StorageBusInfo> storageBusMap = new LinkedHashMap<>();
+    private final Map<Long, RequestAreaDeviceInfo> requestAreaMap = new LinkedHashMap<>();
     // Raw NBT per temp-cell slot, keyed by slot index (also used as the delta ID).
     // Owned by applyTempCells / rebuildTempAreaLines.
     private final Map<Long, NBTTagCompound> tempCellSlotData = new LinkedHashMap<>();
@@ -66,6 +68,7 @@ public class TerminalDataManager {
     private final List<Object> partitionLines = new ArrayList<>();
     private final List<Object> storageBusInventoryLines = new ArrayList<>();
     private final List<Object> storageBusPartitionLines = new ArrayList<>();
+    private final List<Object> requestAreaLines = new ArrayList<>();
     private final List<Object> tempAreaLines = new ArrayList<>();
 
     private BlockPos terminalPos = new BlockPos(0, 0, 0);
@@ -127,6 +130,10 @@ public class TerminalDataManager {
         return tempAreaLines;
     }
 
+    public List<Object> getRequestAreaLines() {
+        return requestAreaLines;
+    }
+
     /**
      * Apply the META channel payload (always FULL).
      * Carries terminalPos / terminalDim / networkId so the client can verify its current
@@ -158,6 +165,29 @@ public class TerminalDataManager {
         boolean hasNewEntries = hasAddedEntries(mode, data);
         DeltaApplier.apply(mode, data, this.storageBusMap, StorageBusInfo::new, StorageBusInfo::getId);
         finishUpdate(Section.BUSES, hasNewEntries);
+    }
+
+    public void applyRequestAreas(PayloadMode mode, NBTTagCompound data) {
+        DeltaApplier.apply(mode, data, requestAreaMap, RequestAreaDeviceInfo::new, RequestAreaDeviceInfo::getId);
+        rebuildRequestAreaLines();
+    }
+
+    private void rebuildRequestAreaLines() {
+        requestAreaLines.clear();
+        List<RequestAreaDeviceInfo> devices = new ArrayList<>(requestAreaMap.values());
+        devices.sort(
+            Comparator.comparingInt(RequestAreaDeviceInfo::getDimension)
+                .thenComparingInt(
+                    device -> device.getPosition()
+                        .getX())
+                .thenComparingInt(
+                    device -> device.getPosition()
+                        .getY())
+                .thenComparingInt(
+                    device -> device.getPosition()
+                        .getZ())
+                .thenComparingInt(RequestAreaDeviceInfo::getSideOrdinal));
+        requestAreaLines.addAll(devices);
     }
 
     /**
@@ -1059,12 +1089,14 @@ public class TerminalDataManager {
         // is in transit.
         this.storageMap.clear();
         this.storageBusMap.clear();
+        this.requestAreaMap.clear();
         this.tempCellSlotData.clear();
         this.lines.clear();
         this.inventoryLines.clear();
         this.partitionLines.clear();
         this.storageBusInventoryLines.clear();
         this.storageBusPartitionLines.clear();
+        this.requestAreaLines.clear();
         this.tempAreaLines.clear();
     }
 

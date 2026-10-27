@@ -22,10 +22,12 @@ import com.hfstudio.diskterminal.gui.widget.tab.AbstractTabWidget;
 import com.hfstudio.diskterminal.gui.widget.tab.CellContentTabWidget;
 import com.hfstudio.diskterminal.gui.widget.tab.GuiContext;
 import com.hfstudio.diskterminal.gui.widget.tab.NetworkToolsTabWidget;
+import com.hfstudio.diskterminal.gui.widget.tab.RequestAreaTabWidget;
 import com.hfstudio.diskterminal.gui.widget.tab.StorageBusTabWidget;
 import com.hfstudio.diskterminal.gui.widget.tab.SubnetOverviewTabWidget;
 import com.hfstudio.diskterminal.gui.widget.tab.TempAreaTabWidget;
 import com.hfstudio.diskterminal.gui.widget.tab.TerminalTabWidget;
+import com.hfstudio.diskterminal.requestarea.RequestAreaAdapterRegistry;
 
 import appeng.api.AEApi;
 
@@ -87,6 +89,8 @@ public class TabManager {
     private ItemStack tabIconInventory;
     private ItemStack tabIconPartition;
     private ItemStack tabIconStorageBus;
+    private ItemStack tabIconRequestAreaMaintainer;
+    private ItemStack tabIconRequestAreaEmitter;
 
     // Controls help widget cache (used for both rendering and NEI exclusion area calculation).
     // Stored here so the GUI can query the wrapped lines without maintaining its own tab-tracking logic.
@@ -176,6 +180,7 @@ public class TabManager {
             SlotsLine.SlotMode.PARTITION,
             fontRenderer,
             itemRender);
+        RequestAreaTabWidget requestAreaWidget = new RequestAreaTabWidget(fontRenderer, itemRender);
         NetworkToolsTabWidget networkToolsWidget = new NetworkToolsTabWidget(fontRenderer, itemRender);
 
         // Populate indexed lookup
@@ -185,7 +190,8 @@ public class TabManager {
             tempAreaWidget, // TAB_TEMP_AREA (3)
             storageBusInventoryWidget, // TAB_STORAGE_BUS_INVENTORY (4)
             storageBusPartitionWidget, // TAB_STORAGE_BUS_PARTITION (5)
-            networkToolsWidget // TAB_NETWORK_TOOLS (6)
+            requestAreaWidget, // TAB_REQUEST_AREA (6)
+            networkToolsWidget // TAB_NETWORK_TOOLS (7)
         };
 
         // Initialize all widgets with shared GUI context, offsets, and row count
@@ -509,6 +515,28 @@ public class TabManager {
                 }
 
                 return tabIconPartition;
+            }
+
+            @Override
+            public ItemStack getRequestAreaMaintainerIcon() {
+                if (tabIconRequestAreaMaintainer == null) {
+                    tabIconRequestAreaMaintainer = RequestAreaAdapterRegistry.getInstance()
+                        .findByType("level_maintainer")
+                        .map(adapter -> adapter.getIcon())
+                        .orElse(null);
+                }
+                return tabIconRequestAreaMaintainer;
+            }
+
+            @Override
+            public ItemStack getRequestAreaEmitterIcon() {
+                if (tabIconRequestAreaEmitter == null) {
+                    tabIconRequestAreaEmitter = RequestAreaAdapterRegistry.getInstance()
+                        .findByType("level_emitter")
+                        .map(adapter -> adapter.getIcon())
+                        .orElse(null);
+                }
+                return tabIconRequestAreaEmitter;
             }
         };
 

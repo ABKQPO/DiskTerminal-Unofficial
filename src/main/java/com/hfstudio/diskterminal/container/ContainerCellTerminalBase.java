@@ -47,6 +47,9 @@ import com.hfstudio.diskterminal.network.PacketTempCellPartitionAction;
 import com.hfstudio.diskterminal.network.chunked.ChunkedNBTSender;
 import com.hfstudio.diskterminal.network.chunked.PayloadMode;
 import com.hfstudio.diskterminal.network.chunked.TerminalChannels;
+import com.hfstudio.diskterminal.requestarea.RequestAreaAction;
+import com.hfstudio.diskterminal.requestarea.RequestAreaAdapterRegistry;
+import com.hfstudio.diskterminal.requestarea.RequestAreaService;
 import com.hfstudio.diskterminal.storagebus.model.StorageBusId;
 import com.hfstudio.diskterminal.storagebus.runtime.StorageBusActionExecutor;
 import com.hfstudio.diskterminal.storagebus.runtime.StorageBusCapabilityIds;
@@ -93,12 +96,15 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     protected final StorageBusCapabilityProviderRegistry storageBusProviders = new StorageBusCapabilityProviderRegistry();
     protected final StorageBusScanCollector storageBusCollector = new StorageBusScanCollector();
     protected final StorageBusActionExecutor storageBusActionExecutor = new StorageBusActionExecutor();
+    protected final RequestAreaService requestAreaService = new RequestAreaService(
+        RequestAreaAdapterRegistry.getInstance());
     protected IGrid grid;
     protected boolean needsFullRefresh = true;
     protected boolean needsStorageRefresh = true;
     protected boolean needsStorageBusRefresh = false;
     protected boolean needsTempCellRefresh = true;
     protected boolean needsSubnetRefresh = false;
+    protected boolean needsRequestAreaRefresh = false;
 
     protected int tickCounter = 0;
     protected int lastFullRefreshTick = 0;
@@ -113,6 +119,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
     protected int subnetSlotLimit = 64;
 
     protected int storageBusPollCounter = 0;
+    protected int requestAreaPollCounter = 0;
     protected boolean storageBusRefreshUrgent = false;
 
     protected long currentNetworkId = 0;
@@ -203,6 +210,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         }
 
         handleStorageBusPolling();
+        handleRequestAreaPolling();
 
         if (needsSubnetRefresh) {
             this.regenSubnetList();
@@ -262,6 +270,24 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         }
     }
 
+    protected void handleRequestAreaPolling() {
+        if (activeTab != GuiConstants.TAB_REQUEST_AREA) return;
+
+        if (needsRequestAreaRefresh) {
+            regenRequestAreaList();
+            requestAreaPollCounter = 0;
+            needsRequestAreaRefresh = false;
+            return;
+        }
+
+        requestAreaPollCounter++;
+        if (requestAreaPollCounter >= DiskTerminalServerConfig.getInstance()
+            .getPollingInterval()) {
+            regenRequestAreaList();
+            requestAreaPollCounter = 0;
+        }
+    }
+
     public void setActiveTab(int tab) {
         if (this.activeTab == tab) return;
 
@@ -273,6 +299,11 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         if (isOnStorageBusTab) {
             requestStorageBusRefresh(true);
             storageBusPollCounter = 0;
+        }
+
+        if (tab == GuiConstants.TAB_REQUEST_AREA) {
+            needsRequestAreaRefresh = true;
+            requestAreaPollCounter = 0;
         }
 
         if (tabNeedsStorages(tab)) requestStorageRefresh();
@@ -357,6 +388,13 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         NBTTagCompound data = new NBTTagCompound();
         data.setTag("storageBuses", storageBusList);
         sendChunked(TerminalChannels.BUSES, data, "storageBuses", "id");
+    }
+
+    protected void regenRequestAreaList() {
+        needsRequestAreaRefresh = false;
+        NBTTagCompound data = new NBTTagCompound();
+        data.setTag("requestAreas", requestAreaService.collect(getEffectiveGrid()));
+        sendChunked(TerminalChannels.REQUEST_AREAS, data, "requestAreas", "id");
     }
 
     protected void regenTempCellList() {
@@ -1322,6 +1360,7 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         this.needsFullRefresh = true;
         this.needsStorageRefresh = true;
         this.needsTempCellRefresh = true;
+        this.needsRequestAreaRefresh = true;
     }
 
     public void requestStorageRefresh() {
@@ -1352,11 +1391,13 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
         if (tabNeedsStorages(this.activeTab) && this.needsStorageRefresh) regenStorageList();
         if (tabNeedsStorageBuses(this.activeTab) && this.needsStorageBusRefresh) regenStorageBusList();
         if (tabNeedsTempCells(this.activeTab) && this.needsTempCellRefresh) regenTempCellList();
+        if (tabNeedsRequestArea(this.activeTab) && this.needsRequestAreaRefresh) regenRequestAreaList();
     }
 
     protected boolean tabNeedsStorages(int tab) {
         return tab != GuiConstants.TAB_STORAGE_BUS_INVENTORY && tab != GuiConstants.TAB_STORAGE_BUS_PARTITION
-            && tab != GuiConstants.TAB_SUBNETS;
+            && tab != GuiConstants.TAB_SUBNETS
+            && tab != GuiConstants.TAB_REQUEST_AREA;
     }
 
     protected boolean tabNeedsStorageBuses(int tab) {
@@ -1365,5 +1406,100 @@ public abstract class ContainerCellTerminalBase extends AEBaseContainer {
 
     protected boolean tabNeedsTempCells(int tab) {
         return tab == GuiConstants.TAB_TEMP_AREA;
+    }
+
+    protected boolean tabNeedsRequestArea(int tab) {
+        return tab == GuiConstants.TAB_REQUEST_AREA;
+    }
+
+    public void handleRequestAreaAction(EntityPlayer player, long id, int dimension, long position, int side, int slot,
+        RequestAreaAction action, long value, NBTTagCompound stackData, int sourceInventorySlot) {
+        if (activeTab != GuiConstants.TAB_REQUEST_AREA || !DiskTerminalServerConfig.getInstance()
+            .isTabEnabled(GuiConstants.TAB_REQUEST_AREA)) return;
+
+        if (action == RequestAreaAction.INSERT_UPGRADE) {
+            handleRequestAreaUpgradeInsert(player, id, dimension, position, side, slot, sourceInventorySlot);
+            return;
+        }
+
+        if (action == RequestAreaAction.EXTRACT_UPGRADE) {
+            handleRequestAreaUpgradeExtract(player, id, dimension, position, side, slot, value != 0);
+            return;
+        }
+
+        if (requestAreaService
+            .applyAction(getEffectiveGrid(), dimension, position, side, id, slot, action, value, stackData)) {
+            needsRequestAreaRefresh = true;
+        }
+    }
+
+    private void handleRequestAreaUpgradeInsert(EntityPlayer player, long id, int dimension, long position, int side,
+        int slot, int sourceInventorySlot) {
+        if (!DiskTerminalServerConfig.getInstance()
+            .isUpgradeInsertEnabled()) {
+            PlayerMessageHelper.error(player, "disk_terminal.error.upgrade_insert_disabled");
+            return;
+        }
+
+        ItemStack source = sourceInventorySlot >= 0 ? player.inventory.getStackInSlot(sourceInventorySlot)
+            : player.inventory.getItemStack();
+        if (ItemStacks.isEmpty(source)) return;
+
+        ItemStack oneUpgrade = source.copy();
+        oneUpgrade.stackSize = 1;
+        if (!requestAreaService.applyAction(
+            getEffectiveGrid(),
+            dimension,
+            position,
+            side,
+            id,
+            slot,
+            RequestAreaAction.INSERT_UPGRADE,
+            0,
+            oneUpgrade.writeToNBT(new NBTTagCompound()))) return;
+
+        source.stackSize--;
+        if (source.stackSize <= 0) {
+            if (sourceInventorySlot >= 0) player.inventory.setInventorySlotContents(sourceInventorySlot, null);
+            else player.inventory.setItemStack(null);
+        }
+        player.inventory.markDirty();
+        if (player instanceof EntityPlayerMP playerMP && sourceInventorySlot < 0) playerMP.updateHeldItem();
+        needsRequestAreaRefresh = true;
+    }
+
+    private void handleRequestAreaUpgradeExtract(EntityPlayer player, long id, int dimension, long position, int side,
+        int slot, boolean toInventory) {
+        if (!DiskTerminalServerConfig.getInstance()
+            .isUpgradeExtractEnabled()) {
+            PlayerMessageHelper.error(player, "disk_terminal.error.upgrade_extract_disabled");
+            return;
+        }
+        if (!toInventory && !ItemStacks.isEmpty(player.inventory.getItemStack())) return;
+
+        NBTTagCompound result = new NBTTagCompound();
+        if (!requestAreaService.applyAction(
+            getEffectiveGrid(),
+            dimension,
+            position,
+            side,
+            id,
+            slot,
+            RequestAreaAction.EXTRACT_UPGRADE,
+            0,
+            result)) return;
+
+        ItemStack extracted = ItemStack.loadItemStackFromNBT(result.getCompoundTag("extracted"));
+        if (ItemStacks.isEmpty(extracted)) return;
+        if (toInventory) {
+            if (!player.inventory.addItemStackToInventory(extracted)) {
+                player.dropPlayerItemWithRandomChoice(extracted, false);
+            }
+            player.inventory.markDirty();
+        } else {
+            player.inventory.setItemStack(extracted);
+            if (player instanceof EntityPlayerMP playerMP) playerMP.updateHeldItem();
+        }
+        needsRequestAreaRefresh = true;
     }
 }

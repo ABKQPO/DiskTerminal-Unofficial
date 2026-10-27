@@ -22,6 +22,8 @@ public class TabStateManager {
         PARTITION(2),
         STORAGE_BUS_INVENTORY(3),
         STORAGE_BUS_PARTITION(4),
+        REQUEST_AREA(6),
+        NETWORK_TOOLS(7),
         SUBNET_OVERVIEW(-1);
 
         private final int index;

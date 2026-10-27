@@ -216,6 +216,12 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
             updateScrollbarForCurrentTab();
             restoreInitialScrollIfNeeded();
         });
+        PayloadDispatcher.register(TerminalChannels.REQUEST_AREAS, (mode, data) -> {
+            if (!acceptForCurrentNetwork(data)) return;
+            dataManager.applyRequestAreas(mode, data);
+            updateScrollbarForCurrentTab();
+            restoreInitialScrollIfNeeded();
+        });
         PayloadDispatcher.register(TerminalChannels.TEMP_CELLS, (mode, data) -> {
             if (!acceptForCurrentNetwork(data)) return;
             dataManager.applyTempCells(mode, data);
@@ -1582,6 +1588,7 @@ public abstract class GuiCellTerminalBase extends AEBaseGui implements NetworkTo
         PayloadDispatcher.unregister(TerminalChannels.META);
         PayloadDispatcher.unregister(TerminalChannels.STORAGES);
         PayloadDispatcher.unregister(TerminalChannels.BUSES);
+        PayloadDispatcher.unregister(TerminalChannels.REQUEST_AREAS);
         PayloadDispatcher.unregister(TerminalChannels.TEMP_CELLS);
         PayloadDispatcher.unregister(TerminalChannels.SUBNETS);
 

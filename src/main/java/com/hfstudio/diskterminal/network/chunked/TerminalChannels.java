@@ -21,6 +21,9 @@ public class TerminalChannels {
     /** Storage bus list. Polled separately when on a storage bus tab. */
     public static final String BUSES = "ct:buses";
 
+    /** Request area devices and editable slot settings. */
+    public static final String REQUEST_AREAS = "ct:request_areas";
+
     /** Temp cell area contents. Bounded to 16 slots so always small but uses the same protocol. */
     public static final String TEMP_CELLS = "ct:temp";
 

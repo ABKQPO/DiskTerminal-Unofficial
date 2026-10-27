@@ -39,6 +39,7 @@ public class DiskTerminalServerConfig {
     private final Property tabStorageBusInventoryEnabledProperty;
     private final Property tabStorageBusPartitionEnabledProperty;
     private final Property tabNetworkToolsEnabledProperty;
+    private final Property tabRequestAreaEnabledProperty;
 
     private boolean tabTerminalEnabled = true;
     private boolean tabInventoryEnabled = true;
@@ -47,6 +48,7 @@ public class DiskTerminalServerConfig {
     private boolean tabStorageBusInventoryEnabled = true;
     private boolean tabStorageBusPartitionEnabled = true;
     private boolean tabNetworkToolsEnabled = true;
+    private boolean tabRequestAreaEnabled = true;
 
     // Polling settings
     private final Property storageBusPollingEnabledProperty;
@@ -156,6 +158,14 @@ public class DiskTerminalServerConfig {
             "Enable the Network Tools tab (mass operations on cells and storage buses)");
         this.tabNetworkToolsEnabledProperty.setLanguageKey("config.disk_terminal.config.server.tabs.network_tools");
         this.tabNetworkToolsEnabled = this.tabNetworkToolsEnabledProperty.getBoolean();
+
+        this.tabRequestAreaEnabledProperty = config.get(
+            CATEGORY_TABS,
+            "requestAreaTabEnabled",
+            true,
+            "Enable the Request Area tab (view and edit requesters and level emitters)");
+        this.tabRequestAreaEnabledProperty.setLanguageKey("config.disk_terminal.config.server.tabs.request_area");
+        this.tabRequestAreaEnabled = this.tabRequestAreaEnabledProperty.getBoolean();
 
         // Polling settings
         config.setCategoryComment(CATEGORY_POLLING, """
@@ -361,6 +371,7 @@ public class DiskTerminalServerConfig {
         this.tabStorageBusInventoryEnabled = this.tabStorageBusInventoryEnabledProperty.getBoolean();
         this.tabStorageBusPartitionEnabled = this.tabStorageBusPartitionEnabledProperty.getBoolean();
         this.tabNetworkToolsEnabled = this.tabNetworkToolsEnabledProperty.getBoolean();
+        this.tabRequestAreaEnabled = this.tabRequestAreaEnabledProperty.getBoolean();
 
         this.storageBusPollingEnabled = this.storageBusPollingEnabledProperty.getBoolean();
         this.pollingInterval = this.pollingIntervalProperty.getInt();
@@ -430,7 +441,7 @@ public class DiskTerminalServerConfig {
     /**
      * Check if a specific tab is enabled by its index.
      *
-     * @param tabIndex The tab index (0-6)
+     * @param tabIndex The tab index
      * @return true if the tab is enabled
      */
     public boolean isTabEnabled(int tabIndex) {
@@ -442,6 +453,7 @@ public class DiskTerminalServerConfig {
             case GuiConstants.TAB_STORAGE_BUS_INVENTORY -> tabStorageBusInventoryEnabled;
             case GuiConstants.TAB_STORAGE_BUS_PARTITION -> tabStorageBusPartitionEnabled;
             case GuiConstants.TAB_NETWORK_TOOLS -> tabNetworkToolsEnabled;
+            case GuiConstants.TAB_REQUEST_AREA -> tabRequestAreaEnabled;
             default -> false;
         };
     }

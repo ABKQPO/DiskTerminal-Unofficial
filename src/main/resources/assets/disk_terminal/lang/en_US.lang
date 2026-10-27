@@ -25,6 +25,8 @@ gui.disk_terminal.tab.partition.tooltip=Edit Cell Partitions
 gui.disk_terminal.tab.temp_area.tooltip=Temporary Cell Staging Area
 gui.disk_terminal.tab.storage_bus_inventory.tooltip=View Bus Contents
 gui.disk_terminal.tab.storage_bus_partition.tooltip=Edit Bus Filters
+gui.disk_terminal.tab.request_area.tooltip=Edit Request Area
+gui.disk_terminal.tab.network_tools.tooltip=Network Tools
 
 # Terminal style button
 gui.disk_terminal.terminal_style=Terminal Style
@@ -124,10 +126,16 @@ config.disk_terminal.config.server.tabs.inventory=Inventory Tab
 config.disk_terminal.config.server.tabs.inventory.tooltip=Enable the Inventory tab (view cell contents)
 config.disk_terminal.config.server.tabs.partition=Partition Tab
 config.disk_terminal.config.server.tabs.partition.tooltip=Enable the Partition tab (edit cell filters)
+config.disk_terminal.config.server.tabs.temp_area=Temp Area Tab
+config.disk_terminal.config.server.tabs.temp_area.tooltip=Enable the Temp Area tab (temporary cell staging for partitioning)
 config.disk_terminal.config.server.tabs.storage_bus_inventory=Bus Content Tab
 config.disk_terminal.config.server.tabs.storage_bus_inventory.tooltip=Enable the Bus Content tab (view bus contents)
 config.disk_terminal.config.server.tabs.storage_bus_partition=Bus Partition Tab
 config.disk_terminal.config.server.tabs.storage_bus_partition.tooltip=Enable the Bus Partition tab (edit bus filters)
+config.disk_terminal.config.server.tabs.request_area=Request Area Tab
+config.disk_terminal.config.server.tabs.request_area.tooltip=Enable the Request Area tab (edit requesters and level emitters)
+config.disk_terminal.config.server.tabs.network_tools=Network Tools Tab
+config.disk_terminal.config.server.tabs.network_tools.tooltip=Enable the Network Tools tab (bulk operations on cells and storage buses)
 
 config.disk_terminal.config.server.polling=Polling Settings
 config.disk_terminal.config.server.polling.tooltip=Storage bus polling settings. WARNING: Polling can be expensive on large networks!
@@ -159,17 +167,10 @@ config.disk_terminal.config.server.misc.upgrade_extract.tooltip=Allow extracting
 config.disk_terminal.config.server.integration=Integration Settings
 config.disk_terminal.config.server.integration.tooltip=Settings for integration with other mods.
 
-config.disk_terminal.config.server.tabs.temp_area=Temp Area Tab
-config.disk_terminal.config.server.tabs.temp_area.tooltip=Enable the Temp Area tab (temporary cell staging for partitioning)
-
 # Per-integration enable flags
-
-
 
 config.disk_terminal.config.server.integration.enable_thaumicenergistics=Thaumic Energistics Integration
 config.disk_terminal.config.server.integration.enable_thaumicenergistics.tooltip=Enable integration with Thaumic Energistics (essentia cells). Set to false to disable Thaumic Energistics-specific behavior.
-
-
 
 # Server config error messages
 disk_terminal.error.cell_eject_disabled=§cCell ejection is disabled on this server.
@@ -313,10 +314,44 @@ gui.disk_terminal.controls.keybind_targets=Keybinds partition the 1st cell with 
 gui.disk_terminal.controls.storage_bus_add_key=Click on Storage Bus header(s) to select, then press §b%s§r to add the item under the cursor to the bus filter.
 gui.disk_terminal.controls.storage_bus_capacity=Available slots depend on Capacity Card upgrades.
 
-# Network Tools tab
-gui.disk_terminal.tab.network_tools.tooltip=Network Tools
-config.disk_terminal.config.server.tabs.network_tools=Network Tools Tab
-config.disk_terminal.config.server.tabs.network_tools.tooltip=Enable the Network Tools tab (bulk operations on cells and storage buses)
+# Request area controls help
+gui.disk_terminal.request_area.controls.material=Left-click a marker slot with an item to set it; right-click to clear it.
+gui.disk_terminal.request_area.controls.amount=Click a quantity field, type a number, then press Enter or click elsewhere to apply it.
+gui.disk_terminal.request_area.controls.toggle=Click a setting button to cycle forward; right-click to cycle backward.
+gui.disk_terminal.request_area.controls.upgrades=Hold an upgrade and click a device to insert it. Click an installed card to extract it; Shift-click to send it to your inventory.
+gui.disk_terminal.request_area.controls.highlight=Double-click a device header to highlight its location.
+
+# Request area status and slots
+gui.disk_terminal.request_area.status.active=ACTIVE
+gui.disk_terminal.request_area.status.idle=IDLE
+gui.disk_terminal.request_area.material.empty=No material marked
+gui.disk_terminal.request_area.slot.enabled=ON
+gui.disk_terminal.request_area.slot.disabled=OFF
+gui.disk_terminal.request_area.slot.inverted=INV
+gui.disk_terminal.request_area.slot.normal=NOR
+gui.disk_terminal.request_area.slot.target_short=Q
+gui.disk_terminal.request_area.slot.batch_short=B
+
+# Request area modes and settings
+gui.disk_terminal.request_area.mode.lite=Lite
+gui.disk_terminal.request_area.mode.full=Full
+gui.disk_terminal.request_area.mode.high_signal=High
+gui.disk_terminal.request_area.mode.low_signal=Low
+gui.disk_terminal.request_area.mode.and=AND
+gui.disk_terminal.request_area.mode.or=OR
+gui.disk_terminal.request_area.control.enabled=Enabled
+gui.disk_terminal.request_area.control.disabled=Disabled
+gui.disk_terminal.request_area.control.lite_mode=Lite crafting mode
+
+# Request area tooltips
+gui.disk_terminal.request_area.tooltip.mode=Click to switch the device mode.
+gui.disk_terminal.request_area.tooltip.highlight=Double-click to highlight this device in the world.
+gui.disk_terminal.request_area.tooltip.material=Left-click with an item to set the marker; right-click to clear it.
+gui.disk_terminal.request_area.tooltip.stored=Stored: %s
+gui.disk_terminal.request_area.tooltip.target=Requested amount: %s. Type a new value in the field.
+gui.disk_terminal.request_area.tooltip.batch=Single order amount: %s. Type a new value in the field.
+gui.disk_terminal.request_area.tooltip.invert=Click to invert this emitter slot.
+gui.disk_terminal.request_area.tooltip.enabled=Click to enable or disable this slot.
 
 # Network tools - general
 gui.disk_terminal.networktools.warning.caution=§e⚠ Caution:§r This tool performs bulk operations on your storage network. Use the preview function to see what changes will be made before running the tool.

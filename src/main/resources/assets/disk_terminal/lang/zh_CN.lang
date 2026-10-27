@@ -25,6 +25,8 @@ gui.disk_terminal.tab.partition.tooltip=编辑元件分区
 gui.disk_terminal.tab.temp_area.tooltip=临时元件暂存区
 gui.disk_terminal.tab.storage_bus_inventory.tooltip=查看总线内容
 gui.disk_terminal.tab.storage_bus_partition.tooltip=编辑总线分区
+gui.disk_terminal.tab.request_area.tooltip=编辑请求区
+gui.disk_terminal.tab.network_tools.tooltip=网络工具
 
 # Terminal style button
 gui.disk_terminal.terminal_style=终端风格
@@ -124,10 +126,16 @@ config.disk_terminal.config.server.tabs.inventory=库存标签页
 config.disk_terminal.config.server.tabs.inventory.tooltip=启用库存标签页（查看元件内容）
 config.disk_terminal.config.server.tabs.partition=分区标签页
 config.disk_terminal.config.server.tabs.partition.tooltip=启用分区标签页（编辑元件过滤项）
+config.disk_terminal.config.server.tabs.temp_area=暂存区标签页
+config.disk_terminal.config.server.tabs.temp_area.tooltip=启用暂存区标签页（用于分区的元件临时存放区）
 config.disk_terminal.config.server.tabs.storage_bus_inventory=总线内容标签页
 config.disk_terminal.config.server.tabs.storage_bus_inventory.tooltip=启用总线内容标签页（查看总线内容）
 config.disk_terminal.config.server.tabs.storage_bus_partition=总线分区标签页
 config.disk_terminal.config.server.tabs.storage_bus_partition.tooltip=启用总线分区标签页（编辑总线过滤项）
+config.disk_terminal.config.server.tabs.request_area=请求区标签页
+config.disk_terminal.config.server.tabs.request_area.tooltip=启用请求区标签页（编辑请求器和等级发信器）
+config.disk_terminal.config.server.tabs.network_tools=网络工具标签页
+config.disk_terminal.config.server.tabs.network_tools.tooltip=启用网络工具标签页（对元件和存储总线进行批量操作）
 
 config.disk_terminal.config.server.polling=轮询设置
 config.disk_terminal.config.server.polling.tooltip=存储总线轮询设置。警告：在大型网络中进行轮询可能会严重消耗性能！
@@ -159,17 +167,10 @@ config.disk_terminal.config.server.misc.upgrade_extract.tooltip=允许通过元�
 config.disk_terminal.config.server.integration=集成设置
 config.disk_terminal.config.server.integration.tooltip=与其他模组集成的相关设置。
 
-config.disk_terminal.config.server.tabs.temp_area=暂存区标签页
-config.disk_terminal.config.server.tabs.temp_area.tooltip=启用暂存区标签页（用于分区的元件临时存放区）
-
 # Per-integration enable flags
-
-
 
 config.disk_terminal.config.server.integration.enable_thaumicenergistics=神秘能源（Thaumic Energistics）联动
 config.disk_terminal.config.server.integration.enable_thaumicenergistics.tooltip=启用与神秘能源（源质元件）的联动。设为false以禁用神秘能源特有行为。
-
-
 
 # Server config error messages
 disk_terminal.error.cell_eject_disabled=§元件弹出在该服务器中已被禁用。
@@ -313,10 +314,44 @@ gui.disk_terminal.controls.keybind_targets=绑定按键会为第一个未分区�
 gui.disk_terminal.controls.storage_bus_add_key=点击存储总线的顶部区域以选中，然后按§b%s§r将光标处物品添加到该总线的过滤项中。
 gui.disk_terminal.controls.storage_bus_capacity=可用槽位数取决于安装的容量卡升级。
 
-# Network Tools tab
-gui.disk_terminal.tab.network_tools.tooltip=网络工具
-config.disk_terminal.config.server.tabs.network_tools=网络工具标签页
-config.disk_terminal.config.server.tabs.network_tools.tooltip=启用网络工具标签页（对元件和存储总线进行批量操作）
+# Request area controls help
+gui.disk_terminal.request_area.controls.material=手持物品时左键点击标记槽可设置材料；右键清除。
+gui.disk_terminal.request_area.controls.amount=点击数量输入框并键入数值，按回车或点击其他位置应用。
+gui.disk_terminal.request_area.controls.toggle=左键循环切换设置；右键反向切换。
+gui.disk_terminal.request_area.controls.upgrades=手持升级卡并点击设备可插入。点击已安装卡片可取出；按住 Shift 可放入背包。
+gui.disk_terminal.request_area.controls.highlight=双击设备标题可高亮其所在位置。
+
+# Request area status and slots
+gui.disk_terminal.request_area.status.active=运行中
+gui.disk_terminal.request_area.status.idle=未运行
+gui.disk_terminal.request_area.material.empty=未标记材料
+gui.disk_terminal.request_area.slot.enabled=开
+gui.disk_terminal.request_area.slot.disabled=关
+gui.disk_terminal.request_area.slot.inverted=反
+gui.disk_terminal.request_area.slot.normal=正
+gui.disk_terminal.request_area.slot.target_short=量
+gui.disk_terminal.request_area.slot.batch_short=批
+
+# Request area modes and settings
+gui.disk_terminal.request_area.mode.lite=轻量
+gui.disk_terminal.request_area.mode.full=完整
+gui.disk_terminal.request_area.mode.high_signal=高信号
+gui.disk_terminal.request_area.mode.low_signal=低信号
+gui.disk_terminal.request_area.mode.and=与
+gui.disk_terminal.request_area.mode.or=或
+gui.disk_terminal.request_area.control.enabled=已启用
+gui.disk_terminal.request_area.control.disabled=已停用
+gui.disk_terminal.request_area.control.lite_mode=轻量合成模式
+
+# Request area tooltips
+gui.disk_terminal.request_area.tooltip.mode=点击切换设备模式。
+gui.disk_terminal.request_area.tooltip.highlight=双击可在世界中高亮此设备。
+gui.disk_terminal.request_area.tooltip.material=手持物品时左键点击可设置标记；右键清除标记。
+gui.disk_terminal.request_area.tooltip.stored=当前存量：%s
+gui.disk_terminal.request_area.tooltip.target=请求数量：%s。可在输入框中键入新数值。
+gui.disk_terminal.request_area.tooltip.batch=单次下单数量：%s。可在输入框中键入新数值。
+gui.disk_terminal.request_area.tooltip.invert=点击反转此发信器槽位。
+gui.disk_terminal.request_area.tooltip.enabled=点击启用或停用此槽位。
 
 # Network tools - general
 gui.disk_terminal.networktools.warning.caution=§e⚠ 注意：§r该工具会对你的存储网络执行批量操作。使用预览功能可在运行工具前查看将做出的更改内容。

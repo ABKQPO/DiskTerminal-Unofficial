@@ -35,6 +35,7 @@ public class CommonProxy {
         StorageScannerRegistry.register(AE2StorageScanner.INSTANCE);
         StorageBusScannerRegistry.register(AE2StorageBusScanner.INSTANCE);
         AE2FluidCraftIntegration.registerStorageBusScanner();
+        AE2FluidCraftIntegration.registerRequestAreaAdapters();
         GregTechIntegration.registerStorageBusScanner();
         ThaumicEnergisticsIntegration.registerStorageBusScanner();
         SubnetScannerRegistry.register(AE2SubnetScanner.INSTANCE);

@@ -7,6 +7,8 @@ import com.glodblock.github.common.item.ItemFluidDrop;
 import com.hfstudio.diskterminal.integration.storagebus.AE2FluidCraftStorageBusScanner;
 import com.hfstudio.diskterminal.integration.storagebus.StockReplenisherScanner;
 import com.hfstudio.diskterminal.integration.storagebus.StorageBusScannerRegistry;
+import com.hfstudio.diskterminal.requestarea.AE2FCLevelMaintainerAdapter;
+import com.hfstudio.diskterminal.requestarea.RequestAreaAdapterRegistry;
 
 import cpw.mods.fml.common.Optional;
 
@@ -32,6 +34,12 @@ public class AE2FluidCraftIntegration {
         registerStorageBusScannerInternal();
     }
 
+    public static void registerRequestAreaAdapters() {
+        if (!Mods.AE2FluidCraft.isModLoaded()) return;
+
+        registerRequestAreaAdaptersInternal();
+    }
+
     @Optional.Method(modid = Mods.AE2_FLUID_CRAFT)
     private static FluidStack extractFluidDrop(ItemStack stack) {
         if (!ItemFluidDrop.isFluidStack(stack)) return null;
@@ -48,5 +56,11 @@ public class AE2FluidCraftIntegration {
     private static void registerStorageBusScannerInternal() {
         StorageBusScannerRegistry.register(AE2FluidCraftStorageBusScanner.INSTANCE);
         StorageBusScannerRegistry.register(StockReplenisherScanner.INSTANCE);
+    }
+
+    @Optional.Method(modid = Mods.AE2_FLUID_CRAFT)
+    private static void registerRequestAreaAdaptersInternal() {
+        RequestAreaAdapterRegistry.getInstance()
+            .register(new AE2FCLevelMaintainerAdapter());
     }
 }

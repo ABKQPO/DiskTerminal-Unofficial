@@ -17,7 +17,7 @@ import com.hfstudio.diskterminal.gui.widget.NetworkToolRowWidget;
 import appeng.api.AEApi;
 
 /**
- * Tab widget for the Network Tools tab (Tab 6).
+ * Tab widget for the Network Tools tab (Tab 7).
  * <p>
  * Displays a scrollable list of network tools, each rendered as an independent
  * {@link NetworkToolRowWidget}. Each row is 36px tall (2x the standard 18px row height),

@@ -93,9 +93,33 @@ public class AEStackUtil {
 
     public static NBTTagCompound writeItemLikePartitionStack(ItemStack stack) {
         if (ItemStacks.isEmpty(stack)) return null;
+        return writePartitionStack(stack, convertItemUsingRegisteredTypes(stack));
+    }
 
+    /**
+     * Preserves display ingredients and only unwraps containers when explicitly requested.
+     */
+    public static NBTTagCompound writeItemLikePartitionStack(ItemStack stack, boolean useContainerContent) {
+        if (ItemStacks.isEmpty(stack)) return null;
+
+        ItemStack single = stack.copy();
+        single.stackSize = 1;
+        for (IAEStackType<?> type : AEStackTypeRegistry.getAllTypes()) {
+            IAEStack<?> converted = type.convertStackFromItem(single);
+            if (converted != null) return writePartitionStack(single, converted);
+        }
+        if (useContainerContent) {
+            for (IAEStackType<?> type : AEStackTypeRegistry.getAllTypes()) {
+                IAEStack<?> content = type.getStackFromContainerItem(single);
+                if (content != null) return writePartitionStack(single, content);
+            }
+            return null;
+        }
+        return writePartitionStack(single, AEItemStack.create(single));
+    }
+
+    private static NBTTagCompound writePartitionStack(ItemStack stack, IAEStack<?> aeStack) {
         NBTTagCompound data = new NBTTagCompound();
-        IAEStack<?> aeStack = convertItemUsingRegisteredTypes(stack);
         if (aeStack != null) {
             aeStack.setStackSize(1);
             writeStackToNBT(data, aeStack);

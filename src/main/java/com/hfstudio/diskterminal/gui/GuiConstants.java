@@ -372,7 +372,8 @@ public class GuiConstants {
     public static final int TAB_TEMP_AREA = 3;
     public static final int TAB_STORAGE_BUS_INVENTORY = 4;
     public static final int TAB_STORAGE_BUS_PARTITION = 5;
-    public static final int TAB_NETWORK_TOOLS = 6;
+    public static final int TAB_REQUEST_AREA = 6;
+    public static final int TAB_NETWORK_TOOLS = 7;
 
     public static final int LAST_TAB = TAB_NETWORK_TOOLS;
 

@@ -63,7 +63,7 @@ public class FilterPanelManager {
         // Remove old slot limit button
         if (slotLimitButton != null) buttonList.remove(slotLimitButton);
 
-        this.forStorageBus = currentTab >= GuiConstants.TAB_TEMP_AREA;
+        this.forStorageBus = currentTab >= GuiConstants.TAB_TEMP_AREA && currentTab != GuiConstants.TAB_REQUEST_AREA;
         this.currentTab = currentTab;
         DiskTerminalClientConfig config = DiskTerminalClientConfig.getInstance();
 
@@ -97,6 +97,7 @@ public class FilterPanelManager {
      */
     private List<CellFilter> getApplicableFilters(int tab) {
         List<CellFilter> filters = new ArrayList<>();
+        if (tab == GuiConstants.TAB_REQUEST_AREA) return filters;
 
         // Tabs 0-2 are cell tabs, 3-4 are storage bus tabs
         boolean isCellTab = tab <= GuiConstants.TAB_PARTITION;

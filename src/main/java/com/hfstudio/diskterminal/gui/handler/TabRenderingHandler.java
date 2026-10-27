@@ -78,6 +78,10 @@ public class TabRenderingHandler {
         ItemStack getInventoryIcon();
 
         ItemStack getPartitionIcon();
+
+        ItemStack getRequestAreaMaintainerIcon();
+
+        ItemStack getRequestAreaEmitterIcon();
     }
 
     /**
@@ -142,12 +146,14 @@ public class TabRenderingHandler {
                 Gui.drawRect(tabX, actualTabY, tabX + ctx.tabWidth, actualTabY + ctx.tabHeight, 0x99303030);
             }
 
-            // Draw icon (composite for storage bus tabs)
+            // Draw composite icons for storage bus and request area tabs.
             // Gray out icons for disabled tabs
             float iconAlpha = isDisabled ? 0.4f : 1.0f;
             int iconY = isSelected ? actualTabY + 3 : actualTabY + 5;
             if (i == GuiConstants.TAB_STORAGE_BUS_INVENTORY || i == GuiConstants.TAB_STORAGE_BUS_PARTITION) {
                 drawCompositeTabIcon(ctx, tabX + 3, iconY, i, iconProvider, isDisabled);
+            } else if (i == GuiConstants.TAB_REQUEST_AREA) {
+                drawCompositeRequestAreaTabIcon(ctx, tabX + 3, iconY, iconProvider, isDisabled);
             } else {
                 ItemStack icon = iconProvider.getTabIcon(i);
                 if (!ItemStacks.isEmpty(icon)) {
@@ -180,7 +186,22 @@ public class TabRenderingHandler {
         boolean isDisabled) {
         ItemStack topLeftIcon = (tab == GuiConstants.TAB_STORAGE_BUS_INVENTORY) ? iconProvider.getInventoryIcon()
             : iconProvider.getPartitionIcon();
-        ItemStack storageBusIcon = iconProvider.getStorageBusIcon();
+        drawCompositeIconPair(ctx, x, y, topLeftIcon, iconProvider.getStorageBusIcon(), isDisabled);
+    }
+
+    private static void drawCompositeRequestAreaTabIcon(TabRenderContext ctx, int x, int y,
+        TabIconProvider iconProvider, boolean isDisabled) {
+        drawCompositeIconPair(
+            ctx,
+            x,
+            y,
+            iconProvider.getRequestAreaMaintainerIcon(),
+            iconProvider.getRequestAreaEmitterIcon(),
+            isDisabled);
+    }
+
+    private static void drawCompositeIconPair(TabRenderContext ctx, int x, int y, ItemStack topLeftIcon,
+        ItemStack bottomRightIcon, boolean isDisabled) {
 
         float colorMod = isDisabled ? 0.4f : 1.0f;
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
@@ -216,8 +237,8 @@ public class TabRenderingHandler {
             }
         }
 
-        // Bottom-right icon (storage bus)
-        if (!ItemStacks.isEmpty(storageBusIcon)) {
+        // Bottom-right icon
+        if (!ItemStacks.isEmpty(bottomRightIcon)) {
             for (int row = 0; row < 16; row++) {
                 int clipStart = Math.min(16, 17 - row);
                 int stripWidth = 16 - clipStart;
@@ -232,7 +253,7 @@ public class TabRenderingHandler {
                 ctx.itemRender.renderItemAndEffectIntoGUI(
                     ctx.mc.fontRenderer,
                     ctx.mc.renderEngine,
-                    storageBusIcon,
+                    bottomRightIcon,
                     x + offset,
                     y + offset);
             }
